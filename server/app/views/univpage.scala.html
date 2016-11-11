@@ -1,0 +1,14 @@
+@import shared.SharedConstants
+@(pageType: String, customData: String)(implicit environment: play.api.Environment)
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="@controllers.routes.HomeController.css().url">
+    </head>
+    <body>
+        <div id="@SharedConstants.PAGE_TYPE_DIV_ID" hidden>@pageType</div>
+        <div id="@SharedConstants.CUSTOM_DATA_DIV_ID" hidden>@customData</div>
+        <div id="@SharedConstants.UNIV_PAGE_CONTENT_DIV_ID"></div>
+        @playscalajs.html.scripts("client")
+    </body>
+</html>
