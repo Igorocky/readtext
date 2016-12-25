@@ -13,27 +13,27 @@ lazy val server = (project in file("server")).settings(
   pipelineStages := Seq(scalaJSProd, gzip),
   resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
   libraryDependencies ++= Seq(
-    "com.vmunier" %% "play-scalajs-scripts" % "0.5.0",
-    "org.webjars" % "jquery" % "1.11.1",
-    specs2 % Test,
-    ws,
-    evolutions,
-    cache,
-    ws,
-    "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
-    "com.typesafe.play" %% "play-slick" % "2.0.1" withSources(),
-    "com.typesafe.play" %% "play-slick-evolutions" % "2.0.1" withSources(),
-    "com.lihaoyi" %% "upickle" % "0.4.1",
-    "com.github.japgolly.scalacss" %% "core" % "0.4.1"
+    "com.vmunier" %% "play-scalajs-scripts" % "0.5.0"
+    ,"org.webjars" % "jquery" % "1.11.1"
+    ,ws
+    ,evolutions
+    ,cache
+    ,ws
+    ,"com.typesafe.play" %% "play-slick" % "2.0.1"
+    ,"com.typesafe.play" %% "play-slick-evolutions" % "2.0.1"
+    ,"com.lihaoyi" %% "upickle" % "0.4.1"
+    ,"com.github.japgolly.scalacss" %% "core" % "0.4.1"
+    ,"com.h2database" % "h2" % "1.4.192"
+
+    ,"org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
+    ,specs2 % Test
   ),
   //loggers
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-api" % "1.7.16",
     "ch.qos.logback" % "logback-classic" % "1.1.7",
     "ch.qos.logback" % "logback-core" % "1.1.7"
-  ),
-  // h2 database support
-  libraryDependencies += "com.h2database" % "h2" % "1.4.191"
+  )
 ).enablePlugins(PlayScala).
   aggregate(clients.map(projectToRef): _*).
   dependsOn(sharedJvm)
