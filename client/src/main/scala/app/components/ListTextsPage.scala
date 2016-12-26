@@ -58,6 +58,7 @@ object ListTextsPage {
       <.div(
         state.texts.map{text=>
           <.div(
+            <.hr(^.width:="100%"),
             <.h2(text.title),
             <.div(text.content),
             <.div(
@@ -69,7 +70,8 @@ object ListTextsPage {
                 name = "Delete",
                 onClick = $.modState(_.copy(deleteText = Some(text)))
               )
-            )
+            ),
+            <.hr(^.width:="100%")
           )
         }
       )
