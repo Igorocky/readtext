@@ -1,4 +1,4 @@
-package example
+package app
 
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom

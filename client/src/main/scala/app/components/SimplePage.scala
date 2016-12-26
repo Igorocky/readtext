@@ -1,4 +1,4 @@
-package example.components
+package app.components
 
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB}
