@@ -1,6 +1,6 @@
 package app.components
 
-import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
+import app.components.forms.{FormCommonParams, FormTextField, SubmitButton, TextArea}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
 import shared.SharedConstants
@@ -55,7 +55,7 @@ object TextForm {
           Messages.content
         ),
         <.div(
-          FormTextField(SharedConstants.CONTENT)
+          TextArea(SharedConstants.CONTENT)
         ),
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         SubmitButton(props.submitButtonName),

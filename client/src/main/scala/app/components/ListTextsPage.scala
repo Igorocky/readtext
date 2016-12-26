@@ -80,7 +80,7 @@ object ListTextsPage {
     def addTextDialog(props: Props, state: State): TagMod = {
       if (state.addTextDialogOpened) {
         ModalDialog(
-          width = "250px",
+          width = "400px",
           content = TextForm(
             language = state.lang,
             formData = Forms.textFrom.formData.copy(submitUrl = props.mergeTextUrl),
@@ -98,7 +98,7 @@ object ListTextsPage {
       if (state.editText.isDefined) {
         val textToEdit = state.editText.get
         ModalDialog(
-          width = "250px",
+          width = "400px",
           content = TextForm(
             language = state.lang,
             formData = Forms.textFrom.formData(textToEdit).copy(submitUrl = props.mergeTextUrl),
