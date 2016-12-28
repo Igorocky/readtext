@@ -58,8 +58,8 @@ object RandomIndices {
     }
 
     protected[readtext] def getRandomIndicesUnder50(elemsCnt: Int, pct: Int, lastWordsCounts: List[Int]): List[Int] = {
-        val resLength = List(math.round(elemsCnt * pct / 100.0).toInt).map(n => if (n == 0) 1 else n).apply(0)
-        val step = List(math.round(elemsCnt.toDouble / resLength).toInt).map(n => if (n == 0) 1 else n).apply(0)
+        val resLength = math.round(elemsCnt * pct / 100.0).toInt max 1
+        val step = math.round(elemsCnt.toDouble / resLength).toInt max 1
         val res = (2 to resLength).foldLeft(List(findIdxWithMinCnt(lastWordsCounts, Nil))) {(soFarRes, i) =>
             val baseIdx = (soFarRes.head + step) % elemsCnt
 
