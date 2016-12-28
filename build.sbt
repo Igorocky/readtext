@@ -6,7 +6,7 @@ lazy val clients = Seq(client)
 lazy val scalaV = "2.11.8"
 
 lazy val server = (project in file("server")).settings(
-  name := """playExample2""",
+  name := """readtext""",
   version := "1.0-SNAPSHOT",
   scalaVersion := scalaV,
   scalaJSProjects := clients,
@@ -43,7 +43,8 @@ lazy val client = (project in file("client")).settings(
   persistLauncher := true,
   persistLauncher in Test := false,
   libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3",
+//    "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3",
+    "com.github.japgolly.scalajs-react" %%% "core" % "0.11.1",
     "com.lihaoyi" %%% "upickle" % "0.4.3"
   ),
   jsDependencies ++= Seq(
