@@ -1,6 +1,6 @@
 package readtext
 
-import org.junit.{Assert, Test}
+import org.junit.{Assert}
 import org.scalatest.{FlatSpec, Matchers}
 
 class TextFunctionsTest extends FlatSpec with Matchers {

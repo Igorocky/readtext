@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 
 class ReadTextState(private val text: List[List[Word]], private val caretPosition: Int, val probabilityPercent: Int) {
 
-    var currState: ReadingPhase = ONLY_TEXT
+    var currPhase: ReadingPhase = ONLY_TEXT
 
     var minMax: (Int, Int) = (0, 0)
 
@@ -16,7 +16,7 @@ class ReadTextState(private val text: List[List[Word]], private val caretPositio
     val sentenceCount: Int = text.length
 
     private var randomOrderOfSentences = false
-    private val rndForSentenceIndex = new Rnd
+    private val rndForSentenceIndex = new RndForSentenceIndex
     private var skipReadingStage = false
 
     var currSentence = Vector[Word]()
@@ -40,7 +40,7 @@ class ReadTextState(private val text: List[List[Word]], private val caretPositio
 //        selectedWord.set(None)
 //    }
     def setCurrState(v: ReadingPhase): Unit = {
-        currState = v
+        currPhase = v
         selectedWord = None
     }
 
@@ -182,10 +182,10 @@ class ReadTextState(private val text: List[List[Word]], private val caretPositio
     }
 
     def next(): Unit = {
-        if (currState == ONLY_TEXT) {
+        if (currPhase == ONLY_TEXT) {
             hideWordsOfCurrentSentence()
             setCurrState(TEXT_WITH_INPUTS)
-        } else if (currState == TEXT_WITH_INPUTS) {
+        } else if (currPhase == TEXT_WITH_INPUTS) {
             nextSentence()
         }
     }
@@ -203,14 +203,18 @@ class ReadTextState(private val text: List[List[Word]], private val caretPositio
     }
 
     def refreshHiddenWords(): Unit = {
-        if (currState == TEXT_WITH_INPUTS) {
+        if (currPhase == TEXT_WITH_INPUTS) {
             hideWordsOfCurrentSentence()
         }
     }
 
+    def getNextSentenceIndex = {
+        rndForSentenceIndex.nextInt(text.size)
+    }
+
     def nextSentence(): Unit = {
         if (randomOrderOfSentences) {
-            setCurrSentenceIdx(rndForSentenceIndex.nextInt(text.size))
+            setCurrSentenceIdx(getNextSentenceIndex)
             goToSentence(currSentenceIdx)
         } else {
             if (currSentenceIdx < text.size - 1) {
@@ -224,9 +228,9 @@ class ReadTextState(private val text: List[List[Word]], private val caretPositio
     }
 
     def back(): Unit = {
-        if (currState == TEXT_WITH_INPUTS) {
+        if (currPhase == TEXT_WITH_INPUTS) {
             goToSentence(currSentenceIdx)
-        } else if (currState == ONLY_TEXT) {
+        } else if (currPhase == ONLY_TEXT) {
             if (currSentenceIdx > 0) {
                 setCurrSentenceIdx(currSentenceIdx - 1)
                 goToSentence(currSentenceIdx)

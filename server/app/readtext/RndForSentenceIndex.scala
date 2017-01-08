@@ -4,7 +4,7 @@ import java.util.Random
 
 import scala.collection.mutable.ListBuffer
 
-class Rnd {
+class RndForSentenceIndex {
     private val rnd = new Random()
     private val buf = ListBuffer[Int]()
     private var lastBound = -1
