@@ -26,7 +26,9 @@ lazy val server = (project in file("server")).settings(
     ,"com.h2database" % "h2" % "1.4.192"
 
     ,"org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
-    ,specs2 % Test
+//    ,specs2 % Test
+    ,"org.scalacheck" %% "scalacheck" % "1.12.6" % Test
+//    ,"org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
   ),
   //loggers
   libraryDependencies ++= Seq(

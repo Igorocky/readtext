@@ -29,9 +29,9 @@ case class NonRepeatingRng(length: Int, buf: List[Int], rng: RNG) {
 }
 
 object Random {
-  type Rand[T] = Gen[RNG, T]
+  type Rand[T] = SFunc[RNG, T]
 
-  def rng: Rand[Int] = Gen(_.next)
+  def rng: Rand[Int] = SFunc(_.next)
   def nonNegativeLessThen(upperBound: Int): Rand[Int] = rng map (_.abs % upperBound)
 
   def nonRepeatingRng(length: Int, rng: RNG): NonRepeatingRng = {
@@ -39,7 +39,7 @@ object Random {
     NonRepeatingRng(length, newBuf, newRng)
   }
 
-  def shuffle(list: List[Int]): Gen[RNG, List[Int]] =
+  def shuffle(list: List[Int]): SFunc[RNG, List[Int]] =
     sequence(
       iterate(nonNegativeLessThen(list.length))(g => g).take(list.length*5),
       list

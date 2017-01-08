@@ -22,13 +22,5 @@ class RndForSentenceIndex {
         res
     }
 
-    def removeFromBuffer(nums: List[Int]): Unit = {
-        if (buf.nonEmpty) {
-            buf --= nums
-        }
-    }
-
-    def getBuffer = buf.toList
-
     def refresh() = lastBound = -1
 }

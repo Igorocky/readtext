@@ -31,18 +31,4 @@ class RndForSentenceIndexTest extends FlatSpec with Matchers {
         }).toSet
         assertEquals(boundary3, set3.size)
     }
-
-    "Rnd" should "testRemoveFromBuffer" in {
-        val rnd = new RndForSentenceIndex
-        val boundary = 10
-        val firstVal = rnd.nextInt(boundary)
-        rnd.removeFromBuffer(List(1,2,3,4,5))
-        val buf = rnd.getBuffer
-        assertFalse(buf.contains(firstVal))
-        assertFalse(buf.contains(1))
-        assertFalse(buf.contains(2))
-        assertFalse(buf.contains(3))
-        assertFalse(buf.contains(4))
-        assertFalse(buf.contains(5))
-    }
 }
