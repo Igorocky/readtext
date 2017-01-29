@@ -8,18 +8,18 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import shared.SharedConstants
-import shared.forms.{FormData, Forms}
-import shared.forms.PostData.{dataResponse, formWithErrors, readPostData}
+import shared.dto.{Paragraph, Topic}
+import shared.forms.Forms
+import shared.forms.PostData.{dataResponse, formWithErrors}
 import shared.messages.Languages
-import shared.pageparams.{ListTextsPageParams, SimplePageParams, TextUI}
+import shared.pageparams.{ListTextsPageParams, ListTopicsPageParams, SimplePageParams, TextUI}
+import slick.driver.H2Driver.api._
 import slick.driver.JdbcProfile
 import upickle.default._
 import utils.ServerUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalacss.Defaults._
-import slick.driver.H2Driver.api._
-import utils.ServerUtils
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -107,4 +107,68 @@ class HomeController @Inject()(
   }
 
   def css = Action(Ok(Css.render).as("text/css"))
+
+  def topics = Action { implicit request =>
+    Ok(
+      views.html.univpage(
+        pageType = ListTopicsPageParams.getClass.getName,
+        customData = write(ListTopicsPageParams(
+          headerParams = headerParams(getSession.language),
+          doActionUrl = routes.HomeController.doAction.url,
+          paragraphs = List(
+            Paragraph(
+              id = Some(1),
+              checked = false,
+              name = "1.3 Functions",
+              expanded = false,
+              order = 0,
+              topics = List(
+                Topic(id = Some(1), checked = false, title = "associativity of composition", order = 0, images = Nil)
+                ,Topic(id = Some(2), checked = false, title = "lemma g o f = ex", order = 1, images = Nil)
+                ,Topic(id = Some(3), checked = false, title = "prop. g o f = ex && f o g = ey", order = 2, images = Nil)
+                ,Topic(id = Some(4), checked = false, title = "equivalence relation", order = 3, images = Nil)
+                ,Topic(id = Some(5), checked = false, title = "partial ordering", order = 4, images = Nil)
+                ,Topic(id = Some(6), checked = false, title = "functional relation", order = 5, images = Nil)
+                ,Topic(id = Some(7), checked = false, title = "graph of function", order = 6, images = Nil)
+              )
+            ),
+            Paragraph(
+              id = Some(2),
+              checked = false,
+              name = "1.4.1 The Cardinality of a Set",
+              expanded = false,
+              order = 1,
+              topics = List(
+                Topic(id = Some(8), checked = false, title = "cardX <= cardY", order = 0, images = Nil)
+                ,Topic(id = Some(9), checked = false, title = "finite/infinite sets", order = 1, images = Nil)
+                ,Topic(id = Some(10), checked = false, title = "linear ordering of cardinal numbers", order = 2, images = Nil)
+                ,Topic(id = Some(11), checked = false, title = "cardX < cardP(X)", order = 3, images = Nil)
+              )
+            )
+
+          )
+        ))
+      )
+    )
+  }
+
+  var parId = 5
+  def doAction = Action{ request =>
+//    println("sleep...")
+//    Thread.sleep(3000)
+    val action = request.body.asText.get
+    println(s"action = ${action}")
+//    if (Random.nextBoolean()) {
+//      Ok(dataResponse(SharedConstants.OK))
+//    } else {
+//      Ok(errorResponse("Unknown error occurred."))
+//    }
+    if (action.startsWith("create new paragraph")) {
+      parId += 1
+      Ok(dataResponse(parId.toString))
+    } else {
+      Ok(dataResponse(SharedConstants.OK))
+    }
+
+  }
 }

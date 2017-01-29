@@ -15,3 +15,5 @@ POST    /mergeText                           controllers.HomeController.mergeTex
 POST    /deleteText                           controllers.HomeController.deleteText
 POST    /fullTextById                           controllers.HomeController.fullTextById
 GET    /allTexts                           controllers.HomeController.allTexts
+GET    /topics                           controllers.HomeController.topics
+POST    /doAction                           controllers.HomeController.doAction

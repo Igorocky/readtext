@@ -34,6 +34,7 @@ object TextForm {
     .renderPS{($,props,state)=>
       implicit val lang = props.language
       implicit val fParams = FormCommonParams(
+        id = "text-form",
         formData = state.formData,
         transformations = Forms.textFrom.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
@@ -59,7 +60,7 @@ object TextForm {
         ),
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         SubmitButton(props.submitButtonName),
-        Button(name = "Cancel", onClick = props.cancelled),
+        Button(id = "text-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
         if (state.waitPaneOpened) WaitPane() else EmptyTag
       )
     }.componentWillReceiveProps{$=>

@@ -38,7 +38,7 @@ object ListTextsPage {
       content =
         <.div(
           <.div(
-            Button(name = "New text", onClick = $.modState(_.copy(addTextDialogOpened = true)))
+            Button(id = "new-text-btn", name = "New text", onClick = $.modState(_.copy(addTextDialogOpened = true)))
           ),
           tableWithTexts(props, state),
           addTextDialog(props, state),
@@ -63,10 +63,12 @@ object ListTextsPage {
             <.div(text.content),
             <.div(
               Button(
+                id = "edit-btn-" + text.id.get,
                 name = "Edit",
                 onClick = loadFullText(text, props.loadFullTextUrl)
               ),
               Button(
+                id = "delete-btn-" + text.id.get,
                 name = "Delete",
                 onClick = $.modState(_.copy(deleteText = Some(text)))
               )
@@ -130,10 +132,11 @@ object ListTextsPage {
               <.div(s"Are you sure you want to delete the text '${state.deleteText.get.title}'?"),
               <.div(
                 Button(
+                  id = "yes-btn",
                   name = "Yes",
                   onClick = $.modState(_.copy(waitPane = true)) >> deleteText(props, state)
                 ),
-                Button(name = "Cancel", onClick = $.modState(_.copy(deleteText = None)))
+                Button(id = "cancel-btn", name = "Cancel", onClick = $.modState(_.copy(deleteText = None)))
               )
             )
         )

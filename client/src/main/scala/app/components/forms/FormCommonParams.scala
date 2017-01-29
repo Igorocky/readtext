@@ -9,6 +9,7 @@ import upickle.default._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 case class FormCommonParams(
+                             id: String,
                              formData: FormData,
                              transformations: Map[String, InputTransformation[String, _]],
                              onChange: FormData => CallbackTo[FormData],

@@ -1,10 +1,10 @@
 package app
 
-import app.components.{ListTextsPage, SimplePage}
+import app.components.{ListTextsPage, ListTopicsPage, SimplePage}
 import japgolly.scalajs.react.{ReactDOM, ReactElement}
 import org.scalajs.dom
 import shared.SharedConstants
-import shared.pageparams.{ListTextsPageParams, SimplePageParams}
+import shared.pageparams.{ListTextsPageParams, ListTopicsPageParams, SimplePageParams}
 
 import scala.scalajs.js
 
@@ -12,6 +12,7 @@ object Main extends js.JSApp {
   private val componentMap = Map[String, String => ReactElement](
     SimplePageParams.getClass.getName -> SimplePage.apply
     ,ListTextsPageParams.getClass.getName -> ListTextsPage.apply
+    ,ListTopicsPageParams.getClass.getName -> ListTopicsPage.apply
   )
 
   def main(): Unit = {

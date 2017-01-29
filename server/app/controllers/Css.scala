@@ -14,8 +14,7 @@ object Css extends StyleSheet.Standalone {
     left(0 px),
     right(0 px),
     top(0 px),
-    bottom(0 px),
-    backgroundColor(rgba(80,80,80,0.5))
+    bottom(0 px)
   )
 
   private val waitPaneProps = shieldProps:::List[ToStyle](
