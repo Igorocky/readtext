@@ -1,6 +1,7 @@
 package app
 
-import app.components.{ListTextsPage, ListTopicsPage, SimplePage}
+import app.components.listtopics.ListTopicsPage
+import app.components.{ListTextsPage, SimplePage}
 import japgolly.scalajs.react.{ReactDOM, ReactElement}
 import org.scalajs.dom
 import shared.SharedConstants

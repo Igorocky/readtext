@@ -1,10 +1,10 @@
 package shared.dto
 
 case class Paragraph(
-                      id: Option[Long],
-                      checked: Boolean,
+                      id: Option[Long] = None,
+                      checked: Boolean = false,
                       name: String,
-                      expanded: Boolean,
-                      order: Int,
-                      topics: List[Topic]
+                      expanded: Boolean = false,
+                      order: Int = 0,
+                      topics: List[Topic] = Nil
                     )

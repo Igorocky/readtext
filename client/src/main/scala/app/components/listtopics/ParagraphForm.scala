@@ -1,20 +1,21 @@
-package app.components
+package app.components.listtopics
 
-import app.components.forms.{FormCommonParams, FormTextField, SubmitButton, TextArea}
+import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
+import app.components.{Button, WaitPane}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
 import shared.SharedConstants
+import shared.dto.Paragraph
 import shared.forms.{FormData, Forms}
-import shared.messages.{Language, Messages}
-import shared.pageparams.TextUI
+import shared.messages.Language
 import upickle.default._
 
-object TextForm {
+object ParagraphForm {
   protected case class Props(
                               language: Language,
                               formData: FormData,
                               cancelled: Callback,
-                              submitComplete: TextUI => Callback,
+                              submitComplete: Paragraph => Callback,
                               submitButtonName: String,
                               editMode: Boolean = false)
 
@@ -24,7 +25,7 @@ object TextForm {
              language: Language,
              formData: FormData,
              cancelled: Callback,
-             submitComplete: TextUI => Callback,
+             submitComplete: Paragraph => Callback,
              submitButtonName: String,
              editMode: Boolean = false) =
     comp(Props(language, formData, cancelled, submitComplete, submitButtonName, editMode))
@@ -32,35 +33,27 @@ object TextForm {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(p => State(langOfFormData = p.language, formData = p.formData, waitPaneOpened = false))
     .renderPS{($,props,state)=>
+      val openWaitPane = $.modState(_.copy(waitPaneOpened = true))
+      val closeWaitPane = $.modState(_.copy(waitPaneOpened = false))
       implicit val lang = props.language
       implicit val fParams = FormCommonParams(
-        id = "text-form",
+        id = "paragraph-form",
         formData = state.formData,
-        transformations = Forms.textFrom.transformations,
+        transformations = Forms.paragraphFrom.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
         language = lang,
-        beforeSubmit = $.modState(_.copy(waitPaneOpened = true)),
-        onSubmitSuccess = str => props.submitComplete(read[TextUI](str)),
-        onSubmitFormCheckFailure = $.modState(_.copy(waitPaneOpened = false)),
+        beforeSubmit = openWaitPane,
+        onSubmitSuccess = str => closeWaitPane >> props.submitComplete(read[Paragraph](str)),
+        onSubmitFormCheckFailure = closeWaitPane,
         editMode = props.editMode
       )
       <.div(
-        <.div(
-          Messages.title
-        ),
-        <.div(
-          FormTextField(SharedConstants.TITLE)
-        ),
-        <.div(
-          Messages.content
-        ),
-        <.div(
-          TextArea(SharedConstants.CONTENT)
-        ),
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
+        "New paragraph:",
+        FormTextField(SharedConstants.TITLE),
         SubmitButton(props.submitButtonName),
-        Button(id = "text-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
+        Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
         if (state.waitPaneOpened) WaitPane() else EmptyTag
       )
     }.componentWillReceiveProps{$=>

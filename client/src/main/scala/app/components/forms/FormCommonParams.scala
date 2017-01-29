@@ -17,7 +17,7 @@ case class FormCommonParams(
                              language: Language,
                              beforeSubmit: Callback,
                              onSubmitSuccess: String => Callback,
-                             onSubmitFailure: Callback,
+                             onSubmitFormCheckFailure: Callback,
                              editMode: Boolean = false
                            ) {
 
@@ -38,7 +38,7 @@ case class FormCommonParams(
           } else {
             onChange(
               read[FormData](postData.content)
-            ) >> onSubmitFailure
+            ) >> onSubmitFormCheckFailure
           }
         }
       }

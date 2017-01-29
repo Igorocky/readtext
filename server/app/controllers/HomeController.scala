@@ -115,6 +115,7 @@ class HomeController @Inject()(
         customData = write(ListTopicsPageParams(
           headerParams = headerParams(getSession.language),
           doActionUrl = routes.HomeController.doAction.url,
+          createParagraphUrl = routes.HomeController.createParagraph.url,
           paragraphs = List(
             Paragraph(
               id = Some(1),
@@ -171,4 +172,19 @@ class HomeController @Inject()(
     }
 
   }
+
+  def createParagraph = Action.async { request =>
+    readFormDataFromPostRequest(request).values(Forms.paragraphFrom.transformations, getSession(request).language) match {
+      case Right(values) =>
+        val paragraph = Paragraph(
+          name = values(SharedConstants.TITLE).asInstanceOf[String]
+        )
+        parId += 1
+        println(s"action = create paragraph: $paragraph")
+        Future.successful(Ok(dataResponse(write(paragraph.copy(id = Some(parId))))))
+      case Left(fd) =>
+        Future.successful(Ok(formWithErrors(fd)))
+    }
+  }
+
 }
