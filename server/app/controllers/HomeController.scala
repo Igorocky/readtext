@@ -116,6 +116,7 @@ class HomeController @Inject()(
           headerParams = headerParams(getSession.language),
           doActionUrl = routes.HomeController.doAction.url,
           createParagraphUrl = routes.HomeController.createParagraph.url,
+          renameParagraphUrl = routes.HomeController.renameParagraph.url,
           paragraphs = List(
             Paragraph(
               id = Some(1),
@@ -182,6 +183,20 @@ class HomeController @Inject()(
         parId += 1
         println(s"action = create paragraph: $paragraph")
         Future.successful(Ok(dataResponse(write(paragraph.copy(id = Some(parId))))))
+      case Left(fd) =>
+        Future.successful(Ok(formWithErrors(fd)))
+    }
+  }
+
+  def renameParagraph = Action.async { request =>
+    readFormDataFromPostRequest(request).values(Forms.paragraphFrom.transformations, getSession(request).language) match {
+      case Right(values) =>
+        val paragraph = Paragraph(
+          id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
+          name = values(SharedConstants.TITLE).asInstanceOf[String]
+        )
+        println(s"action = rename paragraph: $paragraph")
+        Future.successful(Ok(dataResponse(write(paragraph))))
       case Left(fd) =>
         Future.successful(Ok(formWithErrors(fd)))
     }

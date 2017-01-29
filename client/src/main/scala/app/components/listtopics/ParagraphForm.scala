@@ -16,6 +16,7 @@ object ParagraphForm {
                               formData: FormData,
                               cancelled: Callback,
                               submitComplete: Paragraph => Callback,
+                              textFieldTitle: String,
                               submitButtonName: String,
                               editMode: Boolean = false)
 
@@ -26,9 +27,10 @@ object ParagraphForm {
              formData: FormData,
              cancelled: Callback,
              submitComplete: Paragraph => Callback,
+             textFieldTitle: String,
              submitButtonName: String,
              editMode: Boolean = false) =
-    comp(Props(language, formData, cancelled, submitComplete, submitButtonName, editMode))
+    comp(Props(language, formData, cancelled, submitComplete, textFieldTitle, submitButtonName, editMode))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(p => State(langOfFormData = p.language, formData = p.formData, waitPaneOpened = false))
@@ -50,7 +52,7 @@ object ParagraphForm {
       )
       <.div(
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
-        "New paragraph:",
+        props.textFieldTitle,
         FormTextField(SharedConstants.TITLE),
         SubmitButton(props.submitButtonName),
         Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled),

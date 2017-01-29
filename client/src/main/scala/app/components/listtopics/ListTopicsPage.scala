@@ -35,10 +35,13 @@ object ListTopicsPage {
           header(state, props),
           state.paragraphs.map{paragraph =>
             ParagraphCmp(
+              language = props.headerParams.language,
               paragraph = paragraph,
+              renameParagraphUrl = props.renameParagraphUrl,
               checkParagraphAction = checkParagraphAction(paragraph, props),
               expandParagraphAction = expandParagraphAction(paragraph, props),
-              checkTopicAction = checkTopicAction(paragraph, props)
+              checkTopicAction = checkTopicAction(paragraph, props),
+              paragraphRenamed = par => $.modState(_.renameParagraph(par.id.get, par.name))
             )
           },
           waitPaneIfNecessary(state),

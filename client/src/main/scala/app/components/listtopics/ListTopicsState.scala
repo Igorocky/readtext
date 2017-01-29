@@ -11,6 +11,8 @@ case class ListTopicsState(
                   errorDesc: Option[String] = None
                 ) {
 
+  def renameParagraph(id: Long, name: String): ListTopicsState = modParagraphById(id, _.copy(name = name))
+
   def addParagraph(paragraph: Paragraph): ListTopicsState =
     copy(paragraphs = paragraphs:::paragraph::Nil)
 
