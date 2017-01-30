@@ -22,3 +22,4 @@ POST    /createParagraph                           controllers.TopicController.c
 POST    /renameParagraph                           controllers.TopicController.renameParagraph
 POST    /createTopic                           controllers.TopicController.createTopic
 POST    /updateTopic                           controllers.TopicController.updateTopic
+POST    /uploadFile/:fileName                           controllers.TopicController.uploadFile(fileName: String)

@@ -1,5 +1,6 @@
 package controllers
 
+import java.io.File
 import javax.inject._
 
 import db.Tables
@@ -27,8 +28,8 @@ class TopicController @Inject()(
   extends Controller with HasDatabaseConfigProvider[JdbcProfile] with Tables with I18nSupport {
 
   def topics = Action { implicit request =>
-    val pn = 2
-    val tn = 5
+    val pn = 3
+    val tn = 6
     val ps = (0 until pn).map{pi => Paragraph(
       id = Some(pi),
       name = "PARAGRAPH-" + pi,
@@ -169,4 +170,17 @@ class TopicController @Inject()(
     }
   }
 
+  def uploadFile(fileName: String) = Action(parse.multipartFormData) { request =>
+    println(">in upload")
+    request.body.files.foreach(f => println(s"file from sequence, key = ${f.key}, filename = ${f.filename}"))
+    request.body.file("fileQQWWEE").map { picture =>
+      import java.io.File
+      val filename = picture.filename
+      val contentType = picture.contentType
+      picture.ref.moveTo(new File(s"D:\\temp\\uploaded\\$filename"))
+      Ok("File uploaded")
+    }.getOrElse {
+      Ok("File was not uploaded")
+    }
+  }
 }

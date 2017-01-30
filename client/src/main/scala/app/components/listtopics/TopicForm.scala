@@ -54,6 +54,7 @@ object TopicForm {
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         props.textFieldTitle,
         FormTextField(SharedConstants.TITLE),
+        FileUploader(),
         SubmitButton(props.submitButtonName),
         Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
         if (state.waitPaneOpened) WaitPane() else EmptyTag
