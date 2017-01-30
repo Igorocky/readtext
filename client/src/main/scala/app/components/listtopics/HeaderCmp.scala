@@ -37,7 +37,7 @@ object HeaderCmp {
           <.div(
             ParagraphForm(
               language = p.language,
-              formData = Forms.paragraphFrom.formData.copy(submitUrl = p.createParagraphUrl),
+              formData = Forms.paragraphForm.formData.copy(submitUrl = p.createParagraphUrl),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
               submitComplete = par => $.modState(_.copy(newParagraphFormOpened = false)) >> p.paragraphCreated(par),
               textFieldTitle = "New paragraph:",

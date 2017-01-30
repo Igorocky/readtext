@@ -41,7 +41,11 @@ object ListTopicsPage {
               checkParagraphAction = checkParagraphAction(paragraph, props),
               expandParagraphAction = expandParagraphAction(paragraph, props),
               checkTopicAction = checkTopicAction(paragraph, props),
-              paragraphRenamed = par => $.modState(_.renameParagraph(par.id.get, par.name))
+              paragraphRenamed = par => $.modState(_.renameParagraph(par.id.get, par.name)),
+              createTopicUrl = props.createTopicUrl,
+              topicCreated = topic => $.modState(_.addTopic(topic)),
+              updateTopicUrl = props.updateTopicUrl,
+              topicUpdated = topic => $.modState(_.updateTopic(topic))
             )
           },
           waitPaneIfNecessary(state),

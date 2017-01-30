@@ -7,5 +7,7 @@ case class ListTopicsPageParams(
                                 doActionUrl: String,
                                 createParagraphUrl: String,
                                 renameParagraphUrl: String,
+                                createTopicUrl: String,
+                                updateTopicUrl: String,
                                 paragraphs: List[Paragraph]
                                 )

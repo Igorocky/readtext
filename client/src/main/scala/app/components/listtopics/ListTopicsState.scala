@@ -16,6 +16,12 @@ case class ListTopicsState(
   def addParagraph(paragraph: Paragraph): ListTopicsState =
     copy(paragraphs = paragraphs:::paragraph::Nil)
 
+  def addTopic(topic: Topic): ListTopicsState =
+    modParagraphById(topic.paragraphId.get, p => p.copy(topics = p.topics:::topic::Nil))
+
+  def updateTopic(topic: Topic): ListTopicsState =
+    modParagraphById(topic.paragraphId.get, p => p.copy(topics = modTopicById(p.topics, topic.id.get, _ => topic)))
+
   def checkParagraph(p: Paragraph, newChecked: Boolean): ListTopicsState =
     modParagraphById(p.id.get, _.copy(checked = newChecked))
 

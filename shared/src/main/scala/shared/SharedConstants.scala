@@ -17,6 +17,7 @@ object SharedConstants {
   final val EDITABLE_DIV_EMPTY = "editable-div-empty"
 
   final val ID = "ID"
+  final val PARAGRAPH_ID = "PARAGRAPH_ID"
   final val TITLE = "TITLE"
   final val CONTENT = "CONTENT"
 }

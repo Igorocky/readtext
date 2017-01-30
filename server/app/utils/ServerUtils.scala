@@ -55,7 +55,7 @@ object ServerUtils {
 
   def headerParams(language: Language) = HeaderParams (
     language = language,
-    changeLanguageUrl = routes.HomeController.changeLanguage.url
+    changeLanguageUrl = routes.LanguageController.changeLanguage.url
   )
 
   def readFormDataFromPostRequest(request: Request[AnyContent]): FormData =

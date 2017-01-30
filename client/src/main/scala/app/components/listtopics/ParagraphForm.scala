@@ -41,7 +41,7 @@ object ParagraphForm {
       implicit val fParams = FormCommonParams(
         id = "paragraph-form",
         formData = state.formData,
-        transformations = Forms.paragraphFrom.transformations,
+        transformations = Forms.paragraphForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
         language = lang,
@@ -62,7 +62,7 @@ object ParagraphForm {
       if ($.nextProps.language != $.currentState.langOfFormData) {
         $.$.modState(_.copy(
           langOfFormData = $.nextProps.language,
-          formData = $.currentState.formData.validate(Forms.textFrom.transformations, $.nextProps.language)
+          formData = $.currentState.formData.validate(Forms.textForm.transformations, $.nextProps.language)
         ))
       } else {
         Callback.empty

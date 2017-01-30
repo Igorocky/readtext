@@ -54,13 +54,8 @@ class HomeController @Inject()(
     )
   }
 
-  def changeLanguage = Action { request =>
-    val newLang = Languages.fromString(request.body.asText.get)
-    Ok(SharedConstants.OK).withSession(modSession(request, _.copy(language = newLang)))
-  }
-
   def mergeText = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.textFrom.transformations, getSession(request).language) match {
+    readFormDataFromPostRequest(request).values(Forms.textForm.transformations, getSession(request).language) match {
       case Right(values) =>
         val text = TextUI(
           id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
@@ -107,99 +102,4 @@ class HomeController @Inject()(
   }
 
   def css = Action(Ok(Css.render).as("text/css"))
-
-  def topics = Action { implicit request =>
-    Ok(
-      views.html.univpage(
-        pageType = ListTopicsPageParams.getClass.getName,
-        customData = write(ListTopicsPageParams(
-          headerParams = headerParams(getSession.language),
-          doActionUrl = routes.HomeController.doAction.url,
-          createParagraphUrl = routes.HomeController.createParagraph.url,
-          renameParagraphUrl = routes.HomeController.renameParagraph.url,
-          paragraphs = List(
-            Paragraph(
-              id = Some(1),
-              checked = false,
-              name = "1.3 Functions",
-              expanded = false,
-              order = 0,
-              topics = List(
-                Topic(id = Some(1), checked = false, title = "associativity of composition", order = 0, images = Nil)
-                ,Topic(id = Some(2), checked = false, title = "lemma g o f = ex", order = 1, images = Nil)
-                ,Topic(id = Some(3), checked = false, title = "prop. g o f = ex && f o g = ey", order = 2, images = Nil)
-                ,Topic(id = Some(4), checked = false, title = "equivalence relation", order = 3, images = Nil)
-                ,Topic(id = Some(5), checked = false, title = "partial ordering", order = 4, images = Nil)
-                ,Topic(id = Some(6), checked = false, title = "functional relation", order = 5, images = Nil)
-                ,Topic(id = Some(7), checked = false, title = "graph of function", order = 6, images = Nil)
-              )
-            ),
-            Paragraph(
-              id = Some(2),
-              checked = false,
-              name = "1.4.1 The Cardinality of a Set",
-              expanded = false,
-              order = 1,
-              topics = List(
-                Topic(id = Some(8), checked = false, title = "cardX <= cardY", order = 0, images = Nil)
-                ,Topic(id = Some(9), checked = false, title = "finite/infinite sets", order = 1, images = Nil)
-                ,Topic(id = Some(10), checked = false, title = "linear ordering of cardinal numbers", order = 2, images = Nil)
-                ,Topic(id = Some(11), checked = false, title = "cardX < cardP(X)", order = 3, images = Nil)
-              )
-            )
-
-          )
-        ))
-      )
-    )
-  }
-
-  var parId = 5
-  def doAction = Action{ request =>
-//    println("sleep...")
-//    Thread.sleep(3000)
-    val action = request.body.asText.get
-    println(s"action = ${action}")
-//    if (Random.nextBoolean()) {
-//      Ok(dataResponse(SharedConstants.OK))
-//    } else {
-//      Ok(errorResponse("Unknown error occurred."))
-//    }
-    if (action.startsWith("create new paragraph")) {
-      parId += 1
-      Ok(dataResponse(parId.toString))
-    } else {
-      Ok(dataResponse(SharedConstants.OK))
-    }
-
-  }
-
-  def createParagraph = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.paragraphFrom.transformations, getSession(request).language) match {
-      case Right(values) =>
-        val paragraph = Paragraph(
-          name = values(SharedConstants.TITLE).asInstanceOf[String]
-        )
-        parId += 1
-        println(s"action = create paragraph: $paragraph")
-        Future.successful(Ok(dataResponse(write(paragraph.copy(id = Some(parId))))))
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
-    }
-  }
-
-  def renameParagraph = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.paragraphFrom.transformations, getSession(request).language) match {
-      case Right(values) =>
-        val paragraph = Paragraph(
-          id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
-          name = values(SharedConstants.TITLE).asInstanceOf[String]
-        )
-        println(s"action = rename paragraph: $paragraph")
-        Future.successful(Ok(dataResponse(write(paragraph))))
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
-    }
-  }
-
 }
