@@ -9,6 +9,7 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import shared.SharedConstants
+import shared.SharedConstants._
 import shared.dto.{Paragraph, Topic}
 import shared.forms.{Forms, PostData}
 import shared.forms.PostData.{dataResponse, formWithErrors}
@@ -139,27 +140,29 @@ class TopicController @Inject()(
     }
   }
 
+  val imgStorageDir = new File("D:/temp/uploaded")
   def uploadTopicFile = Action(parse.multipartFormData) { request =>
     println(">in upload")
     println(s"request.body.dataParts = ${request.body.dataParts}")
-//    request.body.files.foreach(f => println(s"file from sequence, key = ${f.key}, filename = ${f.filename}"))
-    request.body.file("file").map { picture =>
-//      import java.io.File
-//      val filename = picture.filename
-//      val contentType = picture.contentType
-//      picture.ref.moveTo(new File(s"D:\\temp\\uploaded\\$filename"))
-      Ok(PostData.dataResponse("File uploaded."))
+    request.body.file(FILE).map { file =>
+      val paragraphId = request.body.dataParts(PARAGRAPH_ID)(0).toLong
+      val topicId = request.body.dataParts(TOPIC_ID)(0).toLong
+      val topicFilesDir = getTopicFilesDir(paragraphId, topicId, imgStorageDir)
+      val topicFileName = generateNameForNewFile(topicFilesDir)
+      file.ref.moveTo(new File(topicFilesDir, topicFileName))
+      Ok(PostData.dataResponse(topicFileName))
     }.getOrElse {
       Ok(PostData.errorResponse("Could not upload file."))
     }
   }
 
-  def getTopicFilesDir(topic: Topic, imgStorageDir: File): File =
-    new File(imgStorageDir, s"${topic.paragraphId.get}/${topic.id.get}")
+  def getTopicFilesDir(paragraphId: Long, topicId: Long, imgStorageDir: File): File =
+    new File(imgStorageDir, s"$paragraphId/$topicId")
 
   def generateNameForNewFile(topicFilesDir: File): String = {
     topicFilesDir.mkdirs()
-    val res = topicFilesDir.listFiles().view.map(_.getName).filter(_.forall(_.isDigit)).map(_.toLong).max + 1
+    val existingFileNames = topicFilesDir.listFiles().view.map(_.getName).filter(_.forall(_.isDigit)).map(_.toLong)
+    val res = if (existingFileNames.isEmpty) 0 else existingFileNames.max + 1
     res.toString
   }
 }

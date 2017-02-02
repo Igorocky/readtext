@@ -33,6 +33,7 @@ object TopicCmp {
             props.topic,
             props.globalScope.pageParams.updateTopicUrl
           ),
+          topic = Some(props.topic),
           cancelled = $.modState(_.copy(editMode = false)),
           submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.globalScope.topicUpdated(topic),
           textFieldLabel = "",

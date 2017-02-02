@@ -12,6 +12,7 @@ import upickle.default._
 object TopicForm {
   protected case class Props(globalScope: GlobalScope,
                              formData: FormData,
+                             topic: Option[Topic] = None,
                              cancelled: Callback,
                              submitComplete: Topic => Callback,
                              textFieldLabel: String,
@@ -23,6 +24,7 @@ object TopicForm {
 
   def apply(globalScope: GlobalScope,
             formData: FormData,
+            topic: Option[Topic] = None,
             cancelled: Callback,
             submitComplete: Topic => Callback,
             textFieldLabel: String,
@@ -31,6 +33,7 @@ object TopicForm {
     comp(Props(
       globalScope,
       formData,
+      topic,
       cancelled,
       submitComplete,
       textFieldLabel,
@@ -60,7 +63,7 @@ object TopicForm {
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         props.textFieldLabel,
         FormTextField(SharedConstants.TITLE),
-        if (props.editMode) FileUploader(props.globalScope) else EmptyTag,
+        if (props.editMode) FileUploader(props.globalScope, props.topic.get) else EmptyTag,
         SubmitButton(props.submitButtonName),
         Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
         if (state.waitPaneOpened) WaitPane() else EmptyTag
