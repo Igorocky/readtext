@@ -19,8 +19,7 @@ object TopicForm {
                              submitButtonName: String,
                              editMode: Boolean = false)
 
-  protected case class State(formData: FormData,
-                             waitPaneOpened: Boolean)
+  protected case class State(formData: FormData)
 
   def apply(globalScope: GlobalScope,
             formData: FormData,
@@ -42,10 +41,8 @@ object TopicForm {
     ))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
-    .initialState_P(p => State(formData = p.formData, waitPaneOpened = false))
+    .initialState_P(p => State(formData = p.formData))
     .renderPS{($,props,state)=>
-      val openWaitPane = $.modState(_.copy(waitPaneOpened = true))
-      val closeWaitPane = $.modState(_.copy(waitPaneOpened = false))
       implicit val lang = props.globalScope.language
       implicit val fParams = FormCommonParams(
         id = "topic-form",
@@ -54,9 +51,10 @@ object TopicForm {
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
         language = lang,
-        beforeSubmit = openWaitPane,
-        onSubmitSuccess = str => closeWaitPane >> props.submitComplete(read[Topic](str)),
-        onSubmitFormCheckFailure = closeWaitPane,
+        beforeSubmit = props.globalScope.openWaitPane,
+        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(read[Topic](str)),
+        onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
+        onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
         editMode = false
       )
       <.div(
@@ -65,8 +63,7 @@ object TopicForm {
         FormTextField(SharedConstants.TITLE),
         if (props.editMode) FileUploader(props.globalScope, props.topic.get) else EmptyTag,
         SubmitButton(props.submitButtonName),
-        Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
-        if (state.waitPaneOpened) WaitPane() else EmptyTag
+        Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
       )
     }.componentWillReceiveProps{$=>
       if ($.nextProps.globalScope.language != $.currentState.formData.language) {

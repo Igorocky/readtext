@@ -6,6 +6,9 @@ import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
 case class GlobalScope(pageParams: ListTopicsPageParams,
+                       openOkDialog: String => Callback,
+                       openWaitPane: Callback,
+                       closeWaitPane: Callback,
                        paragraphCreated: Paragraph => Callback,
                        checkParagraphAction: (Paragraph, NewValueChecked) => Callback,
                        expandParagraphAction: (Paragraph, NewValueExpanded) => Callback,

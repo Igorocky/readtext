@@ -5,7 +5,7 @@ import shared.messages.Language
 
 case class ListTopicsState(globalScope: GlobalScope = null,
                            waitPane: Boolean = false,
-                           errorDesc: Option[String] = None) {
+                           infoToShow: Option[String] = None) {
 
   def paragraphs = globalScope.pageParams.paragraphs
 

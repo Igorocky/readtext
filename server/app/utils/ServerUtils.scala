@@ -5,7 +5,7 @@ import play.api.i18n.Lang
 import play.api.mvc.BodyParsers.parse
 import play.api.mvc._
 import shared.forms.PostData.readPostData
-import shared.forms.{FormData, InputTransformation}
+import shared.forms.{FormData, FormSubmit, InputTransformation}
 import shared.messages.Language
 import shared.messages.Languages.{EN, RU}
 import shared.pageparams.HeaderParams
@@ -59,5 +59,5 @@ object ServerUtils {
   )
 
   def readFormDataFromPostRequest(request: Request[AnyContent]): FormData =
-    read[FormData](readPostData(request.body.asText.get).content)
+    readPostData(request.body.asText.get).asInstanceOf[FormSubmit].formData
 }

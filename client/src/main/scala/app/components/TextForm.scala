@@ -43,6 +43,7 @@ object TextForm {
         beforeSubmit = $.modState(_.copy(waitPaneOpened = true)),
         onSubmitSuccess = str => props.submitComplete(read[TextUI](str)),
         onSubmitFormCheckFailure = $.modState(_.copy(waitPaneOpened = false)),
+        onAjaxError = th => $.modState(_.copy(waitPaneOpened = false)),
         editMode = props.editMode
       )
       <.div(

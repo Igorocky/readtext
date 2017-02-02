@@ -1,12 +1,12 @@
 package app.components.forms
 
+import app.Utils
 import japgolly.scalajs.react._
-import org.scalajs.dom.ext.Ajax
-import shared.forms.PostDataTypes.DATA_RESPONSE
-import shared.forms.{FormData, InputTransformation, PostData}
+import shared.forms.{PostData, _}
 import shared.messages.Language
-import upickle.default._
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.{Failure, Success}
 
 case class FormCommonParams(
                              id: String,
@@ -18,6 +18,7 @@ case class FormCommonParams(
                              beforeSubmit: Callback,
                              onSubmitSuccess: String => Callback,
                              onSubmitFormCheckFailure: Callback,
+                             onAjaxError: Throwable => Callback,
                              editMode: Boolean = false
                            ) {
 
@@ -28,18 +29,10 @@ case class FormCommonParams(
       Callback.empty
     } else {
       beforeSubmit >> Callback.future {
-        Ajax.post(
-          url = submitUrl,
-          data = PostData.forSubmit(fd)
-        ).map { resp =>
-          val postData = PostData.readPostData(resp.responseText)
-          if (postData.typ == DATA_RESPONSE) {
-            onSubmitSuccess(postData.content)
-          } else {
-            onChange(
-              read[FormData](postData.content)
-            ) >> onSubmitFormCheckFailure
-          }
+        Utils.post(url = submitUrl, data = PostData.formSubmit(fd)).map {
+          case Success(DataResponse(str)) => onSubmitSuccess(str)
+          case Success(FormWithErrors(formData)) => onChange(formData) >> onSubmitFormCheckFailure
+          case Failure(throwable) => onAjaxError(throwable)
         }
       }
     }

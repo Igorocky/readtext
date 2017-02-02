@@ -19,7 +19,7 @@ object ParagraphForm {
                              submitButtonName: String,
                              editMode: Boolean = false)
 
-  protected case class State(formData: FormData, waitPaneOpened: Boolean)
+  protected case class State(formData: FormData)
 
   def apply(globalScope: GlobalScope,
             formData: FormData,
@@ -39,10 +39,8 @@ object ParagraphForm {
     ))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
-    .initialState_P(props => State(formData = props.formData, waitPaneOpened = false))
+    .initialState_P(props => State(formData = props.formData))
     .renderPS{($,props,state)=>
-      val openWaitPane = $.modState(_.copy(waitPaneOpened = true))
-      val closeWaitPane = $.modState(_.copy(waitPaneOpened = false))
       implicit val lang = props.globalScope.language
       implicit val fParams = FormCommonParams(
         id = "paragraph-form",
@@ -51,9 +49,10 @@ object ParagraphForm {
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
         language = lang,
-        beforeSubmit = openWaitPane,
-        onSubmitSuccess = str => closeWaitPane >> props.submitComplete(read[Paragraph](str)),
-        onSubmitFormCheckFailure = closeWaitPane,
+        beforeSubmit = props.globalScope.openWaitPane,
+        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(read[Paragraph](str)),
+        onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
+        onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
         editMode = props.editMode
       )
       <.div(
@@ -61,8 +60,7 @@ object ParagraphForm {
         props.textFieldLabel,
         FormTextField(SharedConstants.TITLE),
         SubmitButton(props.submitButtonName),
-        Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
-        if (state.waitPaneOpened) WaitPane() else EmptyTag
+        Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
       )
     }.componentWillReceiveProps{$=>
       if ($.nextProps.globalScope.language != $.currentState.formData.language) {
