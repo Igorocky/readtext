@@ -10,7 +10,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import shared.SharedConstants
 import shared.dto.{Paragraph, Topic}
-import shared.forms.Forms
+import shared.forms.{Forms, PostData}
 import shared.forms.PostData.{dataResponse, formWithErrors}
 import shared.pageparams.ListTopicsPageParams
 import slick.driver.JdbcProfile
@@ -53,39 +53,8 @@ class TopicController @Inject()(
           renameParagraphUrl = routes.TopicController.renameParagraph.url,
           createTopicUrl = routes.TopicController.createTopic.url,
           updateTopicUrl = routes.TopicController.updateTopic.url,
+          uploadTopicFileUrl = routes.TopicController.uploadTopicFile.url,
           paragraphs = ps
-//          paragraphs = List(
-//            Paragraph(
-//              id = Some(1),
-//              checked = false,
-//              name = "1.3 Functions",
-//              expanded = false,
-//              order = 0,
-//              topics = List(
-//                Topic(id = Some(1), checked = false, title = "associativity of composition", order = 0, images = Nil)
-//                ,Topic(id = Some(2), checked = false, title = "lemma g o f = ex", order = 1, images = Nil)
-//                ,Topic(id = Some(3), checked = false, title = "prop. g o f = ex && f o g = ey", order = 2, images = Nil)
-//                ,Topic(id = Some(4), checked = false, title = "equivalence relation", order = 3, images = Nil)
-//                ,Topic(id = Some(5), checked = false, title = "partial ordering", order = 4, images = Nil)
-//                ,Topic(id = Some(6), checked = false, title = "functional relation", order = 5, images = Nil)
-//                ,Topic(id = Some(7), checked = false, title = "graph of function", order = 6, images = Nil)
-//              )
-//            ),
-//            Paragraph(
-//              id = Some(2),
-//              checked = false,
-//              name = "1.4.1 The Cardinality of a Set",
-//              expanded = false,
-//              order = 1,
-//              topics = List(
-//                Topic(id = Some(8), checked = false, title = "cardX <= cardY", order = 0, images = Nil)
-//                ,Topic(id = Some(9), checked = false, title = "finite/infinite sets", order = 1, images = Nil)
-//                ,Topic(id = Some(10), checked = false, title = "linear ordering of cardinal numbers", order = 2, images = Nil)
-//                ,Topic(id = Some(11), checked = false, title = "cardX < cardP(X)", order = 3, images = Nil)
-//              )
-//            )
-//
-//          )
         ))
       )
     )
@@ -113,7 +82,7 @@ class TopicController @Inject()(
   }
 
   def createParagraph = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations, getSession(request).language) match {
+    readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations) match {
       case Right(values) =>
         val paragraph = Paragraph(
           name = values(SharedConstants.TITLE).asInstanceOf[String]
@@ -127,7 +96,7 @@ class TopicController @Inject()(
   }
 
   def renameParagraph = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations, getSession(request).language) match {
+    readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations) match {
       case Right(values) =>
         val paragraph = Paragraph(
           id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
@@ -141,7 +110,7 @@ class TopicController @Inject()(
   }
 
   def createTopic = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.topicForm.transformations, getSession(request).language) match {
+    readFormDataFromPostRequest(request).values(Forms.topicForm.transformations) match {
       case Right(values) =>
         val topic = Topic(
           paragraphId = values(SharedConstants.PARAGRAPH_ID).asInstanceOf[Option[Long]],
@@ -156,7 +125,7 @@ class TopicController @Inject()(
   }
 
   def updateTopic = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.topicForm.transformations, getSession(request).language) match {
+    readFormDataFromPostRequest(request).values(Forms.topicForm.transformations) match {
       case Right(values) =>
         val topic = Topic(
           id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
@@ -170,17 +139,27 @@ class TopicController @Inject()(
     }
   }
 
-  def uploadFile(fileName: String) = Action(parse.multipartFormData) { request =>
+  def uploadTopicFile = Action(parse.multipartFormData) { request =>
     println(">in upload")
-    request.body.files.foreach(f => println(s"file from sequence, key = ${f.key}, filename = ${f.filename}"))
-    request.body.file("fileQQWWEE").map { picture =>
-      import java.io.File
-      val filename = picture.filename
-      val contentType = picture.contentType
-      picture.ref.moveTo(new File(s"D:\\temp\\uploaded\\$filename"))
-      Ok("File uploaded")
+    println(s"request.body.dataParts = ${request.body.dataParts}")
+//    request.body.files.foreach(f => println(s"file from sequence, key = ${f.key}, filename = ${f.filename}"))
+    request.body.file("file").map { picture =>
+//      import java.io.File
+//      val filename = picture.filename
+//      val contentType = picture.contentType
+//      picture.ref.moveTo(new File(s"D:\\temp\\uploaded\\$filename"))
+      Ok(PostData.dataResponse("File uploaded."))
     }.getOrElse {
-      Ok("File was not uploaded")
+      Ok(PostData.errorResponse("Could not upload file."))
     }
+  }
+
+  def getTopicFilesDir(topic: Topic, imgStorageDir: File): File =
+    new File(imgStorageDir, s"${topic.paragraphId.get}/${topic.id.get}")
+
+  def generateNameForNewFile(topicFilesDir: File): String = {
+    topicFilesDir.mkdirs()
+    val res = topicFilesDir.listFiles().view.map(_.getName).filter(_.forall(_.isDigit)).map(_.toLong).max + 1
+    res.toString
   }
 }

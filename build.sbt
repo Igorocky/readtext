@@ -4,6 +4,7 @@ import sbt.Project.projectToRef
 
 lazy val clients = Seq(client)
 lazy val scalaV = "2.11.8"
+val upickleVersion = "0.4.3"
 
 lazy val server = (project in file("server")).settings(
   name := """readtext""",
@@ -21,7 +22,7 @@ lazy val server = (project in file("server")).settings(
     ,ws
     ,"com.typesafe.play" %% "play-slick" % "2.0.1"
     ,"com.typesafe.play" %% "play-slick-evolutions" % "2.0.1"
-    ,"com.lihaoyi" %% "upickle" % "0.4.1"
+    ,"com.lihaoyi" %% "upickle" % upickleVersion
     ,"com.github.japgolly.scalacss" %% "core" % "0.4.1"
     ,"com.h2database" % "h2" % "1.4.192"
 
@@ -47,7 +48,7 @@ lazy val client = (project in file("client")).settings(
   libraryDependencies ++= Seq(
 //    "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3",
     "com.github.japgolly.scalajs-react" %%% "core" % "0.11.1",
-    "com.lihaoyi" %%% "upickle" % "0.4.3"
+    "com.lihaoyi" %%% "upickle" % upickleVersion
   ),
   jsDependencies ++= Seq(
     "org.webjars.bower" % "react" % "15.3.2"
@@ -74,7 +75,7 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
   settings(
     scalaVersion := scalaV,
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.4.1"
+      "com.lihaoyi" %%% "upickle" % upickleVersion
     )
   ).jsConfigure(_ enablePlugins ScalaJSPlay)
 
@@ -82,3 +83,5 @@ lazy val sharedJvm = shared.jvm
 lazy val sharedJs = shared.js
 
 onLoad in Global := (Command.process("project server", _: State)) compose (onLoad in Global).value
+
+resolvers += Resolver.sonatypeRepo("releases")

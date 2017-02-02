@@ -1,11 +1,9 @@
 package app.components.listtopics
 
 import app.components._
-import app.components.listtopics.ParagraphCmp.NewValueChecked
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import org.scalajs.dom.ext.Ajax
-import shared.dto.{Paragraph, Topic}
 import shared.forms.PostData
 import shared.forms.PostDataTypes.DATA_RESPONSE
 import shared.pageparams.ListTopicsPageParams
@@ -21,44 +19,49 @@ object ListTopicsPage {
   def apply(str: String) = comp(read[Props](str))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
-    .initialState_P(p => ListTopicsState(p.headerParams.language, p.doActionUrl, p.paragraphs))
+    .initialState_P(_ => ListTopicsState())
     .renderBackend[Backend]
+    .componentWillMount($ => $.modState(_.setGlobalScope(GlobalScope(
+      pageParams = $.props,
+      paragraphCreated = p => $.modState(_.addParagraph(p)),
+      checkParagraphAction = (par, newChecked) => $.backend.doAction(
+        action = "check paragraph " + par.id + " to " + newChecked,
+        doActionUrl = $.props.doActionUrl,
+        onSuccess = _ => $.modState(_.checkParagraph(par, newChecked))
+      ),
+      expandParagraphAction = (par, newChecked) => $.backend.doAction(
+        action = "expand paragraph " + par.id + " to " + newChecked,
+        doActionUrl = $.props.doActionUrl,
+        onSuccess = _ => $.modState(_.expandParagraph(par, newChecked))
+      ),
+      checkTopicAction = (topic, newChecked) => $.backend.doAction(
+        action = "check topic " + topic.id + " to " + newChecked,
+        doActionUrl = $.props.doActionUrl,
+        onSuccess = _ => $.modState(_.checkTopic(topic, newChecked))
+      ),
+      paragraphRenamed = par => $.modState(_.renameParagraph(par.id.get, par.name)),
+      topicCreated = topic => $.modState(_.addTopic(topic)),
+      topicUpdated = topic => $.modState(_.updateTopic(topic))
+    ))))
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
     def render(props: Props, state: State) = UnivPage(
-      language = state.lang,
+      language = state.globalScope.pageParams.headerParams.language,
       changeLangUrl = props.headerParams.changeLanguageUrl,
-      onLanguageChange = newLang => $.modState(_.copy(lang = newLang)),
+      onLanguageChange = newLang => $.modState(_.setLanguage(newLang)),
       content =
         <.div(
           header(state, props),
           state.paragraphs.map{paragraph =>
-            ParagraphCmp(
-              language = props.headerParams.language,
-              paragraph = paragraph,
-              renameParagraphUrl = props.renameParagraphUrl,
-              checkParagraphAction = checkParagraphAction(paragraph, props),
-              expandParagraphAction = expandParagraphAction(paragraph, props),
-              checkTopicAction = checkTopicAction(paragraph, props),
-              paragraphRenamed = par => $.modState(_.renameParagraph(par.id.get, par.name)),
-              createTopicUrl = props.createTopicUrl,
-              topicCreated = topic => $.modState(_.addTopic(topic)),
-              updateTopicUrl = props.updateTopicUrl,
-              topicUpdated = topic => $.modState(_.updateTopic(topic))
-            )
+            ParagraphCmp(paragraph, state.globalScope)
           },
           waitPaneIfNecessary(state),
           errorDialogIfNecessary(state)
         )
     )
 
-    def header(state: State, props: Props) =
-      HeaderCmp(
-        language = props.headerParams.language,
-        createParagraphUrl = props.createParagraphUrl,
-        paragraphCreated = p => $.modState(_.addParagraph(p))
-      )
+    def header(state: State, props: Props) = HeaderCmp(state.globalScope)
 
     def waitPaneIfNecessary(state: State): TagMod =
       if (state.waitPane) {
@@ -78,25 +81,6 @@ object ListTopicsPage {
         EmptyTag
       }
 
-    def checkParagraphAction(paragraph: Paragraph, props: Props) = (newChecked: Boolean) => doAction(
-        action = "check paragraph " + paragraph.id + " to " + newChecked,
-        doActionUrl = props.doActionUrl,
-        onSuccess = _ => $.modState(_.checkParagraph(paragraph, newChecked))
-      )
-
-    def checkTopicAction(paragraph: Paragraph, props: Props): (Topic, NewValueChecked) => Callback =
-      (topic: Topic, newChecked: Boolean) => doAction(
-        action = "check topic " + topic.id + " to " + newChecked,
-        doActionUrl = props.doActionUrl,
-        onSuccess = _ => $.modState(_.checkTopic(paragraph, topic, newChecked))
-      )
-
-    def expandParagraphAction(paragraph: Paragraph, props: Props) = (newChecked: Boolean) => doAction(
-      action = "expand paragraph " + paragraph.id + " to " + newChecked,
-      doActionUrl = props.doActionUrl,
-      onSuccess = _ => $.modState(_.expandParagraph(paragraph, newChecked))
-    )
-
     def openWaitPane: Callback = $.modState(_.copy(waitPane = true))
     def closeWaitPane: Callback = $.modState(_.copy(waitPane = false))
     def openErrorDialog(errDesc: String): Callback = openWaitPane >> $.modState(_.copy(errorDesc = Some(errDesc)))
@@ -112,7 +96,7 @@ object ListTopicsPage {
             println("ERROR - " + resp.content)
             openErrorDialog(resp.content)
           }
-        }.recover {
+        }.recover{
           case throwable =>
             println("ERROR - " + throwable.getMessage)
             openErrorDialog(throwable.getMessage)

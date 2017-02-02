@@ -85,7 +85,7 @@ object ListTextsPage {
           width = "400px",
           content = TextForm(
             language = state.lang,
-            formData = Forms.textForm.formData.copy(submitUrl = props.mergeTextUrl),
+            formData = Forms.textForm.formData(submitUrl = props.mergeTextUrl, language = state.lang),
             submitButtonName = "Create",
             cancelled = $.modState(_.copy(addTextDialogOpened = false)),
             submitComplete = text => $.modState(_.copy(texts = text :: state.texts, addTextDialogOpened = false))
@@ -103,7 +103,11 @@ object ListTextsPage {
           width = "400px",
           content = TextForm(
             language = state.lang,
-            formData = Forms.textForm.formData(textToEdit).copy(submitUrl = props.mergeTextUrl),
+            formData = Forms.textForm.formData(
+              obj = textToEdit,
+              submitUrl = props.mergeTextUrl,
+              language = state.lang
+            ),
             submitButtonName = "Update",
             cancelled = $.modState(_.copy(editText = None)),
             submitComplete = updatedText => $.modState(_.copy(

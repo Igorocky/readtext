@@ -1,26 +1,17 @@
 package app.components.listtopics
 
 import app.components.Button
+import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
-import shared.dto.Paragraph
 import shared.forms.Forms
-import shared.messages.Language
 
 object HeaderCmp {
 
-  protected case class Props(
-                              language: Language,
-                              createParagraphUrl: String,
-                              paragraphCreated: Paragraph => Callback
-                            )
+  protected case class Props(globalScope: GlobalScope)
 
-  protected case class State(
-                              newParagraphFormOpened: Boolean = false
-                            )
+  protected case class State(newParagraphFormOpened: Boolean = false)
 
-  def apply(language: Language, createParagraphUrl: String, paragraphCreated: Paragraph => Callback) =
-    comp(Props(language, createParagraphUrl, paragraphCreated))
+  def apply(globalScope: GlobalScope) = comp(Props(globalScope))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState(State())
@@ -36,12 +27,15 @@ object HeaderCmp {
         if (s.newParagraphFormOpened)
           <.div(
             ParagraphForm(
-              language = p.language,
-              formData = Forms.paragraphForm.formData.copy(submitUrl = p.createParagraphUrl),
+              formData = Forms.paragraphForm.formData(
+                language = p.globalScope.pageParams.headerParams.language,
+                submitUrl = p.globalScope.pageParams.createParagraphUrl
+              ),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
-              submitComplete = par => $.modState(_.copy(newParagraphFormOpened = false)) >> p.paragraphCreated(par),
-              textFieldTitle = "New paragraph:",
-              submitButtonName = "Create"
+              submitComplete = par => $.modState(_.copy(newParagraphFormOpened = false)) >> p.globalScope.paragraphCreated(par),
+              textFieldLabel = "New paragraph:",
+              submitButtonName = "Create",
+              globalScope = p.globalScope
             )
           )
         else

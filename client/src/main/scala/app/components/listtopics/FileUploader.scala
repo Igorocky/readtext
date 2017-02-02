@@ -1,25 +1,17 @@
 package app.components.listtopics
 
-import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
-import app.components.{Button, WaitPane}
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB, ReactEventAliases}
-import shared.SharedConstants
-import shared.dto.Topic
-import shared.forms.Forms
-import shared.messages.Language
-import upickle.default._
-import japgolly.scalajs.react._
+import japgolly.scalajs.react.{Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.Ajax
 import org.scalajs.dom.raw.FormData
 
 object FileUploader {
-  protected case class Props()
+  protected case class Props(globalScope: GlobalScope)
 
   protected case class State()
 
-  def apply() =
-    comp(Props())
+  def apply(globalScope: GlobalScope) =
+    comp(Props(globalScope))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(p => State())
@@ -30,8 +22,8 @@ object FileUploader {
           ^.onChange ==> {(e: ReactEventI) =>
             println("e === " + e.target.value)
             val fd = new FormData()
-            fd.append("fileQQWWEE", e.target.files(0))
-            Ajax.post(url = "/uploadFile/DFGH", data = fd)
+            fd.append("file", e.target.files(0))
+            Ajax.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd)
             Callback.empty
           }
         )

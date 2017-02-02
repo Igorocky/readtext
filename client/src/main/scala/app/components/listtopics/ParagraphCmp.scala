@@ -4,45 +4,16 @@ import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
 import shared.dto.{Paragraph, Topic}
-import shared.forms.{FormData, Forms}
-import shared.messages.Language
+import shared.forms.Forms
 
 object ParagraphCmp {
-  type NewValueChecked = Boolean
-  type NewValueExpanded = Boolean
+  protected case class Props(paragraph: Paragraph,
+                             globalScope: GlobalScope)
 
-  protected case class Props(
-                              language: Language,
-                              paragraph: Paragraph,
-                              renameParagraphUrl: String,
-                              checkParagraphAction: NewValueChecked => Callback,
-                              expandParagraphAction: NewValueExpanded => Callback,
-                              checkTopicAction: (Topic, NewValueChecked) => Callback,
-                              paragraphRenamed: Paragraph => Callback,
-                              createTopicUrl: String,
-                              topicCreated: Topic => Callback,
-                              updateTopicUrl: String,
-                              topicUpdated: Topic => Callback
-                            )
+  protected case class State(editMode: Boolean = false,
+                             createTopicDiagOpened: Boolean = false)
 
-  protected case class State(
-                              editMode: Boolean = false,
-                              createTopicDiagOpened: Boolean = false
-                            )
-
-  def apply(language: Language, paragraph: Paragraph, renameParagraphUrl: String,
-            checkParagraphAction: NewValueChecked => Callback,
-            expandParagraphAction: NewValueExpanded => Callback,
-            checkTopicAction: (Topic, NewValueChecked) => Callback,
-            paragraphRenamed: Paragraph => Callback,
-            createTopicUrl: String,
-            topicCreated: Topic => Callback,
-            updateTopicUrl: String,
-            topicUpdated: Topic => Callback) =
-    comp(Props(language, paragraph, renameParagraphUrl,
-      checkParagraphAction, expandParagraphAction, checkTopicAction, paragraphRenamed,
-      createTopicUrl, topicCreated,
-      updateTopicUrl, topicUpdated))
+  def apply(paragraph: Paragraph, globalScope: GlobalScope) = comp.withKey(paragraph.id.get)(Props(paragraph, globalScope))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState(State())
@@ -61,11 +32,14 @@ object ParagraphCmp {
             )
           } else {
             ParagraphForm(
-              language = props.language,
-              formData = Forms.paragraphForm.formData(props.paragraph).copy(submitUrl = props.renameParagraphUrl),
+              globalScope = props.globalScope,
+              formData = Forms.paragraphForm.formData(
+                props.globalScope.pageParams.headerParams.language, props.paragraph,
+                props.globalScope.pageParams.renameParagraphUrl
+              ),
               cancelled = $.modState(_.copy(editMode = false)),
-              submitComplete = par => $.modState(_.copy(editMode = false)) >> props.paragraphRenamed(par),
-              textFieldTitle = "",
+              submitComplete = par => $.modState(_.copy(editMode = false)) >> props.globalScope.paragraphRenamed(par),
+              textFieldLabel = "",
               submitButtonName = "Save"
             )
           },
@@ -90,7 +64,7 @@ object ParagraphCmp {
   def checkboxForParagraph(paragraph: Paragraph, props: Props) =
     Checkbox(
       id = "selectPar-" + paragraph.id.get,
-      onChange = props.checkParagraphAction,
+      onChange = props.globalScope.checkParagraphAction(paragraph, _),
       checked = paragraph.checked
     )
 
@@ -98,27 +72,28 @@ object ParagraphCmp {
     Button(
       id = "expandPar-" + paragraph.id.get,
       name = if (paragraph.expanded) "-" else "+",
-      onClick = props.expandParagraphAction(!paragraph.expanded)
+      onClick = props.globalScope.expandParagraphAction(paragraph, !paragraph.expanded)
     )
 
   def listTopics(p: Paragraph, props: Props) =
     p.topics.map{topic=>
       TopicCmp(
-        language = props.language,
-        topic = topic,
-        checkTopicAction = props.checkTopicAction(topic, _),
-        updateTopicUrl = props.updateTopicUrl,
-        topicUpdated = props.topicUpdated
+        globalScope = props.globalScope,
+        topic = topic
       )
     }
 
   def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
     TopicForm(
-      language = props.language,
-      formData = Forms.topicForm.formData(Topic(paragraphId = p.id)).copy(submitUrl = props.createTopicUrl),
+      formData = Forms.topicForm.formData(
+        props.globalScope.pageParams.headerParams.language,
+        Topic(paragraphId = p.id),
+        props.globalScope.pageParams.createTopicUrl
+      ),
       cancelled = closeDiag,
-      submitComplete = topic => closeDiag >> props.topicCreated(topic),
-      textFieldTitle = "New topic",
+      submitComplete = topic => closeDiag >> props.globalScope.topicCreated(topic),
+      textFieldLabel = "New topic",
+      globalScope = props.globalScope,
       submitButtonName = "Create"
     )
 

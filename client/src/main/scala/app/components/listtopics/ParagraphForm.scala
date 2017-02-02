@@ -7,37 +7,43 @@ import japgolly.scalajs.react.{Callback, ReactComponentB}
 import shared.SharedConstants
 import shared.dto.Paragraph
 import shared.forms.{FormData, Forms}
-import shared.messages.Language
 import upickle.default._
 
 object ParagraphForm {
-  protected case class Props(
-                              language: Language,
-                              formData: FormData,
-                              cancelled: Callback,
-                              submitComplete: Paragraph => Callback,
-                              textFieldTitle: String,
-                              submitButtonName: String,
-                              editMode: Boolean = false)
 
-  protected case class State(langOfFormData: Language, formData: FormData, waitPaneOpened: Boolean)
+  protected case class Props(globalScope: GlobalScope,
+                             formData: FormData,
+                             cancelled: Callback,
+                             submitComplete: Paragraph => Callback,
+                             textFieldLabel: String,
+                             submitButtonName: String,
+                             editMode: Boolean = false)
 
-  def apply(
-             language: Language,
-             formData: FormData,
-             cancelled: Callback,
-             submitComplete: Paragraph => Callback,
-             textFieldTitle: String,
-             submitButtonName: String,
-             editMode: Boolean = false) =
-    comp(Props(language, formData, cancelled, submitComplete, textFieldTitle, submitButtonName, editMode))
+  protected case class State(formData: FormData, waitPaneOpened: Boolean)
+
+  def apply(globalScope: GlobalScope,
+            formData: FormData,
+            cancelled: Callback,
+            submitComplete: Paragraph => Callback,
+            textFieldLabel: String,
+            submitButtonName: String,
+            editMode: Boolean = false) =
+    comp(Props(
+      globalScope,
+      formData,
+      cancelled,
+      submitComplete,
+      textFieldLabel,
+      submitButtonName,
+      editMode
+    ))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
-    .initialState_P(p => State(langOfFormData = p.language, formData = p.formData, waitPaneOpened = false))
+    .initialState_P(props => State(formData = props.formData, waitPaneOpened = false))
     .renderPS{($,props,state)=>
       val openWaitPane = $.modState(_.copy(waitPaneOpened = true))
       val closeWaitPane = $.modState(_.copy(waitPaneOpened = false))
-      implicit val lang = props.language
+      implicit val lang = props.globalScope.language
       implicit val fParams = FormCommonParams(
         id = "paragraph-form",
         formData = state.formData,
@@ -52,17 +58,18 @@ object ParagraphForm {
       )
       <.div(
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
-        props.textFieldTitle,
+        props.textFieldLabel,
         FormTextField(SharedConstants.TITLE),
         SubmitButton(props.submitButtonName),
         Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
         if (state.waitPaneOpened) WaitPane() else EmptyTag
       )
     }.componentWillReceiveProps{$=>
-      if ($.nextProps.language != $.currentState.langOfFormData) {
+      if ($.nextProps.globalScope.language != $.currentState.formData.language) {
         $.$.modState(_.copy(
-          langOfFormData = $.nextProps.language,
-          formData = $.currentState.formData.validate(Forms.textForm.transformations, $.nextProps.language)
+          formData = $.currentState.formData
+            .copy(language = $.nextProps.globalScope.language)
+            .validate(Forms.textForm.transformations)
         ))
       } else {
         Callback.empty

@@ -5,26 +5,17 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
 import shared.dto.Topic
 import shared.forms.Forms
-import shared.messages.Language
 
 object TopicCmp {
-  type NewValueChecked = Boolean
-  protected case class Props(
-                              language: Language,
-                              topic: Topic,
-                              checkTopicAction: NewValueChecked => Callback,
-                              updateTopicUrl: String,
-                              topicUpdated: Topic => Callback
-                            )
 
-  protected case class State(
-                              editMode: Boolean = false
-                            )
+  protected case class Props(globalScope: GlobalScope,
+                             topic: Topic)
+
+  protected case class State(editMode: Boolean = false)
 
 
-  def apply(language: Language, topic: Topic, checkTopicAction: NewValueChecked => Callback, updateTopicUrl: String,
-            topicUpdated: Topic => Callback) =
-    comp(Props(language, topic, checkTopicAction, updateTopicUrl, topicUpdated))
+  def apply(globalScope: GlobalScope, topic: Topic) =
+    comp.withKey(topic.id.get)(Props(globalScope, topic))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
       .initialState(State())
@@ -37,12 +28,17 @@ object TopicCmp {
         )
       } else {
         TopicForm(
-          language = props.language,
-          formData = Forms.topicForm.formData(props.topic).copy(submitUrl = props.updateTopicUrl),
+          formData = Forms.topicForm.formData(
+            props.globalScope.language,
+            props.topic,
+            props.globalScope.pageParams.updateTopicUrl
+          ),
           cancelled = $.modState(_.copy(editMode = false)),
-          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.topicUpdated(topic),
-          textFieldTitle = "",
-          submitButtonName = "Save"
+          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.globalScope.topicUpdated(topic),
+          textFieldLabel = "",
+          submitButtonName = "Save",
+          editMode = true,
+          globalScope = props.globalScope
         )
       }
 
@@ -51,7 +47,7 @@ object TopicCmp {
   def checkboxForTopic(topic: Topic, props: Props) =
     Checkbox(
       id = "selectTopic-" + topic.id.get,
-      onChange = props.checkTopicAction,
+      onChange = props.globalScope.checkTopicAction(topic, _),
       checked = topic.checked
     )
 

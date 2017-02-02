@@ -66,8 +66,9 @@ object TextForm {
     }.componentWillReceiveProps{$=>
       if ($.nextProps.language != $.currentState.langOfFormData) {
         $.$.modState(_.copy(
-          langOfFormData = $.nextProps.language,
-          formData = $.currentState.formData.validate(Forms.textForm.transformations, $.nextProps.language)
+          formData = $.currentState.formData
+            .copy(language = $.nextProps.language)
+            .validate(Forms.textForm.transformations)
         ))
       } else {
         Callback.empty

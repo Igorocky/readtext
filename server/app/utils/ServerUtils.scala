@@ -45,7 +45,7 @@ object ServerUtils {
           val formData = body.asFormUrlEncoded.get
             .map{case (k,v) => (k,v.head)}
             .foldLeft(initialFormData)((fd,kv) => fd.set(kv._1, kv._2))
-          formData.values(transformations, lang) match {
+          formData.values(transformations) match {
             case Left(formData) => Left(onErrors(formData, lang))
             case Right(values) => Right(values)
           }

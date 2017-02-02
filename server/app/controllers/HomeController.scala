@@ -55,7 +55,7 @@ class HomeController @Inject()(
   }
 
   def mergeText = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.textForm.transformations, getSession(request).language) match {
+    readFormDataFromPostRequest(request).values(Forms.textForm.transformations) match {
       case Right(values) =>
         val text = TextUI(
           id = values(SharedConstants.ID).asInstanceOf[Option[Long]],

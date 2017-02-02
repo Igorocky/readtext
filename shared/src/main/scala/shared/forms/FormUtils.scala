@@ -38,9 +38,9 @@ object InputValidation {
 }
 
 trait FormParts[T] {
-  val formData: FormData
+  def formData(language: Language, submitUrl: String): FormData
   val transformations: Map[String, InputTransformation[String, _]]
-  def formData(obj: T): FormData
+  def formData(language: Language, obj: T, submitUrl: String): FormData
 }
 
 object FormUtils {
@@ -56,9 +56,9 @@ object FormUtils {
       )
     }.unzip
     new FormParts[T] {
-      val formData = FormData(inputElems)
+      def formData(language: Language, submitUrl: String) = FormData(language = language, inputElems, submitUrl = submitUrl)
       val transformations: Map[String, InputTransformation[String, _]] = transforms.map(t => (t._1, t._2)).toMap
-      def formData(obj: T): FormData = transforms.foldLeft(formData)((fd, tpl) => fd.set(tpl._1, tpl._3(obj)))
+      def formData(language: Language, obj: T, submitUrl: String): FormData = (formData(language, submitUrl) /: transforms){(fd, tpl) => fd.set(tpl._1, tpl._3(obj))}
     }
   }
 }

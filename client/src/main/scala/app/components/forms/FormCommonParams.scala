@@ -22,7 +22,7 @@ case class FormCommonParams(
                            ) {
 
   lazy val submit: Callback = onChange(
-    formData.validate(transformations, language)
+    formData.validate(transformations)
   ) >>= { fd =>
     if (fd.hasErrors) {
       Callback.empty

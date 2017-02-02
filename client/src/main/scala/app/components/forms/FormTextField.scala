@@ -23,7 +23,7 @@ object FormTextField {
       name = name
       ,value = formParams.formData.get(name).value
       ,errors = formParams.formData.get(name).errors
-      ,onChange = formParams.onChange compose formParams.formData.createSetter(name, formParams.transformations, language)
+      ,onChange = formParams.onChange compose formParams.formData.createSetter(name, formParams.transformations)
       ,width = width
       ,editMode = formParams.editMode
       ,onEnter = formParams.submit
