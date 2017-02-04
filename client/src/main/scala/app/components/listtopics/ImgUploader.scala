@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
 object ImgUploader {
   protected case class Props(globalScope: GlobalScope,
                              topic: Topic,
-                             onChange: String => Callback)
+                             onChange: List[String] => Callback)
 
   protected case class State(images: List[String])
 
@@ -25,15 +25,16 @@ object ImgUploader {
     comp(Props(
       globalScope = globalScope,
       topic = topic,
-      onChange =
-        formParams.formData.createSetter(name, formParams.transformations) _ andThen formParams.onChange andThen(_.void)
+      onChange = imgs => formParams.onChange(
+        formParams.formData.set(name, imgs.mkString(";"), formParams.transformations)
+      ).void
     ))
 
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(p => State(p.topic.images))
     .renderPS{($,props,state)=>
       def updateImages(newImages: List[String]) =
-        $.modState(_.copy(images = newImages)) >> props.onChange(newImages.mkString(";"))
+        $.modState(_.copy(images = newImages)) >> props.onChange(newImages)
       <.div(
         <.input.file(
           ^.value:="",

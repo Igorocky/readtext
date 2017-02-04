@@ -27,6 +27,14 @@ case class FormData(language: Language, inputElems: List[InputElem], submitUrl: 
       validate(name, newValue, transformations)
     )
 
+  def set(name: String, newValue: String,
+                   transformations: Map[String, InputTransformation[String, _]]): FormData =
+    set(
+      name,
+      newValue,
+      validate(name, newValue, transformations)
+    )
+
   lazy val hasErrors = inputElems.exists(_.errors.nonEmpty)
 
   def values(transformations: Map[String, InputTransformation[String, _]]): Either[FormData, Map[String, _]] = {
