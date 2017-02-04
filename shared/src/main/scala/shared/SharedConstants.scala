@@ -19,6 +19,7 @@ object SharedConstants {
   final val ID = "ID"
   final val PARAGRAPH_ID = "PARAGRAPH_ID"
   final val TOPIC_ID = "TOPIC_ID"
+  final val IMAGES = "IMAGES"
   final val TITLE = "TITLE"
 
   final val CONTENT = "CONTENT"

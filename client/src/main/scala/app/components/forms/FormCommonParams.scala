@@ -3,9 +3,7 @@ package app.components.forms
 import app.Utils
 import japgolly.scalajs.react._
 import shared.forms.{PostData, _}
-import shared.messages.Language
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
 
 case class FormCommonParams(
@@ -14,7 +12,6 @@ case class FormCommonParams(
                              transformations: Map[String, InputTransformation[String, _]],
                              onChange: FormData => CallbackTo[FormData],
                              submitUrl: String,
-                             language: Language,
                              beforeSubmit: Callback,
                              onSubmitSuccess: String => Callback,
                              onSubmitFormCheckFailure: Callback,

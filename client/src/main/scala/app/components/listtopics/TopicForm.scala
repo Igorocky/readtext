@@ -43,14 +43,12 @@ object TopicForm {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(p => State(formData = p.formData))
     .renderPS{($,props,state)=>
-      implicit val lang = props.globalScope.language
       implicit val fParams = FormCommonParams(
         id = "topic-form",
         formData = state.formData,
         transformations = Forms.topicForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
-        language = lang,
         beforeSubmit = props.globalScope.openWaitPane,
         onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(read[Topic](str)),
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
@@ -61,7 +59,11 @@ object TopicForm {
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         props.textFieldLabel,
         FormTextField(SharedConstants.TITLE),
-        if (props.editMode) FileUploader(props.globalScope, props.topic.get) else EmptyTag,
+        if (props.editMode) ImgUploader(
+          props.globalScope,
+          props.topic.get,
+          name = SharedConstants.IMAGES
+        ) else EmptyTag,
         SubmitButton(props.submitButtonName),
         Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
       )

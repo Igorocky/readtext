@@ -39,7 +39,6 @@ object TextForm {
         transformations = Forms.textForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
-        language = lang,
         beforeSubmit = $.modState(_.copy(waitPaneOpened = true)),
         onSubmitSuccess = str => props.submitComplete(read[TextUI](str)),
         onSubmitFormCheckFailure = $.modState(_.copy(waitPaneOpened = false)),

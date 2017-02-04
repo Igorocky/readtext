@@ -18,7 +18,7 @@ object FormTextField {
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
   def apply(name: String, width: Int = 150)
-           (implicit formParams: FormCommonParams, language: Language): ReactElement =
+           (implicit formParams: FormCommonParams): ReactElement =
     comp(Props(
       name = name
       ,value = formParams.formData.get(name).value

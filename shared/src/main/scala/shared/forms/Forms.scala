@@ -31,6 +31,8 @@ object Forms {
     SharedConstants.PARAGRAPH_ID -> opt(onlyDigits >> long) ->
       ((_: Topic).paragraphId.map(_.toString).getOrElse("")),
     SharedConstants.TITLE -> nonEmpty ->
-      ((_: Topic).title)
+      ((_: Topic).title),
+    SharedConstants.IMAGES -> separatedValues(";") ->
+      ((_: Topic).images.mkString(";"))
   )
 }

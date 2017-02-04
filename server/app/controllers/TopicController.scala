@@ -56,7 +56,7 @@ class TopicController @Inject()(
           renameParagraphUrl = routes.TopicController.renameParagraph.url,
           createTopicUrl = routes.TopicController.createTopic.url,
           updateTopicUrl = routes.TopicController.updateTopic.url,
-          uploadTopicFileUrl = routes.TopicController.uploadTopicFile.url,
+          uploadTopicFileUrl = routes.TopicController.uploadTopicImage.url,
           getTopicImgUrl = getTopicImgUrl,
           paragraphs = ps
         ))
@@ -118,7 +118,8 @@ class TopicController @Inject()(
       case Right(values) =>
         val topic = Topic(
           paragraphId = values(SharedConstants.PARAGRAPH_ID).asInstanceOf[Option[Long]],
-          title = values(SharedConstants.TITLE).asInstanceOf[String]
+          title = values(SharedConstants.TITLE).asInstanceOf[String],
+          images = values(SharedConstants.IMAGES).asInstanceOf[List[String]]
         )
         topId += 1
         println(s"action = create topic: $topic")
@@ -134,7 +135,8 @@ class TopicController @Inject()(
         val topic = Topic(
           id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
           paragraphId = values(SharedConstants.PARAGRAPH_ID).asInstanceOf[Option[Long]],
-          title = values(SharedConstants.TITLE).asInstanceOf[String]
+          title = values(SharedConstants.TITLE).asInstanceOf[String],
+          images = values(SharedConstants.IMAGES).asInstanceOf[List[String]]
         )
         println(s"action = update topic: $topic")
         Future.successful(Ok(dataResponse(write(topic))))
@@ -144,7 +146,7 @@ class TopicController @Inject()(
   }
 
   val imgStorageDir = new File(configuration.getString("topicsImgStorageDir").get)
-  def uploadTopicFile = Action(parse.multipartFormData) { request =>
+  def uploadTopicImage = Action(parse.multipartFormData) { request =>
     request.body.file(FILE).map { file =>
       val topicId = request.body.dataParts(TOPIC_ID)(0).toLong
       val topicFilesDir = getTopicFilesDir(topicId, imgStorageDir)

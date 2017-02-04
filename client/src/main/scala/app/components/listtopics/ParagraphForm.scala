@@ -48,7 +48,6 @@ object ParagraphForm {
         transformations = Forms.paragraphForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
-        language = lang,
         beforeSubmit = props.globalScope.openWaitPane,
         onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(read[Paragraph](str)),
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
