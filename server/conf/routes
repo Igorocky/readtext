@@ -23,3 +23,4 @@ POST    /renameParagraph                           controllers.TopicController.r
 POST    /createTopic                           controllers.TopicController.createTopic
 POST    /updateTopic                           controllers.TopicController.updateTopic
 POST    /uploadTopicFile                           controllers.TopicController.uploadTopicFile
+GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)

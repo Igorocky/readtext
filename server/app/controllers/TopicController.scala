@@ -23,11 +23,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class TopicController @Inject()(
                                 val messagesApi: MessagesApi,
-                                protected val dbConfigProvider: DatabaseConfigProvider
+                                protected val dbConfigProvider: DatabaseConfigProvider,
+                                val configuration: play.api.Configuration
                               )(implicit private val environment: Environment,
                                 implicit private val ec: ExecutionContext)
   extends Controller with HasDatabaseConfigProvider[JdbcProfile] with Tables with I18nSupport {
 
+  val getTopicImgUrl = """/\w+""".r.findFirstIn(routes.TopicController.topicImg(1,"").url).get
   def topics = Action { implicit request =>
     val pn = 3
     val tn = 6
@@ -55,6 +57,7 @@ class TopicController @Inject()(
           createTopicUrl = routes.TopicController.createTopic.url,
           updateTopicUrl = routes.TopicController.updateTopic.url,
           uploadTopicFileUrl = routes.TopicController.uploadTopicFile.url,
+          getTopicImgUrl = getTopicImgUrl,
           paragraphs = ps
         ))
       )
@@ -140,15 +143,12 @@ class TopicController @Inject()(
     }
   }
 
-  val imgStorageDir = new File("D:/temp/uploaded")
+  val imgStorageDir = new File(configuration.getString("topicsImgStorageDir").get)
   def uploadTopicFile = Action(parse.multipartFormData) { request =>
-    println(">in upload")
-    println(s"request.body.dataParts = ${request.body.dataParts}")
     request.body.file(FILE).map { file =>
-      val paragraphId = request.body.dataParts(PARAGRAPH_ID)(0).toLong
       val topicId = request.body.dataParts(TOPIC_ID)(0).toLong
-      val topicFilesDir = getTopicFilesDir(paragraphId, topicId, imgStorageDir)
-      val topicFileName = generateNameForNewFile(topicFilesDir)
+      val topicFilesDir = getTopicFilesDir(topicId, imgStorageDir)
+      val topicFileName = generateNameForNewFile(topicFilesDir) + getFileExtension(file.filename)
       file.ref.moveTo(new File(topicFilesDir, topicFileName))
       Ok(PostData.dataResponse(topicFileName))
     }.getOrElse {
@@ -156,13 +156,31 @@ class TopicController @Inject()(
     }
   }
 
-  def getTopicFilesDir(paragraphId: Long, topicId: Long, imgStorageDir: File): File =
-    new File(imgStorageDir, s"$paragraphId/$topicId")
+  def getFileExtension(name: String): String = if (name.contains('.')) '.' + name.split('.').last else ""
+
+  def getFileNameWithoutExtension(name: String): String =
+    if (name.contains('.')) name.substring(0, name.lastIndexOf('.')) else name
+
+  def getTopicFilesDir(topicId: Long, imgStorageDir: File): File =
+    new File(imgStorageDir, s"/$topicId")
 
   def generateNameForNewFile(topicFilesDir: File): String = {
     topicFilesDir.mkdirs()
-    val existingFileNames = topicFilesDir.listFiles().view.map(_.getName).filter(_.forall(_.isDigit)).map(_.toLong)
+    val existingFileNames = topicFilesDir.listFiles().view
+      .map(_.getName)
+      .map(getFileNameWithoutExtension)
+      .filter(_.forall(_.isDigit))
+      .map(_.toLong)
     val res = if (existingFileNames.isEmpty) 0 else existingFileNames.max + 1
     res.toString
+  }
+
+  val fileNamePattern = """^\d+\.\w+$""".r
+  def topicImg(topicId: Long, fileName: String) = Action {
+    println(s"fileName = ${fileName}")
+    fileName match {
+      case fileNamePattern() => Ok.sendFile(new File(imgStorageDir + "/" + topicId + "/" + fileName))
+      case _ => NotFound(s"File $fileName was not found.")
+    }
   }
 }
