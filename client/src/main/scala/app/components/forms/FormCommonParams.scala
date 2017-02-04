@@ -28,13 +28,11 @@ case class FormCommonParams(
     if (fd.hasErrors) {
       Callback.empty
     } else {
-      beforeSubmit >> Callback.future {
-        Utils.post(url = submitUrl, data = PostData.formSubmit(fd)).map {
-          case Success(DataResponse(str)) => onSubmitSuccess(str)
-          case Success(FormWithErrors(formData)) => onChange(formData) >> onSubmitFormCheckFailure
-          case Failure(throwable) => onAjaxError(throwable)
-        }
-      }
+      beforeSubmit >> Utils.post(url = submitUrl, data = PostData.formSubmit(fd)){
+        case Success(DataResponse(str)) => onSubmitSuccess(str)
+        case Success(FormWithErrors(formData)) => onChange(formData) >> onSubmitFormCheckFailure
+        case Failure(throwable) => onAjaxError(throwable)
+      }.void
     }
   }
 }

@@ -16,9 +16,13 @@ object Utils {
     dom.window.location.href = url
   }
 
-  def post(url: String, data: Ajax.InputData): Future[Try[PostData]] =
-    Ajax.post(url = url, data = data).map(r => Success(read[PostData](r.responseText))).recover[Try[PostData]] {
-      case throwable =>
-        Failure(throwable)
+  def post[T](url: String, data: Ajax.InputData)(f: Try[PostData] => CallbackTo[T]): CallbackTo[Future[T]] =
+    CallbackTo.future {
+      Ajax.post(url = url, data = data).map {
+        r => Success(read[PostData](r.responseText))
+      }.recover[Try[PostData]] {
+        case throwable =>
+          Failure(throwable)
+      }.map(f)
     }
 }

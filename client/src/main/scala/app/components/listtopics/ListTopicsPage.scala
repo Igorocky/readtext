@@ -90,16 +90,14 @@ object ListTopicsPage {
     def closeOkDialog: Callback = $.modState(_.copy(infoToShow = None)) >> closeWaitPane
 
     def doAction(action: String, doActionUrl: String, onSuccess: String => Callback): Callback =
-      openWaitPane >> Callback.future{
-        Utils.post(url = doActionUrl, data = action).map{
-          case Success(DataResponse(str)) => onSuccess(str) >> closeWaitPane
-          case Success(ErrorResponse(str)) =>
-            println("ERROR - " + str)
-            openOkDialog(str)
-          case Failure(throwable) =>
-            println("ERROR - " + throwable.getMessage)
-            openOkDialog(throwable.getMessage)
-        }
-      }
+      openWaitPane >> Utils.post(url = doActionUrl, data = action){
+        case Success(DataResponse(str)) => onSuccess(str) >> closeWaitPane
+        case Success(ErrorResponse(str)) =>
+          println("ERROR - " + str)
+          openOkDialog(str)
+        case Failure(throwable) =>
+          println("ERROR - " + throwable.getMessage)
+          openOkDialog(throwable.getMessage)
+      }.void
   }
 }
