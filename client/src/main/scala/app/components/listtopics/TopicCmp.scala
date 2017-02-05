@@ -70,10 +70,12 @@ object TopicCmp {
     Button(
       id = "delete-topic-btn-" + topic.id.get,
       name = "Delete topic",
-      onClick = props.globalScope.openWaitPane >>
-      Utils.post(url = props.globalScope.pageParams.deleteTopicUrl, data = topic.id.get.toString) {
-        case Success(_) => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
-        case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
-      }.void
+      onClick = props.globalScope.openOkCancelDialog1(
+        s"Delete topic '${topic.title}'?",
+        Utils.post(url = props.globalScope.pageParams.deleteTopicUrl, data = topic.id.get.toString) {
+          case Success(_) => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
+          case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
+        }.void
+      )
     )
 }

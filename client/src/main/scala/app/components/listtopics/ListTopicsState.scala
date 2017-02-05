@@ -1,11 +1,15 @@
 package app.components.listtopics
 
+import japgolly.scalajs.react.Callback
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.messages.Language
 
 case class ListTopicsState(globalScope: GlobalScope = null,
                            waitPane: Boolean = false,
-                           infoToShow: Option[String] = None) {
+                           okDiagText: Option[String] = None,
+                           okCancelDiagText: Option[String] = None,
+                           onOk: Callback = Callback.empty,
+                           onCancel: Callback = Callback.empty) {
 
   def paragraphs = globalScope.pageParams.paragraphs
 

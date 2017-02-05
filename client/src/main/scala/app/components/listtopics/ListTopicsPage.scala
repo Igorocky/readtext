@@ -24,6 +24,8 @@ object ListTopicsPage {
     .componentWillMount($ => $.modState(_.setGlobalScope(GlobalScope(
       pageParams = $.props,
       openOkDialog = str => $.backend.openOkDialog(str),
+      openOkCancelDialog = (text, onOk, onCancel) => $.backend.openOkCancelDialog(text, onOk, onCancel),
+      openOkCancelDialog1 = (text, onOk) => $.backend.openOkCancelDialog(text, onOk),
       openWaitPane = $.backend.openWaitPane,
       closeWaitPane = $.backend.closeWaitPane,
       checkParagraphAction = (par, newChecked) => $.backend.doAction(
@@ -62,7 +64,8 @@ object ListTopicsPage {
             ParagraphCmp(paragraph, state.globalScope)
           },
           waitPaneIfNecessary(state),
-          okDialogIfNecessary(state)
+          okDialogIfNecessary(state),
+          okCancelDialogIfNecessary(state)
         )
     )
 
@@ -70,16 +73,32 @@ object ListTopicsPage {
 
     def waitPaneIfNecessary(state: State): TagMod =
       if (state.waitPane) {
-        if (state.infoToShow.isDefined) WaitPane() else WaitPane("rgba(255,255,255,0.0)")
+        if (state.okDiagText.isDefined || state.okCancelDiagText.isDefined) WaitPane() else WaitPane("rgba(255,255,255,0.0)")
       } else EmptyTag
 
     def okDialogIfNecessary(state: State): TagMod =
-      if (state.infoToShow.isDefined) {
+      if (state.okDiagText.isDefined) {
         ModalDialog(
           width = "400px",
           content = <.div(
-            <.div(state.infoToShow.get),
+            <.div(state.okDiagText.get),
             <.div(Button(id = "ok-diag-ok-btn", name = "OK", onClick = closeOkDialog))
+          )
+        )
+      } else {
+        EmptyTag
+      }
+
+    def okCancelDialogIfNecessary(state: State): TagMod =
+      if (state.okCancelDiagText.isDefined) {
+        ModalDialog(
+          width = "400px",
+          content = <.div(
+            <.div(state.okCancelDiagText.get),
+            <.div(
+              Button(id = "ok-cancel-diag-ok-btn", name = "OK", onClick = closeOkCancelDialog >> state.onOk),
+              Button(id = "ok-cancel-diag-cancel-btn", name = "Cancel", onClick = closeOkCancelDialog >> state.onCancel)
+            )
           )
         )
       } else {
@@ -88,8 +107,14 @@ object ListTopicsPage {
 
     def openWaitPane: Callback = $.modState(_.copy(waitPane = true))
     def closeWaitPane: Callback = $.modState(_.copy(waitPane = false))
-    def openOkDialog(text: String): Callback = openWaitPane >> $.modState(_.copy(infoToShow = Some(text)))
-    def closeOkDialog: Callback = $.modState(_.copy(infoToShow = None)) >> closeWaitPane
+    def openOkDialog(text: String): Callback = openWaitPane >> $.modState(_.copy(okDiagText = Some(text)))
+    def closeOkDialog: Callback = $.modState(_.copy(okDiagText = None)) >> closeWaitPane
+    def openOkCancelDialog(text: String, onOk: Callback, onCancel: Callback): Callback =
+      openWaitPane >> $.modState(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = onCancel))
+    def openOkCancelDialog(text: String, onOk: Callback): Callback =
+      openWaitPane >> $.modState(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = Callback.empty))
+    def closeOkCancelDialog: Callback =
+      $.modState(_.copy(okCancelDiagText = None, onOk = Callback.empty, onCancel = Callback.empty)) >> closeWaitPane
 
     def doAction(action: String, doActionUrl: String, onSuccess: String => Callback): Callback =
       openWaitPane >> Utils.post(url = doActionUrl, data = action){

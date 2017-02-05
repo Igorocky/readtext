@@ -73,11 +73,13 @@ object ParagraphCmp {
     Button(
       id = "delete-paragraph-btn-" + paragraph.id.get,
       name = "Delete paragraph",
-      onClick = props.globalScope.openWaitPane >>
+      onClick = props.globalScope.openOkCancelDialog1(
+        s"Delete paragraph '${paragraph.name}'?",
         post(props.globalScope.pageParams.deleteParagraphUrl, paragraph.id.get.toString){
           case Success(_) => onDeleted
           case Failure(th) => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
         }.void
+      )
     )
 
   def checkboxForParagraph(paragraph: Paragraph, props: Props) =
