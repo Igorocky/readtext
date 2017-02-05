@@ -33,6 +33,6 @@ object Forms {
     SharedConstants.TITLE -> nonEmpty ->
       ((_: Topic).title),
     SharedConstants.IMAGES -> separatedValues(";") ->
-      ((_: Topic).images.mkString(";"))
+      ((_: Topic).imagesStr)
   )
 }

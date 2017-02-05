@@ -26,11 +26,10 @@ object ListTopicsPage {
       openOkDialog = str => $.backend.openOkDialog(str),
       openWaitPane = $.backend.openWaitPane,
       closeWaitPane = $.backend.closeWaitPane,
-      paragraphCreated = p => $.modState(_.addParagraph(p)),
       checkParagraphAction = (par, newChecked) => $.backend.doAction(
         action = "check paragraph " + par.id + " to " + newChecked,
         doActionUrl = $.props.doActionUrl,
-        onSuccess = _ => $.modState(_.checkParagraph(par, newChecked))
+        onSuccess = _ => $.modState(_.checkParagraph(par.id.get, newChecked))
       ),
       expandParagraphAction = (par, newChecked) => $.backend.doAction(
         action = "expand paragraph " + par.id + " to " + newChecked,
@@ -40,11 +39,14 @@ object ListTopicsPage {
       checkTopicAction = (topic, newChecked) => $.backend.doAction(
         action = "check topic " + topic.id + " to " + newChecked,
         doActionUrl = $.props.doActionUrl,
-        onSuccess = _ => $.modState(_.checkTopic(topic, newChecked))
+        onSuccess = _ => $.modState(_.checkTopic(topic.id.get, newChecked))
       ),
-      paragraphRenamed = par => $.modState(_.renameParagraph(par.id.get, par.name)),
+      paragraphCreated = p => $.modState(_.addParagraph(p)),
+      paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),
+      paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> $.backend.closeWaitPane,
       topicCreated = topic => $.modState(_.addTopic(topic)),
-      topicUpdated = topic => $.modState(_.updateTopic(topic))
+      topicUpdated = topUpd => $.modState(_.updateTopic(topUpd)),
+      topicDeleted = topId => $.modState(_.deleteTopic(topId))
     ))))
     .build
 
@@ -98,6 +100,7 @@ object ListTopicsPage {
         case Failure(throwable) =>
           println("ERROR - " + throwable.getMessage)
           openOkDialog(throwable.getMessage)
+        case _ => ???
       }.void
   }
 }

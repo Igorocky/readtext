@@ -2,7 +2,7 @@ package app.components.listtopics
 
 import app.components.listtopics.GlobalScope.{NewValueChecked, NewValueExpanded}
 import japgolly.scalajs.react.Callback
-import shared.dto.{Paragraph, Topic}
+import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.pageparams.ListTopicsPageParams
 
 case class GlobalScope(pageParams: ListTopicsPageParams,
@@ -10,12 +10,14 @@ case class GlobalScope(pageParams: ListTopicsPageParams,
                        openWaitPane: Callback,
                        closeWaitPane: Callback,
                        paragraphCreated: Paragraph => Callback,
+                       paragraphUpdated: ParagraphUpdate => Callback,
+                       paragraphDeleted: Long => Callback,
+                       topicCreated: Topic => Callback,
+                       topicUpdated: TopicUpdate => Callback,
+                       topicDeleted: Long => Callback,
                        checkParagraphAction: (Paragraph, NewValueChecked) => Callback,
                        expandParagraphAction: (Paragraph, NewValueExpanded) => Callback,
-                       checkTopicAction: (Topic, NewValueChecked) => Callback,
-                       paragraphRenamed: Paragraph => Callback,
-                       topicCreated: Topic => Callback,
-                       topicUpdated: Topic => Callback) {
+                       checkTopicAction: (Topic, NewValueChecked) => Callback) {
 
   def language = pageParams.headerParams.language
 }

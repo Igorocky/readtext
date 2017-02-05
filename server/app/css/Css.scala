@@ -1,4 +1,4 @@
-package controllers
+package css
 
 import shared.SharedConstants._
 
@@ -57,5 +57,26 @@ object Css extends StyleSheet.Standalone {
 
   "." + EDITABLE_DIV_EMPTY - (
     opacity(0)
+    )
+
+  case class Color(r: Int, g: Int, b: Int) {
+    def more(pct: Double) = {
+      val factor = 1 + pct
+      copy(r = (r*factor).toInt,g = (g*factor).toInt,b = (b*factor).toInt)
+    }
+    def less(pct: Double) = {
+      val factor = 1 - pct
+      copy(r = (r*factor).toInt,g = (g*factor).toInt,b = (b*factor).toInt)
+    }
+    def forCss = rgb(r,g,b)
+  }
+  val color = Color(76,201,63)
+  ".HeaderCmp button.new-par" - (
+    backgroundColor(color.forCss),
+    border(none),
+    borderRadius(5 px),
+    &.hover - (
+      backgroundColor(color.more(0.25).forCss)
+      )
     )
 }

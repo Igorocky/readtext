@@ -1,10 +1,15 @@
 package app.components.listtopics
 
+import app.Utils
+import app.Utils.post
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
-import shared.dto.{Paragraph, Topic}
+import shared.dto.{Paragraph, ParagraphUpdate, Topic}
 import shared.forms.Forms
+import upickle.default.read
+
+import scala.util.{Failure, Success}
 
 object ParagraphCmp {
   protected case class Props(paragraph: Paragraph,
@@ -26,6 +31,7 @@ object ParagraphCmp {
               props.paragraph.name,
               editParagraphButton(props.paragraph, $.modState(_.copy(editMode = true))),
               createTopicButton(props.paragraph, $.modState(_.copy(createTopicDiagOpened = true))),
+              deleteParagraphButton(props, props.paragraph, props.globalScope.paragraphDeleted(props.paragraph.id.get)),
               if (state.createTopicDiagOpened) {
                 createNewTopicDiag(props.paragraph, props, $.modState(_.copy(createTopicDiagOpened = false)))
               } else EmptyTag
@@ -35,10 +41,12 @@ object ParagraphCmp {
               globalScope = props.globalScope,
               formData = Forms.paragraphForm.formData(
                 props.globalScope.pageParams.headerParams.language, props.paragraph,
-                props.globalScope.pageParams.renameParagraphUrl
+                props.globalScope.pageParams.updateParagraphUrl
               ),
               cancelled = $.modState(_.copy(editMode = false)),
-              submitComplete = par => $.modState(_.copy(editMode = false)) >> props.globalScope.paragraphRenamed(par),
+              submitComplete = str =>
+                $.modState(_.copy(editMode = false)) >>
+                  props.globalScope.paragraphUpdated(read[ParagraphUpdate](str)),
               textFieldLabel = "",
               submitButtonName = "Save"
             )
@@ -59,6 +67,17 @@ object ParagraphCmp {
       id = "create-topic-btn-" + paragraph.id.get,
       name = "Create topic",
       onClick = onClick
+    )
+
+  def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) =
+    Button(
+      id = "delete-paragraph-btn-" + paragraph.id.get,
+      name = "Delete paragraph",
+      onClick = props.globalScope.openWaitPane >>
+        post(props.globalScope.pageParams.deleteParagraphUrl, paragraph.id.get.toString){
+          case Success(_) => onDeleted
+          case Failure(th) => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
+        }.void
     )
 
   def checkboxForParagraph(paragraph: Paragraph, props: Props) =
@@ -91,7 +110,7 @@ object ParagraphCmp {
         props.globalScope.pageParams.createTopicUrl
       ),
       cancelled = closeDiag,
-      submitComplete = topic => closeDiag >> props.globalScope.topicCreated(topic),
+      submitComplete = str => closeDiag >> props.globalScope.topicCreated(read[Topic](str)),
       textFieldLabel = "New topic",
       globalScope = props.globalScope,
       submitButtonName = "Create"

@@ -24,7 +24,7 @@ class LanguageController @Inject()(
                                 protected val dbConfigProvider: DatabaseConfigProvider
                               )(implicit private val environment: Environment,
                                 implicit private val ec: ExecutionContext)
-  extends Controller with HasDatabaseConfigProvider[JdbcProfile] with Tables with I18nSupport {
+  extends Controller with HasDatabaseConfigProvider[JdbcProfile] with I18nSupport {
 
   def changeLanguage = Action { request =>
     val newLang = Languages.fromString(request.body.asText.get)

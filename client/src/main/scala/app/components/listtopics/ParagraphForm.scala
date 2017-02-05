@@ -14,7 +14,7 @@ object ParagraphForm {
   protected case class Props(globalScope: GlobalScope,
                              formData: FormData,
                              cancelled: Callback,
-                             submitComplete: Paragraph => Callback,
+                             submitComplete: String => Callback,
                              textFieldLabel: String,
                              submitButtonName: String,
                              editMode: Boolean = false)
@@ -24,7 +24,7 @@ object ParagraphForm {
   def apply(globalScope: GlobalScope,
             formData: FormData,
             cancelled: Callback,
-            submitComplete: Paragraph => Callback,
+            submitComplete: String => Callback,
             textFieldLabel: String,
             submitButtonName: String,
             editMode: Boolean = false) =
@@ -49,7 +49,7 @@ object ParagraphForm {
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
         beforeSubmit = props.globalScope.openWaitPane,
-        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(read[Paragraph](str)),
+        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(str),
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
         onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
         editMode = props.editMode

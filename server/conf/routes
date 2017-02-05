@@ -19,8 +19,10 @@ GET    /allTexts                           controllers.HomeController.allTexts
 GET    /topics                           controllers.TopicController.topics
 POST    /doAction                           controllers.TopicController.doAction
 POST    /createParagraph                           controllers.TopicController.createParagraph
-POST    /renameParagraph                           controllers.TopicController.renameParagraph
+POST    /updateParagraph                           controllers.TopicController.updateParagraph
+POST    /deleteParagraph                           controllers.TopicController.deleteParagraph
 POST    /createTopic                           controllers.TopicController.createTopic
 POST    /updateTopic                           controllers.TopicController.updateTopic
+POST    /deleteTopic                           controllers.TopicController.deleteTopic
 POST    /uploadTopicImage                           controllers.TopicController.uploadTopicImage
 GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)

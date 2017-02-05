@@ -47,6 +47,7 @@ object ImgUploader {
                 updateImages(state.images:::fileName::Nil) >> props.globalScope.closeWaitPane
               case Success(ErrorResponse(str)) => props.globalScope.openOkDialog(s"Error uploading file: $str")
               case Failure(throwable) => props.globalScope.openOkDialog("Error: " + throwable.getMessage)
+              case _ => ???
             }.void
           }
           ,^.accept := "image/*"

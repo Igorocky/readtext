@@ -14,7 +14,7 @@ object TopicForm {
                              formData: FormData,
                              topic: Option[Topic] = None,
                              cancelled: Callback,
-                             submitComplete: Topic => Callback,
+                             submitComplete: String => Callback,
                              textFieldLabel: String,
                              submitButtonName: String,
                              editMode: Boolean = false)
@@ -25,7 +25,7 @@ object TopicForm {
             formData: FormData,
             topic: Option[Topic] = None,
             cancelled: Callback,
-            submitComplete: Topic => Callback,
+            submitComplete: String => Callback,
             textFieldLabel: String,
             submitButtonName: String,
             editMode: Boolean = false) =
@@ -50,7 +50,7 @@ object TopicForm {
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         submitUrl = state.formData.submitUrl,
         beforeSubmit = props.globalScope.openWaitPane,
-        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(read[Topic](str)),
+        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(str),
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
         onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
         editMode = false

@@ -29,6 +29,7 @@ case class FormCommonParams(
         case Success(DataResponse(str)) => onSubmitSuccess(str)
         case Success(FormWithErrors(formData)) => onChange(formData) >> onSubmitFormCheckFailure
         case Failure(throwable) => onAjaxError(throwable)
+        case _ => ???
       }.void
     }
   }

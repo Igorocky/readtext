@@ -1,10 +1,14 @@
 package app.components.listtopics
 
+import app.Utils
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
-import shared.dto.Topic
+import shared.dto.{Topic, TopicUpdate}
 import shared.forms.Forms
+import upickle.default._
+
+import scala.util.{Failure, Success}
 
 object TopicCmp {
 
@@ -24,7 +28,8 @@ object TopicCmp {
         <.div(
           checkboxForTopic(props.topic, props),
           props.topic.title,
-          editTopicButton(props.topic, props, $.modState(_.copy(editMode = true)))
+          editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
+          deleteTopicButton(props.topic, props)
         )
       } else {
         TopicForm(
@@ -35,7 +40,9 @@ object TopicCmp {
           ),
           topic = Some(props.topic),
           cancelled = $.modState(_.copy(editMode = false)),
-          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.globalScope.topicUpdated(topic),
+          submitComplete = str =>
+            $.modState(_.copy(editMode = false)) >>
+              props.globalScope.topicUpdated(read[TopicUpdate](str)),
           textFieldLabel = "",
           submitButtonName = "Save",
           editMode = true,
@@ -54,8 +61,19 @@ object TopicCmp {
 
   def editTopicButton(topic: Topic, props: Props, onClick: Callback) =
     Button(
-      id = "edit-tioc-" + topic.id.get,
+      id = "edit-topic-btn-" + topic.id.get,
       name = "Edit",
       onClick = onClick
+    )
+
+  def deleteTopicButton(topic: Topic, props: Props) =
+    Button(
+      id = "delete-topic-btn-" + topic.id.get,
+      name = "Delete topic",
+      onClick = props.globalScope.openWaitPane >>
+      Utils.post(url = props.globalScope.pageParams.deleteTopicUrl, data = topic.id.get.toString) {
+        case Success(_) => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
+        case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
+      }.void
     )
 }

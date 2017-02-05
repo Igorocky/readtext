@@ -2,7 +2,9 @@ package controllers
 
 import javax.inject._
 
+import css.Css
 import db.Tables
+import db.Tables.textTable
 import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -31,7 +33,7 @@ class HomeController @Inject()(
                                 protected val dbConfigProvider: DatabaseConfigProvider
                               )(implicit private val environment: Environment,
                                 implicit private val ec: ExecutionContext)
-  extends Controller with HasDatabaseConfigProvider[JdbcProfile] with Tables with I18nSupport {
+  extends Controller with HasDatabaseConfigProvider[JdbcProfile] with I18nSupport {
 
   /**
    * Create an Action to render an HTML page with a welcome message.

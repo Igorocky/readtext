@@ -1,6 +1,6 @@
 package app.components.listtopics
 
-import shared.dto.{Paragraph, Topic}
+import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.messages.Language
 
 case class ListTopicsState(globalScope: GlobalScope = null,
@@ -21,43 +21,59 @@ case class ListTopicsState(globalScope: GlobalScope = null,
 
   def setGlobalScope(globalScope: GlobalScope): ListTopicsState = copy(globalScope = globalScope)
 
-  def renameParagraph(id: Long, newName: String): ListTopicsState = modParagraphById(id, _.copy(name = newName))
-
   def addParagraph(paragraph: Paragraph): ListTopicsState =
     updateParagraphs(paragraphs:::paragraph::Nil)
+
+  def updateParagraph(parUpd: ParagraphUpdate): ListTopicsState = modParagraphById(parUpd.id, _.copy(name = parUpd.name))
+
+  def deleteParagraph(id: Long): ListTopicsState = {
+    val (rest, List(deletedPar)) = paragraphs.partition(_.id.get != id)
+    updateParagraphs(rest.map(p => if (p.order < deletedPar.order) p else p.copy(order = p.order-1)))
+  }
 
   def addTopic(topic: Topic): ListTopicsState =
     modParagraphById(topic.paragraphId.get, p => p.copy(topics = p.topics:::topic::Nil))
 
-  def updateTopic(topic: Topic): ListTopicsState =
-    modParagraphById(topic.paragraphId.get, p => p.copy(topics = modTopicById(p.topics, topic.id.get, _ => topic)))
+  def updateTopic(topicUpd: TopicUpdate): ListTopicsState =
+    modTopicById(topicUpd.id, _.copy(title = topicUpd.title, images = topicUpd.images))
 
-  def checkParagraph(p: Paragraph, newChecked: Boolean): ListTopicsState =
-    modParagraphById(p.id.get, _.copy(checked = newChecked))
+  def deleteTopic(topId: Long) = {
+    val parWithTop = paragraphByTopicId(topId)
+    val (rest, List(deleted)) = parWithTop.topics.partition(_.id.get != topId)
+    modParagraphById(
+      parWithTop.id.get,
+      _.copy(topics = rest.map(t => if (t.order < deleted.order) t else t.copy(order = t.order-1)))
+    )
+  }
 
-  def checkTopic(t: Topic, newChecked: Boolean): ListTopicsState =
-    modTopicById(t.paragraphId.get, t.id.get, _.copy(checked = newChecked))
+  def checkParagraph(parId: Long, newChecked: Boolean): ListTopicsState =
+    modParagraphById(parId, _.copy(checked = newChecked))
+
+  def checkTopic(topId: Long, newChecked: Boolean): ListTopicsState =
+    modTopicById(topId, _.copy(checked = newChecked))
 
   def expandParagraph(p: Paragraph, newExpanded: Boolean): ListTopicsState =
     modParagraphById(p.id.get, _.copy(expanded = newExpanded))
 
-  def modParagraphById(ps: List[Paragraph], parId: Long, mod: Paragraph => Paragraph): List[Paragraph] =
+  //-------------------------
+
+  private def modParagraphById(ps: List[Paragraph], parId: Long, mod: Paragraph => Paragraph): List[Paragraph] =
     ps.map(p => if (p.id.get == parId) mod(p) else p)
 
-  def modParagraphById(parId: Long, mod: Paragraph => Paragraph): ListTopicsState =
+  private def modParagraphById(parId: Long, mod: Paragraph => Paragraph): ListTopicsState =
     updateParagraphs(modParagraphById(paragraphs, parId, mod))
 
-  def modTopicById(ts: List[Topic], topId: Long, mod: Topic => Topic): List[Topic] =
+  private def paragraphByTopicId(topId: Long) = paragraphs.find(_.topics.exists(_.id.get == topId)).get
+
+  private def modTopicById(topId: Long, mod: Topic => Topic): ListTopicsState = {
+    val parWithTop = paragraphByTopicId(topId)
+    modParagraphById(parWithTop.id.get, p => p.copy(topics = modTopicById(p.topics, topId, mod)))
+  }
+
+  private def modTopicById(ts: List[Topic], topId: Long, mod: Topic => Topic): List[Topic] =
     ts.map(t => if (t.id.get == topId) mod(t) else t)
 
-  def modTopicById(parId: Long, topId: Long, mod: Topic => Topic): ListTopicsState =
-    updateParagraphs(
-      modParagraphById(
-        paragraphs, parId, p => p.copy(topics = modTopicById(p.topics, topId, mod))
-      )
-    )
-
-  def updateParagraphs(paragraphs: List[Paragraph]): ListTopicsState = copy(
+  private def updateParagraphs(paragraphs: List[Paragraph]): ListTopicsState = copy(
     globalScope = globalScope.copy(
       pageParams = globalScope.pageParams.copy(
         paragraphs = paragraphs

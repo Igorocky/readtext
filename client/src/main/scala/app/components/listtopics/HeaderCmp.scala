@@ -3,7 +3,9 @@ package app.components.listtopics
 import app.components.Button
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
+import shared.dto.Paragraph
 import shared.forms.Forms
+import upickle.default.read
 
 object HeaderCmp {
 
@@ -16,7 +18,7 @@ object HeaderCmp {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState(State())
     .renderPS { ($, p, s) =>
-      <.div(
+      <.div(^.`class`:=this.getClass.getSimpleName,
         <.div(
           Button(
             id = "open-new-paragraph-diag-btn",
@@ -32,7 +34,9 @@ object HeaderCmp {
                 submitUrl = p.globalScope.pageParams.createParagraphUrl
               ),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
-              submitComplete = par => $.modState(_.copy(newParagraphFormOpened = false)) >> p.globalScope.paragraphCreated(par),
+              submitComplete = str =>
+                $.modState(_.copy(newParagraphFormOpened = false)) >>
+                  p.globalScope.paragraphCreated(read[Paragraph](str)),
               textFieldLabel = "New paragraph:",
               submitButtonName = "Create",
               globalScope = p.globalScope
