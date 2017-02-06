@@ -4,6 +4,7 @@ import app.Utils
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
+import shared.SharedConstants.HIGHLIGHT_ON_HOVER
 import shared.dto.{Topic, TopicUpdate}
 import shared.forms.Forms
 import upickle.default._
@@ -15,7 +16,7 @@ object TopicCmp {
   protected case class Props(globalScope: GlobalScope,
                              topic: Topic)
 
-  protected case class State(editMode: Boolean = false)
+  protected case class State(editMode: Boolean = false, showImg: Boolean = false)
 
 
   def apply(globalScope: GlobalScope, topic: Topic) =
@@ -26,12 +27,20 @@ object TopicCmp {
     .renderPS{ ($,props,state) =>
       if (!state.editMode) {
         <.div(
-          checkboxForTopic(props.topic, props),
-          props.topic.title,
-          editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
-          moveUpButton(props.topic, props),
-          moveDownButton(props.topic, props),
-          deleteTopicButton(props.topic, props)
+          <.div(^.`class` := HIGHLIGHT_ON_HOVER,
+            checkboxForTopic(props.topic, props),
+            props.topic.title,
+            editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
+            moveUpButton(props.topic, props),
+            moveDownButton(props.topic, props),
+            deleteTopicButton(props.topic, props),
+            showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg)))
+          ),
+          if (state.showImg) {
+            <.div(props.topic.images.map { img =>
+              <.div(<.img(^.src := props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img))
+            })
+          } else EmptyTag
         )
       } else {
         TopicForm(
@@ -93,5 +102,12 @@ object TopicCmp {
           case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
         }.void
       )
+    )
+
+  def showImgButton(topic: Topic, state: State, onClick: Callback) =
+    Button(
+      id = "show-img-topic-btn-" + topic.id.get,
+      name = if (!state.showImg) "Show image" else "Hide image",
+      onClick = onClick
     )
 }

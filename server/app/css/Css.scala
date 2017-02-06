@@ -59,6 +59,17 @@ object Css extends StyleSheet.Standalone {
     opacity(0)
     )
 
+  "." + HIGHLIGHT_ON_HOVER - (
+    &.hover - (
+      backgroundColor(yellow)
+      )
+  )
+
+  ".ParagraphCmp span" - (
+    fontSize(30 px),
+    fontWeight.bold
+  )
+
   case class Color(r: Int, g: Int, b: Int) {
     def more(pct: Double) = {
       val factor = 1 + pct

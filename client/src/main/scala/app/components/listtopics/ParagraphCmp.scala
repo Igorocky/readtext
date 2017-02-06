@@ -4,6 +4,7 @@ import app.Utils.post
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
+import shared.SharedConstants.HIGHLIGHT_ON_HOVER
 import shared.dto.{Paragraph, ParagraphUpdate, Topic}
 import shared.forms.Forms
 import upickle.default.read
@@ -22,12 +23,12 @@ object ParagraphCmp {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState(State())
     .renderPS{ ($, props, state) =>
-        <.div(
+        <.div(^.`class`:=this.getClass.getSimpleName,
           if (!state.editMode) {
-            <.div(
+            <.div(^.`class`:=HIGHLIGHT_ON_HOVER,
               checkboxForParagraph(props.paragraph, props),
               expandParagraphButton(props.paragraph, props),
-              props.paragraph.name,
+              <.span(props.paragraph.name),
               editParagraphButton(props.paragraph, $.modState(_.copy(editMode = true))),
               createTopicButton(props.paragraph, $.modState(_.copy(createTopicDiagOpened = true))),
               moveUpButton(props.paragraph, props),
