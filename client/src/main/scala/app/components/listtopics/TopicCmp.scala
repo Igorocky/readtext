@@ -108,6 +108,7 @@ object TopicCmp {
     Button(
       id = "show-img-topic-btn-" + topic.id.get,
       name = if (!state.showImg) "Show image" else "Hide image",
-      onClick = onClick
+      onClick = onClick,
+      disabled = topic.images.isEmpty
     )
 }
