@@ -50,14 +50,46 @@ case class ListTopicsState(globalScope: GlobalScope = null,
     )
   }
 
+  def checkById(id: Long, newChecked: Boolean) =
+    if (paragraphs.exists(_.id.get == id)) checkParagraph(id, newChecked)
+    else checkTopic(id, newChecked)
+
   def checkParagraph(parId: Long, newChecked: Boolean): ListTopicsState =
     modParagraphById(parId, _.copy(checked = newChecked))
 
   def checkTopic(topId: Long, newChecked: Boolean): ListTopicsState =
     modTopicById(topId, _.copy(checked = newChecked))
 
-  def expandParagraph(p: Paragraph, newExpanded: Boolean): ListTopicsState =
-    modParagraphById(p.id.get, _.copy(expanded = newExpanded))
+  def expandParagraph(id: Long, newExpanded: Boolean): ListTopicsState =
+    modParagraphById(id, _.copy(expanded = newExpanded))
+
+  def moveUpById(id: Long): ListTopicsState =
+    if (paragraphs.exists(_.id.get == id)) updateParagraphs(moveUp(id, paragraphs)) else {
+      val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
+      modParagraphById(par.id.get, _.copy(topics = moveUp(id, par.topics)))
+    }
+
+  def moveDownById(id: Long): ListTopicsState =
+    if (paragraphs.exists(_.id.get == id)) updateParagraphs(moveDown(id, paragraphs)) else {
+      val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
+      modParagraphById(par.id.get, _.copy(topics = moveDown(id, par.topics)))
+    }
+
+  private def moveUp[E <: {val id: Option[Long]}](id: Long, elems: List[E]): List[E] = {
+    val idx = elems.indexWhere(_.id.get == id)
+    if (idx == 0) elems else {
+      val vec = elems.toVector
+      vec.updated(idx - 1, vec(idx)).updated(idx, vec(idx - 1)).toList
+    }
+  }
+
+  private def moveDown[E <: {val id: Option[Long]}](id: Long, elems: List[E]): List[E] = {
+    val idx = elems.indexWhere(_.id.get == id)
+    if (idx == elems.size - 1) elems else {
+      val vec = elems.toVector
+      vec.updated(idx + 1, vec(idx)).updated(idx, vec(idx + 1)).toList
+    }
+  }
 
   //-------------------------
 

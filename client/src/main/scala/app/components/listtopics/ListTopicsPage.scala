@@ -28,20 +28,25 @@ object ListTopicsPage {
       openOkCancelDialog1 = (text, onOk) => $.backend.openOkCancelDialog(text, onOk),
       openWaitPane = $.backend.openWaitPane,
       closeWaitPane = $.backend.closeWaitPane,
-      checkParagraphAction = (par, newChecked) => $.backend.doAction(
-        action = "check paragraph " + par.id + " to " + newChecked,
-        doActionUrl = $.props.doActionUrl,
-        onSuccess = _ => $.modState(_.checkParagraph(par.id.get, newChecked))
+      expandParagraphAction = (parId, newExpanded) => $.backend.doAction(
+        $.props.expandUrl,
+        write((parId, newExpanded)),
+        _ => $.modState(_.expandParagraph(parId, newExpanded))
       ),
-      expandParagraphAction = (par, newChecked) => $.backend.doAction(
-        action = "expand paragraph " + par.id + " to " + newChecked,
-        doActionUrl = $.props.doActionUrl,
-        onSuccess = _ => $.modState(_.expandParagraph(par, newChecked))
+      checkAction = (id, newChecked) => $.backend.doAction(
+        $.props.checkUrl,
+        write((id, newChecked)),
+        _ => $.modState(_.checkById(id, newChecked))
       ),
-      checkTopicAction = (topic, newChecked) => $.backend.doAction(
-        action = "check topic " + topic.id + " to " + newChecked,
-        doActionUrl = $.props.doActionUrl,
-        onSuccess = _ => $.modState(_.checkTopic(topic.id.get, newChecked))
+      moveUpAction = id => $.backend.doAction(
+        $.props.moveUpUrl,
+        id.toString,
+        _ => $.modState(_.moveUpById(id))
+      ),
+      moveDownAction = id => $.backend.doAction(
+        $.props.moveDownUrl,
+        id.toString,
+        _ => $.modState(_.moveDownById(id))
       ),
       paragraphCreated = p => $.modState(_.addParagraph(p)),
       paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),
@@ -116,8 +121,8 @@ object ListTopicsPage {
     def closeOkCancelDialog: Callback =
       $.modState(_.copy(okCancelDiagText = None, onOk = Callback.empty, onCancel = Callback.empty)) >> closeWaitPane
 
-    def doAction(action: String, doActionUrl: String, onSuccess: String => Callback): Callback =
-      openWaitPane >> Utils.post(url = doActionUrl, data = action){
+    def doAction(doActionUrl: String, data: String, onSuccess: String => Callback): Callback =
+      openWaitPane >> Utils.post(url = doActionUrl, data = data){
         case Success(DataResponse(str)) => onSuccess(str) >> closeWaitPane
         case Success(ErrorResponse(str)) =>
           println("ERROR - " + str)

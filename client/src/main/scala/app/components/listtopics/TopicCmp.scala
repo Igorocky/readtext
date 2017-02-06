@@ -29,6 +29,8 @@ object TopicCmp {
           checkboxForTopic(props.topic, props),
           props.topic.title,
           editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
+          moveUpButton(props.topic, props),
+          moveDownButton(props.topic, props),
           deleteTopicButton(props.topic, props)
         )
       } else {
@@ -55,8 +57,22 @@ object TopicCmp {
   def checkboxForTopic(topic: Topic, props: Props) =
     Checkbox(
       id = "selectTopic-" + topic.id.get,
-      onChange = props.globalScope.checkTopicAction(topic, _),
+      onChange = props.globalScope.checkAction(topic.id.get, _),
       checked = topic.checked
+    )
+
+  def moveUpButton(topic: Topic, props: Props) =
+    Button(
+      id = "move-up-topic-" + topic.id.get,
+      name = "Up",
+      onClick = props.globalScope.moveUpAction(topic.id.get)
+    )
+
+  def moveDownButton(topic: Topic, props: Props) =
+    Button(
+      id = "move-down-topic-" + topic.id.get,
+      name = "Down",
+      onClick = props.globalScope.moveDownAction(topic.id.get)
     )
 
   def editTopicButton(topic: Topic, props: Props, onClick: Callback) =

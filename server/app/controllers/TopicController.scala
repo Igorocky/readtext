@@ -62,6 +62,10 @@ class TopicController @Inject()(
             deleteTopicUrl = routes.TopicController.deleteTopic.url,
             uploadTopicFileUrl = routes.TopicController.uploadTopicImage.url,
             getTopicImgUrl = getTopicImgUrl,
+            expandUrl = routes.TopicController.expand.url,
+            moveUpUrl = routes.TopicController.up.url,
+            moveDownUrl = routes.TopicController.down.url,
+            checkUrl = routes.TopicController.check.url,
             paragraphs = ps
           ))
         )
@@ -263,4 +267,78 @@ class TopicController @Inject()(
       case _ => NotFound(s"File $fileName was not found.")
     }
   }
+
+  def expand = Action.async { request =>
+    val (parId, newVal) = read[(Long, Boolean)](request.body.asText.get)
+    db.run(paragraphTable.filter(_.id === parId).map(_.expanded).update(newVal)) map {_ =>
+      Ok(dataResponse(SharedConstants.OK))
+    }
+  }
+
+  def check = Action.async { request =>
+    val (id, newVal) = read[(Long, Boolean)](request.body.asText.get)
+    db.run(for {
+      parCnt <- paragraphTable.filter(_.id === id).map(_.checked).update(newVal)
+      _ <- if (parCnt > 0) DBIOAction.successful(parCnt) else topicTable.filter(_.id === id).map(_.checked).update(newVal)
+    } yield ()) map {_ =>
+      Ok(dataResponse(SharedConstants.OK))
+    }
+  }
+
+  def up = Action.async { request =>
+    val id = request.body.asText.get.toLong
+    db.run(for {
+      parOpt <- paragraphTable.filter(_.id === id).map(_.id).result.headOption
+      _ <- if (parOpt.isDefined) upParagraph(id) else upTopic(id)
+    } yield ()) map {_ =>
+      Ok(dataResponse(SharedConstants.OK))
+    }
+  }
+
+  def upParagraph(id: Long) = for {
+    order <- paragraphTable.filter(_.id === id).map(_.order).result.head
+    min <- paragraphTable.map(_.order).min.result.map(_.get)
+    _ <- if (order == min) DBIO.successful(()) else for {
+      _ <- paragraphTable.filter(_.order === order - 1).map(_.order).update(order)
+      _ <- paragraphTable.filter(_.id === id).map(_.order).update(order - 1)
+    } yield ()
+  } yield ()
+
+  def upTopic(topId: Long) = for {
+    (parId, order) <- topicTable.filter(_.id === topId).map(t => (t.paragraphId, t.order)).result.head
+    min <- topicTable.filter(_.paragraphId === parId).map(_.order).min.result.map(_.get)
+    _ <- if (order == min) DBIO.successful(()) else for {
+      _ <- topicTable.filter(t => t.paragraphId === parId && t.order === order - 1).map(_.order).update(order)
+      _ <- topicTable.filter(_.id === topId).map(_.order).update(order - 1)
+    } yield ()
+  } yield ()
+
+  def down = Action.async { request =>
+    val id = request.body.asText.get.toLong
+    db.run(for {
+      parOpt <- paragraphTable.filter(_.id === id).map(_.id).result.headOption
+      _ <- if (parOpt.isDefined) downParagraph(id) else downTopic(id)
+    } yield ()) map {_ =>
+      Ok(dataResponse(SharedConstants.OK))
+    }
+  }
+
+  def downParagraph(id: Long) = for {
+    order <- paragraphTable.filter(_.id === id).map(_.order).result.head
+    max <- paragraphTable.map(_.order).max.result.map(_.get)
+    _ <- if (order == max) DBIO.successful(()) else for {
+      _ <- paragraphTable.filter(_.order === order + 1).map(_.order).update(order)
+      _ <- paragraphTable.filter(_.id === id).map(_.order).update(order + 1)
+    } yield ()
+  } yield ()
+
+  def downTopic(topId: Long) = for {
+    (parId, order) <- topicTable.filter(_.id === topId).map(t => (t.paragraphId, t.order)).result.head
+    max <- topicTable.filter(_.paragraphId === parId).map(_.order).max.result.map(_.get)
+    _ <- if (order == max) DBIO.successful(()) else for {
+      _ <- topicTable.filter(t => t.paragraphId === parId && t.order === order + 1).map(_.order).update(order)
+      _ <- topicTable.filter(_.id === topId).map(_.order).update(order + 1)
+    } yield ()
+  } yield ()
+
 }

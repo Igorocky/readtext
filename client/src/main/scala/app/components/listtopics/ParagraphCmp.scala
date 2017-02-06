@@ -1,6 +1,5 @@
 package app.components.listtopics
 
-import app.Utils
 import app.Utils.post
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -31,6 +30,8 @@ object ParagraphCmp {
               props.paragraph.name,
               editParagraphButton(props.paragraph, $.modState(_.copy(editMode = true))),
               createTopicButton(props.paragraph, $.modState(_.copy(createTopicDiagOpened = true))),
+              moveUpButton(props.paragraph, props),
+              moveDownButton(props.paragraph, props),
               deleteParagraphButton(props, props.paragraph, props.globalScope.paragraphDeleted(props.paragraph.id.get)),
               if (state.createTopicDiagOpened) {
                 createNewTopicDiag(props.paragraph, props, $.modState(_.copy(createTopicDiagOpened = false)))
@@ -85,7 +86,7 @@ object ParagraphCmp {
   def checkboxForParagraph(paragraph: Paragraph, props: Props) =
     Checkbox(
       id = "selectPar-" + paragraph.id.get,
-      onChange = props.globalScope.checkParagraphAction(paragraph, _),
+      onChange = props.globalScope.checkAction(paragraph.id.get, _),
       checked = paragraph.checked
     )
 
@@ -93,7 +94,21 @@ object ParagraphCmp {
     Button(
       id = "expandPar-" + paragraph.id.get,
       name = if (paragraph.expanded) "-" else "+",
-      onClick = props.globalScope.expandParagraphAction(paragraph, !paragraph.expanded)
+      onClick = props.globalScope.expandParagraphAction(paragraph.id.get, !paragraph.expanded)
+    )
+
+  def moveUpButton(paragraph: Paragraph, props: Props) =
+    Button(
+      id = "move-up-Par-" + paragraph.id.get,
+      name = "Up",
+      onClick = props.globalScope.moveUpAction(paragraph.id.get)
+    )
+
+  def moveDownButton(paragraph: Paragraph, props: Props) =
+    Button(
+      id = "move-down-Par-" + paragraph.id.get,
+      name = "Down",
+      onClick = props.globalScope.moveDownAction(paragraph.id.get)
     )
 
   def listTopics(p: Paragraph, props: Props) =

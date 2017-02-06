@@ -12,6 +12,10 @@ case class ListTopicsPageParams(headerParams: HeaderParams,
                                 updateTopicUrl: String,
                                 deleteTopicUrl: String,
                                 uploadTopicFileUrl: String,
-                                getTopicImgUrl: String) {
+                                getTopicImgUrl: String,
+                                expandUrl: String,
+                                moveUpUrl: String,
+                                moveDownUrl: String,
+                                checkUrl: String) {
   lazy val eraseData = copy(paragraphs = null)
 }
