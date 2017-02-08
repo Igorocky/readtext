@@ -259,11 +259,11 @@ class TopicController @Inject()(
     res.toString
   }
 
-  val fileNamePattern = """^\d+\.\w+$""".r
+  val fileNamePattern = """^\d+(\.\w+)?$""".r
   def topicImg(topicId: Long, fileName: String) = Action {
     println(s"fileName = ${fileName}")
     fileName match {
-      case fileNamePattern() => Ok.sendFile(new File(imgStorageDir + "/" + topicId + "/" + fileName))
+      case fileNamePattern(_) => Ok.sendFile(new File(imgStorageDir + "/" + topicId + "/" + fileName))
       case _ => NotFound(s"File $fileName was not found.")
     }
   }

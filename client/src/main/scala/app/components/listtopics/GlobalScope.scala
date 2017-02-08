@@ -2,6 +2,7 @@ package app.components.listtopics
 
 import app.components.listtopics.GlobalScope.{NewValueChecked, NewValueExpanded}
 import japgolly.scalajs.react.Callback
+import org.scalajs.dom.raw.File
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.pageparams.ListTopicsPageParams
 
@@ -11,6 +12,8 @@ case class GlobalScope(pageParams: ListTopicsPageParams,
                        openOkCancelDialog1: (String, Callback/*onOk*/) => Callback,
                        openWaitPane: Callback,
                        closeWaitPane: Callback,
+                       registerPasteListener: (Long, File => Callback) => Callback,
+                       unregisterPasteListener: (Long) => Callback,
                        paragraphCreated: Paragraph => Callback,
                        paragraphUpdated: ParagraphUpdate => Callback,
                        paragraphDeleted: Long => Callback,

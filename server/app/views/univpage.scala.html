@@ -4,6 +4,21 @@
 <html>
     <head>
         <link rel="stylesheet" type="text/css" href="@controllers.routes.HomeController.css().url">
+        <script>
+            function extractFileFromEvent(event) {
+                // use event.originalEvent.clipboard for newer chrome versions
+                var items = (event.clipboardData  || event.originalEvent.clipboardData).items;
+                console.log(JSON.stringify(items)); // will give you the mime types
+                // find pasted image among pasted items
+                var blob = null;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf("image") === 0) {
+                        blob = items[i].getAsFile();
+                    }
+                }
+                return blob;
+            }
+        </script>
     </head>
     <body>
         <div id="@SharedConstants.PAGE_TYPE_DIV_ID" hidden>@pageType</div>

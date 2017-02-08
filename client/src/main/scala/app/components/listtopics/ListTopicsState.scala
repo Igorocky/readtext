@@ -1,6 +1,7 @@
 package app.components.listtopics
 
 import japgolly.scalajs.react.Callback
+import org.scalajs.dom.raw.File
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.messages.Language
 
@@ -9,9 +10,18 @@ case class ListTopicsState(globalScope: GlobalScope = null,
                            okDiagText: Option[String] = None,
                            okCancelDiagText: Option[String] = None,
                            onOk: Callback = Callback.empty,
-                           onCancel: Callback = Callback.empty) {
+                           onCancel: Callback = Callback.empty,
+                           pasteListeners: Map[(Long,Int), File => Callback] = Map()) {
 
   def paragraphs = globalScope.pageParams.paragraphs
+
+  def registerListener(id: Long, listener: File => Callback): ListTopicsState = {
+    val order = if (pasteListeners.isEmpty) 1 else pasteListeners.map(_._1._2).max + 1
+    copy(pasteListeners = pasteListeners + ((id,order) -> listener))
+  }
+
+  def runPasteListener(file: File): Unit =
+    if (pasteListeners.isEmpty) () else pasteListeners.maxBy(_._1._2)._2(file).runNow()
 
   def setLanguage(language: Language): ListTopicsState = copy(
     globalScope = globalScope.copy(

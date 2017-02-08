@@ -1,13 +1,14 @@
 package app.components.listtopics
 
-import app.Utils
 import app.components._
+import app.{JsGlobalScope, Utils}
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactExt_DomNodeO, Ref}
+import org.scalajs.dom
+import org.scalajs.dom.raw.{ClipboardEvent, HTMLInputElement}
 import shared.forms.{DataResponse, ErrorResponse}
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scala.util.{Failure, Success}
 
@@ -21,40 +22,48 @@ object ListTopicsPage {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(_ => ListTopicsState())
     .renderBackend[Backend]
-    .componentWillMount($ => $.modState(_.setGlobalScope(GlobalScope(
-      pageParams = $.props,
-      openOkDialog = str => $.backend.openOkDialog(str),
-      openOkCancelDialog = (text, onOk, onCancel) => $.backend.openOkCancelDialog(text, onOk, onCancel),
-      openOkCancelDialog1 = (text, onOk) => $.backend.openOkCancelDialog(text, onOk),
-      openWaitPane = $.backend.openWaitPane,
-      closeWaitPane = $.backend.closeWaitPane,
-      expandParagraphAction = (parId, newExpanded) => $.backend.doAction(
-        $.props.expandUrl,
-        write((parId, newExpanded)),
-        _ => $.modState(_.expandParagraph(parId, newExpanded))
-      ),
-      checkAction = (id, newChecked) => $.backend.doAction(
-        $.props.checkUrl,
-        write((id, newChecked)),
-        _ => $.modState(_.checkById(id, newChecked))
-      ),
-      moveUpAction = id => $.backend.doAction(
-        $.props.moveUpUrl,
-        id.toString,
-        _ => $.modState(_.moveUpById(id))
-      ),
-      moveDownAction = id => $.backend.doAction(
-        $.props.moveDownUrl,
-        id.toString,
-        _ => $.modState(_.moveDownById(id))
-      ),
-      paragraphCreated = p => $.modState(_.addParagraph(p)),
-      paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),
-      paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> $.backend.closeWaitPane,
-      topicCreated = topic => $.modState(_.addTopic(topic)),
-      topicUpdated = topUpd => $.modState(_.updateTopic(topUpd)),
-      topicDeleted = topId => $.modState(_.deleteTopic(topId))
-    ))))
+    .componentWillMount { $ =>
+      dom.window.addEventListener[ClipboardEvent](
+        "paste",
+        (e: ClipboardEvent) => $.state.runPasteListener(JsGlobalScope.extractFileFromEvent(e))
+      )
+      $.modState(_.setGlobalScope(GlobalScope(
+        pageParams = $.props,
+        openOkDialog = str => $.backend.openOkDialog(str),
+        openOkCancelDialog = (text, onOk, onCancel) => $.backend.openOkCancelDialog(text, onOk, onCancel),
+        openOkCancelDialog1 = (text, onOk) => $.backend.openOkCancelDialog(text, onOk),
+        openWaitPane = $.backend.openWaitPane,
+        closeWaitPane = $.backend.closeWaitPane,
+        registerPasteListener = (id, listener) => $.modState(_.registerListener(id,listener)),
+        unregisterPasteListener = id => $.modState(s => s.copy(pasteListeners = s.pasteListeners.filterNot(_._1._2 == id))),
+        expandParagraphAction = (parId, newExpanded) => $.backend.doAction(
+          $.props.expandUrl,
+          write((parId, newExpanded)),
+          _ => $.modState(_.expandParagraph(parId, newExpanded))
+        ),
+        checkAction = (id, newChecked) => $.backend.doAction(
+          $.props.checkUrl,
+          write((id, newChecked)),
+          _ => $.modState(_.checkById(id, newChecked))
+        ),
+        moveUpAction = id => $.backend.doAction(
+          $.props.moveUpUrl,
+          id.toString,
+          _ => $.modState(_.moveUpById(id))
+        ),
+        moveDownAction = id => $.backend.doAction(
+          $.props.moveDownUrl,
+          id.toString,
+          _ => $.modState(_.moveDownById(id))
+        ),
+        paragraphCreated = p => $.modState(_.addParagraph(p)),
+        paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),
+        paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> $.backend.closeWaitPane,
+        topicCreated = topic => $.modState(_.addTopic(topic)),
+        topicUpdated = topUpd => $.modState(_.updateTopic(topUpd)),
+        topicDeleted = topId => $.modState(_.deleteTopic(topId))
+      )))
+    }
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
