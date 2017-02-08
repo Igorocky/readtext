@@ -19,8 +19,8 @@ object Main extends js.JSApp {
   def main(): Unit = {
     val pageType: String = getValueFromDiv(SharedConstants.PAGE_TYPE_DIV_ID)
     println("pageType = " + pageType)
-    val customData: String = getValueFromDiv(SharedConstants.CUSTOM_DATA_DIV_ID)
-    println("customData = " + customData)
+    val customData: String = cropCdata(getValueFromDiv(SharedConstants.CUSTOM_DATA_DIV_ID))
+    println("customData = |>" + customData + "<|")
     ReactDOM.render(
       componentMap(pageType)(customData),
       dom.document.getElementById(SharedConstants.UNIV_PAGE_CONTENT_DIV_ID)
@@ -28,4 +28,6 @@ object Main extends js.JSApp {
   }
 
   private def getValueFromDiv(id: String) = dom.document.getElementById(id).innerHTML
+
+  private def cropCdata(str: String) = str.substring(11, str.length - 5)
 }

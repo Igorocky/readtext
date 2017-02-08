@@ -23,7 +23,7 @@
     </head>
     <body>
         <div id="@SharedConstants.PAGE_TYPE_DIV_ID" hidden>@pageType</div>
-        <div id="@SharedConstants.CUSTOM_DATA_DIV_ID" hidden>@customData</div>
+        <div id="@SharedConstants.CUSTOM_DATA_DIV_ID" hidden><![CDATA[@Html(customData)]]></div>
         <div id="@SharedConstants.UNIV_PAGE_CONTENT_DIV_ID"></div>
         @playscalajs.html.scripts("client")
     </body>
