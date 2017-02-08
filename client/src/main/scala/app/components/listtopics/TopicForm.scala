@@ -58,7 +58,7 @@ object TopicForm {
       <.div(
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         props.textFieldLabel,
-        FormTextField(SharedConstants.TITLE),
+        FormTextField(name = SharedConstants.TITLE, focusOnMount = !props.editMode),
         if (props.editMode) ImgUploader(
           props.globalScope,
           props.topic.get,

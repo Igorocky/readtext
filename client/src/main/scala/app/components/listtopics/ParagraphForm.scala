@@ -57,7 +57,7 @@ object ParagraphForm {
       <.div(
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         props.textFieldLabel,
-        FormTextField(SharedConstants.TITLE),
+        FormTextField(name = SharedConstants.TITLE, focusOnMount = true),
         SubmitButton(props.submitButtonName),
         Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
       )

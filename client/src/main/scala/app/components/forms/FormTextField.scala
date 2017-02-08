@@ -1,13 +1,13 @@
 package app.components.forms
 
-import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.raw.HTMLInputElement
 import shared.SharedConstants._
-import shared.messages.Language
 
 object FormTextField {
   protected case class Props(name: String,
+                             focusOnMount: Boolean,
                              value: String,
                              errors: List[String],
                              onChange: String => CallbackTo[_],
@@ -17,10 +17,11 @@ object FormTextField {
 
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
-  def apply(name: String, width: Int = 150)
+  def apply(name: String, width: Int = 150, focusOnMount: Boolean = false)
            (implicit formParams: FormCommonParams): ReactElement =
     comp(Props(
       name = name
+      ,focusOnMount = focusOnMount
       ,value = formParams.formData.get(name).value
       ,errors = formParams.formData.get(name).errors
       ,onChange = formParams.onChange compose formParams.formData.createSetter(name, formParams.transformations)
@@ -29,9 +30,9 @@ object FormTextField {
       ,onEnter = formParams.submit
     ))
 
-  private val theInput: RefSimple[HTMLInputElement] = Ref[HTMLInputElement]("theInput")
-
   private class Backend($: BackendScope[Props, State]) {
+    val theInput: RefSimple[HTMLInputElement] = Ref[HTMLInputElement]("theInput")
+
     def render(props: Props, state: State) = {
       <.div(
         if (state.focused) {
@@ -58,7 +59,7 @@ object FormTextField {
           <.div(
             ^.`class`:=EDITABLE_DIV +
               " " + (if (state.value != state.initialValue) EDITABLE_DIV_CHANGED else ""),
-            ^.onClick --> $.modState(_.copy(focused = true), Callback{theInput($).tryFocus.runNow()}),
+            ^.onClick --> $.modState(_.copy(focused = true), theInput($).tryFocus),
             ^.minWidth:=s"${props.width}px",
             if (valueIsEmpty) <.div(^.`class`:=EDITABLE_DIV_EMPTY, ".") else state.value
           )
@@ -71,5 +72,6 @@ object FormTextField {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState_P(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
     .renderBackend[Backend]
+    .componentDidMount{$ => if ($.props.focusOnMount) $.backend.theInput($).tryFocus else Callback.empty}
     .build
 }
