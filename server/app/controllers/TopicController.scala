@@ -67,7 +67,8 @@ class TopicController @Inject()(
             moveDownUrl = routes.TopicController.down.url,
             checkUrl = routes.TopicController.check.url,
             paragraphs = ps
-          ))
+          )),
+          pageTitle = "Topics"
         )
       )
 

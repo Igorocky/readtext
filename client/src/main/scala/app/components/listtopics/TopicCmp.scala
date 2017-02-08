@@ -29,12 +29,12 @@ object TopicCmp {
         <.div(
           <.div(^.`class` := HIGHLIGHT_ON_HOVER,
             checkboxForTopic(props.topic, props),
+            showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
             props.topic.title,
             editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
             moveUpButton(props.topic, props),
             moveDownButton(props.topic, props),
-            deleteTopicButton(props.topic, props),
-            showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg)))
+            deleteTopicButton(props.topic, props)
           ),
           if (state.showImg) {
             <.div(props.topic.images.map { img =>

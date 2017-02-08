@@ -1,8 +1,9 @@
 @import shared.SharedConstants
-@(pageType: String, customData: String)(implicit environment: play.api.Environment)
+@(pageType: String, customData: String, pageTitle: String = "")(implicit environment: play.api.Environment)
 <!DOCTYPE html>
 <html>
     <head>
+        <title>@pageTitle</title>
         <link rel="stylesheet" type="text/css" href="@controllers.routes.HomeController.css().url">
         <script>
             function extractFileFromEvent(event) {
