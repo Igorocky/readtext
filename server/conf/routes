@@ -17,7 +17,6 @@ POST    /fullTextById                           controllers.HomeController.fullT
 GET    /allTexts                           controllers.HomeController.allTexts
 
 GET    /topics                           controllers.TopicController.topics
-POST    /doAction                           controllers.TopicController.doAction
 POST    /createParagraph                           controllers.TopicController.createParagraph
 POST    /updateParagraph                           controllers.TopicController.updateParagraph
 POST    /deleteParagraph                           controllers.TopicController.deleteParagraph

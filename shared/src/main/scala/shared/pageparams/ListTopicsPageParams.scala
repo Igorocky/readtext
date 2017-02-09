@@ -4,7 +4,6 @@ import shared.dto.Paragraph
 
 case class ListTopicsPageParams(headerParams: HeaderParams,
                                 paragraphs: List[Paragraph],
-                                doActionUrl: String,
                                 createParagraphUrl: String,
                                 updateParagraphUrl: String,
                                 deleteParagraphUrl: String,

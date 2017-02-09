@@ -53,7 +53,6 @@ class TopicController @Inject()(
           pageType = ListTopicsPageParams.getClass.getName,
           customData = write(ListTopicsPageParams(
             headerParams = headerParams(getSession.language),
-            doActionUrl = routes.TopicController.doAction.url,
             createParagraphUrl = routes.TopicController.createParagraph.url,
             updateParagraphUrl = routes.TopicController.updateParagraph.url,
             deleteParagraphUrl = routes.TopicController.deleteParagraph.url,
@@ -73,19 +72,6 @@ class TopicController @Inject()(
       )
 
     }
-  }
-
-  def doAction = Action{ request =>
-//    println("sleep...")
-//    Thread.sleep(3000)
-    val action = request.body.asText.get
-    println(s"action = ${action}")
-//    if (Random.nextBoolean()) {
-//      Ok(dataResponse(SharedConstants.OK))
-//    } else {
-//      Ok(errorResponse("Unknown error occurred."))
-//    }
-      Ok(dataResponse(SharedConstants.OK))
   }
 
   def createParagraph = Action.async { request =>
@@ -220,6 +206,7 @@ class TopicController @Inject()(
             top <- topicTable.filter(_.id === topic.id).result.head
           } yield top
         ) map { top =>
+          removeUnusedImages(top)
           println(s"action = update topic: $top")
           Ok(dataResponse(write(TopicUpdate(id = top.id.get, title = top.title, images = top.images))))
         }
@@ -228,11 +215,18 @@ class TopicController @Inject()(
     }
   }
 
+  def removeUnusedImages(topic: Topic): Unit = {
+    getTopicImagesDir(topic.id.get, imgStorageDir)
+      .listFiles()
+      .filterNot(f => topic.images.exists(_ == f.getName))
+      .foreach(_.delete())
+  }
+
   val imgStorageDir = new File(configuration.getString("topicsImgStorageDir").get)
   def uploadTopicImage = Action(parse.multipartFormData) { request =>
     request.body.file(FILE).map { file =>
       val topicId = request.body.dataParts(TOPIC_ID)(0).toLong
-      val topicFilesDir = getTopicFilesDir(topicId, imgStorageDir)
+      val topicFilesDir = getTopicImagesDir(topicId, imgStorageDir)
       val topicFileName = generateNameForNewFile(topicFilesDir) + getFileExtension(file.filename)
       file.ref.moveTo(new File(topicFilesDir, topicFileName))
       Ok(PostData.dataResponse(topicFileName))
@@ -246,7 +240,7 @@ class TopicController @Inject()(
   def getFileNameWithoutExtension(name: String): String =
     if (name.contains('.')) name.substring(0, name.lastIndexOf('.')) else name
 
-  def getTopicFilesDir(topicId: Long, imgStorageDir: File): File =
+  def getTopicImagesDir(topicId: Long, imgStorageDir: File): File =
     new File(imgStorageDir, s"/$topicId")
 
   def generateNameForNewFile(topicFilesDir: File): String = {
