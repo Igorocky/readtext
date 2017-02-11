@@ -216,10 +216,10 @@ class TopicController @Inject()(
   }
 
   def removeUnusedImages(topic: Topic): Unit = {
-    getTopicImagesDir(topic.id.get, imgStorageDir)
-      .listFiles()
-      .filterNot(f => topic.images.exists(_ == f.getName))
-      .foreach(_.delete())
+    Some(getTopicImagesDir(topic.id.get, imgStorageDir).listFiles()).filterNot(_ eq null).foreach { files =>
+      files.filterNot(f => topic.images.exists(_ == f.getName))
+        .foreach(_.delete())
+    }
   }
 
   val imgStorageDir = new File(configuration.getString("topicsImgStorageDir").get)
