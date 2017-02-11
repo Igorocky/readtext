@@ -4,7 +4,7 @@ import app.components.listtopics.ListTopicsPage
 import app.components.{ListTextsPage, SimplePage}
 import japgolly.scalajs.react.{ReactDOM, ReactElement}
 import org.scalajs.dom
-import shared.SharedConstants
+import shared.{SharedConstants, StrUtils}
 import shared.pageparams.{ListTextsPageParams, ListTopicsPageParams, SimplePageParams}
 
 import scala.scalajs.js
@@ -19,7 +19,7 @@ object Main extends js.JSApp {
   def main(): Unit = {
     val pageType: String = getValueFromDiv(SharedConstants.PAGE_TYPE_DIV_ID)
     println("pageType = " + pageType)
-    val customData: String = cropCdata(getValueFromDiv(SharedConstants.CUSTOM_DATA_DIV_ID))
+    val customData: String = StrUtils.fromBytesStr(cropCdata(getValueFromDiv(SharedConstants.CUSTOM_DATA_DIV_ID)))
     println("customData = |>" + customData + "<|")
     ReactDOM.render(
       componentMap(pageType)(customData),
