@@ -104,4 +104,8 @@ object Css extends StyleSheet.Standalone {
   "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover > span" - (
     backgroundColor(yellow)
   )
+
+  "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover" - (
+    outline(solid, 2 px, yellow)
+  )
 }
