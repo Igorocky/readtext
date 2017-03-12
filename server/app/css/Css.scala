@@ -93,6 +93,10 @@ object Css extends StyleSheet.Standalone {
     backgroundColor(rgb(140,140,140))
   )
 
+  ".TopicCmp" - (
+    marginLeft(45 px)
+  )
+
   "." + HIGHLIGHT_ON_HOVER - (
     &.hover - (
       backgroundColor(yellow)

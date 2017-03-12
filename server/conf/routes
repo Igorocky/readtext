@@ -27,7 +27,7 @@ POST    /uploadTopicImage                           controllers.TopicController.
 GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)
 POST     /expand                         controllers.TopicController.expand
 POST     /checkParagraph                         controllers.TopicController.checkParagraph
-POST     /checkTopic                         controllers.TopicController.checkTopic
+POST     /checkTopics                         controllers.TopicController.checkTopics
 POST     /upParagraph                         controllers.TopicController.upParagraph
 POST     /upTopic                         controllers.TopicController.upTopic
 POST     /downParagraph                         controllers.TopicController.downParagraph

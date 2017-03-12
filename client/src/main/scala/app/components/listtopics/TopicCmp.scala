@@ -68,7 +68,7 @@ object TopicCmp {
   def checkboxForTopic(topic: Topic, props: Props) =
     Checkbox(
       id = "selectTopic-" + topic.id.get,
-      onChange = props.globalScope.checkTopicAction(topic.id.get, _),
+      onChange = newVal => props.globalScope.checkTopicsAction(List((topic.id.get, newVal))),
       checked = topic.checked
     )
 

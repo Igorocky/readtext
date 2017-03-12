@@ -67,7 +67,7 @@ class TopicController @Inject()(
             moveDownParagraphUrl = routes.TopicController.downParagraph.url,
             moveDownTopicUrl = routes.TopicController.downTopic.url,
             checkParagraphUrl = routes.TopicController.checkParagraph.url,
-            checkTopicUrl = routes.TopicController.checkTopic.url,
+            checkTopicsUrl = routes.TopicController.checkTopics.url,
             paragraphs = ps
           )),
           pageTitle = "Topics"
@@ -267,8 +267,15 @@ class TopicController @Inject()(
   }
 
   def expand = Action.async { request =>
-    val (parId, newVal) = read[(Long, Boolean)](request.body.asText.get)
-    db.run(paragraphTable.filter(_.id === parId).map(_.expanded).update(newVal)) map {_ =>
+    val ids = read[List[(Long, Boolean)]](request.body.asText.get)
+    val trueIds = ids.filter(_._2).map(_._1)
+    val falseIds = ids.filter(!_._2).map(_._1)
+    db.run(
+      DBIO.seq(
+        paragraphTable.filter(_.id inSet trueIds).map(_.expanded).update(true),
+        paragraphTable.filter(_.id inSet falseIds).map(_.expanded).update(false)
+      )
+    ) map {_ =>
       Ok(dataResponse(SharedConstants.OK))
     }
   }
@@ -280,9 +287,16 @@ class TopicController @Inject()(
     }
   }
 
-  def checkTopic = Action.async { request =>
-    val (id, newVal) = read[(Long, Boolean)](request.body.asText.get)
-    db.run(topicTable.filter(_.id === id).map(_.checked).update(newVal)) map {_ =>
+  def checkTopics = Action.async { request =>
+    val ids = read[List[(Long, Boolean)]](request.body.asText.get)
+    val trueIds = ids.filter(_._2).map(_._1)
+    val falseIds = ids.filter(!_._2).map(_._1)
+    db.run(
+      DBIO.seq(
+        topicTable.filter(_.id inSet trueIds).map(_.checked).update(true),
+        topicTable.filter(_.id inSet falseIds).map(_.checked).update(false)
+      )
+    ) map {_ =>
       Ok(dataResponse(SharedConstants.OK))
     }
   }

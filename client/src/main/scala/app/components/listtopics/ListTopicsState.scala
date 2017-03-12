@@ -63,11 +63,17 @@ case class ListTopicsState(globalScope: GlobalScope = null,
   def checkParagraph(parId: Long, newChecked: Boolean): ListTopicsState =
     modParagraphById(parId, _.copy(checked = newChecked))
 
+  def checkTopics(ids: List[(Long, Boolean)]): ListTopicsState =
+    ids.foldLeft(this){case (s,t) => s.checkTopic(t._1, t._2)}
+
   def checkTopic(topId: Long, newChecked: Boolean): ListTopicsState =
     modTopicById(topId, _.copy(checked = newChecked))
 
   def expandParagraph(id: Long, newExpanded: Boolean): ListTopicsState =
     modParagraphById(id, _.copy(expanded = newExpanded))
+
+  def expandParagraphs(ids: List[(Long, Boolean)]): ListTopicsState =
+    ids.foldLeft(this){case (s,t) => s.expandParagraph(t._1, t._2)}
 
   def moveUpTopic(id: Long): ListTopicsState = {
     val par = paragraphs.find(_.topics.exists(_.id.get == id)).get

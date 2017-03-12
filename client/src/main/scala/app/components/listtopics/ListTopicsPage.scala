@@ -36,20 +36,20 @@ object ListTopicsPage {
         closeWaitPane = $.backend.closeWaitPane,
         registerPasteListener = (id, listener) => $.modState(_.registerListener(id,listener)),
         unregisterPasteListener = id => $.modState(s => s.copy(pasteListeners = s.pasteListeners.filterNot(_._1._2 == id))),
-        expandParagraphAction = (parId, newExpanded) => $.backend.doAction(
+        expandParagraphsAction = ids => $.backend.doAction(
           $.props.expandUrl,
-          write((parId, newExpanded)),
-          _ => $.modState(_.expandParagraph(parId, newExpanded))
+          write(ids),
+          _ => $.modState(_.expandParagraphs(ids))
         ),
         checkParagraphAction = (id, newChecked) => $.backend.doAction(
           $.props.checkParagraphUrl,
           write((id, newChecked)),
           _ => $.modState(_.checkParagraph(id, newChecked))
         ),
-        checkTopicAction = (id, newChecked) => $.backend.doAction(
-          $.props.checkTopicUrl,
-          write((id, newChecked)),
-          _ => $.modState(_.checkTopic(id, newChecked))
+        checkTopicsAction = ids => $.backend.doAction(
+          $.props.checkTopicsUrl,
+          write(ids),
+          _ => $.modState(_.checkTopics(ids))
         ),
         moveUpParagraphAction = id => $.backend.doAction(
           $.props.moveUpParagraphUrl,
@@ -98,7 +98,7 @@ object ListTopicsPage {
         )
     )
 
-    def header(state: State, props: Props) = HeaderCmp(state.globalScope)
+    def header(state: State, props: Props) = HeaderCmp(state.globalScope, props.paragraphs)
 
     def waitPaneIfNecessary(state: State): TagMod =
       if (state.waitPane) {
