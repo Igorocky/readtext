@@ -60,10 +60,6 @@ case class ListTopicsState(globalScope: GlobalScope = null,
     )
   }
 
-  def checkById(id: Long, newChecked: Boolean) =
-    if (paragraphs.exists(_.id.get == id)) checkParagraph(id, newChecked)
-    else checkTopic(id, newChecked)
-
   def checkParagraph(parId: Long, newChecked: Boolean): ListTopicsState =
     modParagraphById(parId, _.copy(checked = newChecked))
 
@@ -73,17 +69,19 @@ case class ListTopicsState(globalScope: GlobalScope = null,
   def expandParagraph(id: Long, newExpanded: Boolean): ListTopicsState =
     modParagraphById(id, _.copy(expanded = newExpanded))
 
-  def moveUpById(id: Long): ListTopicsState =
-    if (paragraphs.exists(_.id.get == id)) updateParagraphs(moveUp(id, paragraphs)) else {
-      val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
-      modParagraphById(par.id.get, _.copy(topics = moveUp(id, par.topics)))
-    }
+  def moveUpTopic(id: Long): ListTopicsState = {
+    val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
+    modParagraphById(par.id.get, _.copy(topics = moveUp(id, par.topics)))
+  }
 
-  def moveDownById(id: Long): ListTopicsState =
-    if (paragraphs.exists(_.id.get == id)) updateParagraphs(moveDown(id, paragraphs)) else {
-      val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
-      modParagraphById(par.id.get, _.copy(topics = moveDown(id, par.topics)))
-    }
+  def moveUpParagraph(id: Long): ListTopicsState = updateParagraphs(moveUp(id, paragraphs))
+
+  def moveDownParagraph(id: Long): ListTopicsState = updateParagraphs(moveDown(id, paragraphs))
+
+  def moveDownTopic(id: Long): ListTopicsState = {
+    val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
+    modParagraphById(par.id.get, _.copy(topics = moveDown(id, par.topics)))
+  }
 
   private def moveUp[E <: {val id: Option[Long]}](id: Long, elems: List[E]): List[E] = {
     val idx = elems.indexWhere(_.id.get == id)

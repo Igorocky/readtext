@@ -21,9 +21,12 @@ case class GlobalScope(pageParams: ListTopicsPageParams,
                        topicUpdated: TopicUpdate => Callback,
                        topicDeleted: Long => Callback,
                        expandParagraphAction: (Long, NewValueExpanded) => Callback,
-                       checkAction: (Long, NewValueChecked) => Callback,
-                       moveUpAction: Long => Callback,
-                       moveDownAction: Long => Callback) {
+                       checkParagraphAction: (Long, NewValueChecked) => Callback,
+                       checkTopicAction: (Long, NewValueChecked) => Callback,
+                       moveUpParagraphAction: Long => Callback,
+                       moveUpTopicAction: Long => Callback,
+                       moveDownParagraphAction: Long => Callback,
+                       moveDownTopicAction: Long => Callback) {
 
   def language = pageParams.headerParams.language
 }

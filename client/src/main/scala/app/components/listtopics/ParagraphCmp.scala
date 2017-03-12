@@ -23,7 +23,7 @@ object ParagraphCmp {
   private lazy val comp = ReactComponentB[Props](this.getClass.getName)
     .initialState(State())
     .renderPS{ ($, props, state) =>
-        <.div(^.`class`:=this.getClass.getSimpleName,
+        <.div(^.`class`:= this.getClass.getSimpleName + (if (props.paragraph.checked) " checked" else ""),
           if (!state.editMode) {
             <.div(^.`class`:=HIGHLIGHT_ON_HOVER,
               checkboxForParagraph(props.paragraph, props),
@@ -87,7 +87,7 @@ object ParagraphCmp {
   def checkboxForParagraph(paragraph: Paragraph, props: Props) =
     Checkbox(
       id = "selectPar-" + paragraph.id.get,
-      onChange = props.globalScope.checkAction(paragraph.id.get, _),
+      onChange = props.globalScope.checkParagraphAction(paragraph.id.get, _),
       checked = paragraph.checked
     )
 
@@ -102,14 +102,14 @@ object ParagraphCmp {
     Button(
       id = "move-up-Par-" + paragraph.id.get,
       name = "Up",
-      onClick = props.globalScope.moveUpAction(paragraph.id.get)
+      onClick = props.globalScope.moveUpParagraphAction(paragraph.id.get)
     )
 
   def moveDownButton(paragraph: Paragraph, props: Props) =
     Button(
       id = "move-down-Par-" + paragraph.id.get,
       name = "Down",
-      onClick = props.globalScope.moveDownAction(paragraph.id.get)
+      onClick = props.globalScope.moveDownParagraphAction(paragraph.id.get)
     )
 
   def listTopics(p: Paragraph, props: Props) =

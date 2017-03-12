@@ -27,7 +27,9 @@ object TopicCmp {
     .renderPS{ ($,props,state) =>
       if (!state.editMode) {
         <.div(
-          <.div(^.`class` := HIGHLIGHT_ON_HOVER,
+          <.div(^.`class` := this.getClass.getSimpleName +
+                          " " + HIGHLIGHT_ON_HOVER +
+                          (if (props.topic.checked) " checked" else ""),
             checkboxForTopic(props.topic, props),
             showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
             props.topic.title,
@@ -66,7 +68,7 @@ object TopicCmp {
   def checkboxForTopic(topic: Topic, props: Props) =
     Checkbox(
       id = "selectTopic-" + topic.id.get,
-      onChange = props.globalScope.checkAction(topic.id.get, _),
+      onChange = props.globalScope.checkTopicAction(topic.id.get, _),
       checked = topic.checked
     )
 
@@ -74,14 +76,14 @@ object TopicCmp {
     Button(
       id = "move-up-topic-" + topic.id.get,
       name = "Up",
-      onClick = props.globalScope.moveUpAction(topic.id.get)
+      onClick = props.globalScope.moveUpTopicAction(topic.id.get)
     )
 
   def moveDownButton(topic: Topic, props: Props) =
     Button(
       id = "move-down-topic-" + topic.id.get,
       name = "Down",
-      onClick = props.globalScope.moveDownAction(topic.id.get)
+      onClick = props.globalScope.moveDownTopicAction(topic.id.get)
     )
 
   def editTopicButton(topic: Topic, props: Props, onClick: Callback) =

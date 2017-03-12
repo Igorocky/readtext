@@ -26,6 +26,9 @@ POST    /deleteTopic                           controllers.TopicController.delet
 POST    /uploadTopicImage                           controllers.TopicController.uploadTopicImage
 GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)
 POST     /expand                         controllers.TopicController.expand
-POST     /check                         controllers.TopicController.check
-POST     /up                         controllers.TopicController.up
-POST     /down                         controllers.TopicController.down
+POST     /checkParagraph                         controllers.TopicController.checkParagraph
+POST     /checkTopic                         controllers.TopicController.checkTopic
+POST     /upParagraph                         controllers.TopicController.upParagraph
+POST     /upTopic                         controllers.TopicController.upTopic
+POST     /downParagraph                         controllers.TopicController.downParagraph
+POST     /downTopic                         controllers.TopicController.downTopic

@@ -41,20 +41,35 @@ object ListTopicsPage {
           write((parId, newExpanded)),
           _ => $.modState(_.expandParagraph(parId, newExpanded))
         ),
-        checkAction = (id, newChecked) => $.backend.doAction(
-          $.props.checkUrl,
+        checkParagraphAction = (id, newChecked) => $.backend.doAction(
+          $.props.checkParagraphUrl,
           write((id, newChecked)),
-          _ => $.modState(_.checkById(id, newChecked))
+          _ => $.modState(_.checkParagraph(id, newChecked))
         ),
-        moveUpAction = id => $.backend.doAction(
-          $.props.moveUpUrl,
-          id.toString,
-          _ => $.modState(_.moveUpById(id))
+        checkTopicAction = (id, newChecked) => $.backend.doAction(
+          $.props.checkTopicUrl,
+          write((id, newChecked)),
+          _ => $.modState(_.checkTopic(id, newChecked))
         ),
-        moveDownAction = id => $.backend.doAction(
-          $.props.moveDownUrl,
+        moveUpParagraphAction = id => $.backend.doAction(
+          $.props.moveUpParagraphUrl,
           id.toString,
-          _ => $.modState(_.moveDownById(id))
+          _ => $.modState(_.moveUpParagraph(id))
+        ),
+        moveUpTopicAction = id => $.backend.doAction(
+          $.props.moveUpTopicUrl,
+          id.toString,
+          _ => $.modState(_.moveUpTopic(id))
+        ),
+        moveDownParagraphAction = id => $.backend.doAction(
+          $.props.moveDownParagraphUrl,
+          id.toString,
+          _ => $.modState(_.moveDownParagraph(id))
+        ),
+        moveDownTopicAction = id => $.backend.doAction(
+          $.props.moveDownTopicUrl,
+          id.toString,
+          _ => $.modState(_.moveDownTopic(id))
         ),
         paragraphCreated = p => $.modState(_.addParagraph(p)),
         paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),

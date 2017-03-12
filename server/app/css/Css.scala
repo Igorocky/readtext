@@ -59,12 +59,6 @@ object Css extends StyleSheet.Standalone {
     opacity(0)
     )
 
-  "." + HIGHLIGHT_ON_HOVER - (
-    &.hover - (
-      backgroundColor(yellow)
-      )
-  )
-
   ".ParagraphCmp span" - (
     fontSize(30 px),
     fontWeight.bold
@@ -88,6 +82,20 @@ object Css extends StyleSheet.Standalone {
     borderRadius(5 px),
     &.hover - (
       backgroundColor(color.more(0.25).forCss)
+      )
+    )
+
+  ".ParagraphCmp.checked" - (
+    backgroundColor(rgb(200,200,200))
+  )
+
+  ".TopicCmp.checked" - (
+    backgroundColor(rgb(140,140,140))
+  )
+
+  "." + HIGHLIGHT_ON_HOVER - (
+    &.hover - (
+      backgroundColor(yellow)
       )
     )
 }
