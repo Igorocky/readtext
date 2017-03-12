@@ -15,7 +15,8 @@ object SharedConstants {
   final val EDITABLE_DIV = "editable-div"
   final val EDITABLE_DIV_CHANGED = "editable-div-changed"
   final val EDITABLE_DIV_EMPTY = "editable-div-empty"
-  final val HIGHLIGHT_ON_HOVER = "highlight-on-hover"
+  final val HIGHLIGHT_CHILD_SPAN_ON_HOVER = "highlight-child-span-on-hover"
+  final val PARAGRAPH_NAME = "paragraph-name"
 
   final val ID = "ID"
   final val PARAGRAPH_ID = "PARAGRAPH_ID"

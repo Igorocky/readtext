@@ -59,7 +59,7 @@ object Css extends StyleSheet.Standalone {
     opacity(0)
     )
 
-  ".ParagraphCmp span" - (
+  "." + PARAGRAPH_NAME - (
     fontSize(30 px),
     fontWeight.bold
   )
@@ -97,9 +97,11 @@ object Css extends StyleSheet.Standalone {
     marginLeft(45 px)
   )
 
-  "." + HIGHLIGHT_ON_HOVER - (
-    &.hover - (
-      backgroundColor(yellow)
-      )
-    )
+  ".TopicCmp img" - (
+    marginLeft(10 px)
+  )
+
+  "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover > span" - (
+    backgroundColor(yellow)
+  )
 }

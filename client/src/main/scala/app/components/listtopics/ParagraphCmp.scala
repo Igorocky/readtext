@@ -4,7 +4,7 @@ import app.Utils.post
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
-import shared.SharedConstants.HIGHLIGHT_ON_HOVER
+import shared.SharedConstants.{HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, ParagraphUpdate, Topic}
 import shared.forms.Forms
 import upickle.default.read
@@ -29,7 +29,7 @@ object ParagraphCmp {
     def render(props: Props, state: State) =
       <.div(^.`class` := ParagraphCmp.getClass.getSimpleName + (if (props.paragraph.checked) " checked" else ""),
         if (!state.editMode) {
-          <.div(^.`class` := HIGHLIGHT_ON_HOVER,
+          <.div(^.`class` := PARAGRAPH_NAME + " " + HIGHLIGHT_CHILD_SPAN_ON_HOVER,
             checkboxForParagraph(props.paragraph, props),
             expandParagraphButton(props.paragraph, props),
             <.span(props.paragraph.name),

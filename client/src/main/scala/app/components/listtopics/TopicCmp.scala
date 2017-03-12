@@ -4,7 +4,7 @@ import app.Utils
 import app.components.{Button, Checkbox}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{Callback, ReactComponentB}
-import shared.SharedConstants.HIGHLIGHT_ON_HOVER
+import shared.SharedConstants.HIGHLIGHT_CHILD_SPAN_ON_HOVER
 import shared.dto.{Topic, TopicUpdate}
 import shared.forms.Forms
 import upickle.default._
@@ -26,13 +26,11 @@ object TopicCmp {
       .initialState(State())
     .renderPS{ ($,props,state) =>
       if (!state.editMode) {
-        <.div(
-          <.div(^.`class` := this.getClass.getSimpleName +
-                          " " + HIGHLIGHT_ON_HOVER +
-                          (if (props.topic.checked) " checked" else ""),
+        <.div(^.`class` := this.getClass.getSimpleName + (if (props.topic.checked) " checked" else ""),
+          <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
             checkboxForTopic(props.topic, props),
             showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
-            props.topic.title,
+            <.span(props.topic.title),
             editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
             moveUpButton(props.topic, props),
             moveDownButton(props.topic, props),
