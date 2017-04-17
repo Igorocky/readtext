@@ -1,7 +1,8 @@
 package app.components
 
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
+import japgolly.scalajs.react
+import japgolly.scalajs.react.Callback
+import japgolly.scalajs.react.vdom.html_<^._
 
 object Checkbox {
   type NewValue = Boolean
@@ -11,7 +12,7 @@ object Checkbox {
   def apply(id: String, checked: Boolean, onChange: NewValue => Callback, disabled: Boolean = false) =
     comp.withKey(id)(Props(checked = checked, onChange = onChange, disabled = disabled))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = react.ScalaComponent.builder[Props](this.getClass.getName)
     .render_P { props =>
       <.input(
         ^.`type`:="checkbox",

@@ -1,7 +1,8 @@
 package app.components
 
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.component.Scala.Unmounted
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.Ajax
 import shared.SharedConstants._
 import shared.forms.Forms
@@ -23,9 +24,9 @@ object ListTextsPage {
                               waitPane: Boolean = false
                             )
 
-  def apply(str: String) = comp(read[Props](str))
+  def apply(str: String): Unmounted[Props, State, Backend] = comp(read[Props](str))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State(p.headerParams.language, p.texts))
     .renderBackend[Backend]
     .build
@@ -44,7 +45,7 @@ object ListTextsPage {
           addTextDialog(props, state),
           editTextDialog(props, state),
           deleteTextDialog(props, state),
-          if (state.waitPane) WaitPane() else EmptyTag
+          if (state.waitPane) WaitPane() else EmptyVdom
         )
     )
 
@@ -53,10 +54,10 @@ object ListTextsPage {
       data = textUI.id.get.toString
     ).map(resp => $.modState(_.copy(editText = Some(read[TextUI](resp.responseText))))))
 
-    def tableWithTexts(props: Props, state: State): ReactElement = {
+    def tableWithTexts(props: Props, state: State): VdomElement = {
       implicit val lang = state.lang
       <.div(
-        state.texts.map{text=>
+        state.texts.toTagMod{text=>
           <.div(
             <.hr(^.width:="100%"),
             <.h2(text.title),
@@ -92,13 +93,12 @@ object ListTextsPage {
           )
         )
       } else {
-        EmptyTag
+        EmptyVdom
       }
     }
 
     def editTextDialog(props: Props, state: State): TagMod = {
-      if (state.editText.isDefined) {
-        val textToEdit = state.editText.get
+      state.editText.whenDefined {textToEdit=>
         ModalDialog(
           width = "400px",
           content = TextForm(
@@ -117,8 +117,6 @@ object ListTextsPage {
             editMode = true
           )
         )
-      } else {
-        EmptyTag
       }
     }
 
@@ -128,12 +126,12 @@ object ListTextsPage {
       }.reverse
 
     def deleteTextDialog(props: Props, state: State): TagMod = {
-      if (state.deleteText.isDefined) {
+      state.deleteText.whenDefined {textUI=>
         ModalDialog(
           width = "500px",
           content =
             <.div(
-              <.div(s"Are you sure you want to delete the text '${state.deleteText.get.title}'?"),
+              <.div(s"Are you sure you want to delete the text '${textUI.title}'?"),
               <.div(
                 Button(
                   id = "yes-btn",
@@ -144,8 +142,6 @@ object ListTextsPage {
               )
             )
         )
-      } else {
-        EmptyTag
       }
     }
 

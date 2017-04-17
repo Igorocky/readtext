@@ -1,8 +1,9 @@
 package app.components.forms
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom.raw.HTMLInputElement
+import japgolly.scalajs.react
+import japgolly.scalajs.react.{Callback, _}
+import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.html
 import shared.SharedConstants._
 
 object FormTextField {
@@ -18,7 +19,7 @@ object FormTextField {
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
   def apply(name: String, width: Int = 150, focusOnMount: Boolean = false)
-           (implicit formParams: FormCommonParams): ReactElement =
+           (implicit formParams: FormCommonParams) =
     comp(Props(
       name = name
       ,focusOnMount = focusOnMount
@@ -30,23 +31,22 @@ object FormTextField {
       ,onEnter = formParams.submit
     ))
 
-  private class Backend($: BackendScope[Props, State]) {
-    val theInput: RefSimple[HTMLInputElement] = Ref[HTMLInputElement]("theInput")
+  protected class Backend($: BackendScope[Props, State]) {
+    var theInput: html.Element = _
 
     def render(props: Props, state: State) = {
       <.div(
         if (state.focused) {
-          <.input.text(
-            ^.ref:=theInput,
+          <.input.text.ref(theInput = _)(
             ^.name := props.name,
             ^.value := props.value,
-            ^.onChange ==> { (e: ReactEventI) =>
+            ^.onChange ==> { (e: ReactEventFromInput) =>
               val newValue = e.target.value
               props.onChange(newValue)>>$.modState(_.copy(value = newValue))
             },
             ^.onBlur --> (if (props.editMode) $.modState(_.copy(focused = false)) else Callback.empty),
             ^.minWidth:=s"${props.width}px",
-            ^.onKeyPress ==> { (e: ReactKeyboardEventI) =>
+            ^.onKeyPress ==> { (e: ReactKeyboardEvent) =>
               if (e.charCode == 13) {
                 props.onEnter
               } else {
@@ -59,19 +59,19 @@ object FormTextField {
           <.div(
             ^.`class`:=EDITABLE_DIV +
               " " + (if (state.value != state.initialValue) EDITABLE_DIV_CHANGED else ""),
-            ^.onClick --> $.modState(_.copy(focused = true), theInput($).tryFocus),
+            ^.onClick --> $.modState(_.copy(focused = true), Callback(theInput.focus())),
             ^.minWidth:=s"${props.width}px",
             if (valueIsEmpty) <.div(^.`class`:=EDITABLE_DIV_EMPTY, ".") else state.value
           )
         },
-        props.errors.map(<.div(_))
+        props.errors.toTagMod(<.div(_))
       )
     }
   }
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = react.ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
     .renderBackend[Backend]
-    .componentDidMount{$ => if ($.props.focusOnMount) $.backend.theInput($).tryFocus else Callback.empty}
+    .componentDidMount{$ => if ($.props.focusOnMount) Callback($.backend.theInput.focus()) else Callback.empty}
     .build
 }

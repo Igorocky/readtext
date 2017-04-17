@@ -2,8 +2,8 @@ package app.components.listtopics
 
 import app.Utils
 import app.components.{Button, Checkbox}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants.HIGHLIGHT_CHILD_SPAN_ON_HOVER
 import shared.dto.{Topic, TopicUpdate}
 import shared.forms.Forms
@@ -20,9 +20,9 @@ object TopicCmp {
 
 
   def apply(globalScope: GlobalScope, topic: Topic) =
-    comp.withKey(topic.id.get)(Props(globalScope, topic))
+    comp.withKey(topic.id.get.toString)(Props(globalScope, topic))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
       .initialState(State())
     .renderPS{ ($,props,state) =>
       if (!state.editMode) {
@@ -37,10 +37,10 @@ object TopicCmp {
             deleteTopicButton(props.topic, props)
           ),
           if (state.showImg) {
-            <.div(props.topic.images.map { img =>
+            <.div(props.topic.images.toVdomArray { img =>
               <.div(<.img(^.src := props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img))
             })
-          } else EmptyTag
+          } else EmptyVdom
         )
       } else {
         TopicForm(
@@ -105,10 +105,11 @@ object TopicCmp {
     )
 
   def showImgButton(topic: Topic, state: State, onClick: Callback) =
-    Button(
-      id = "show-img-topic-btn-" + topic.id.get,
-      name = if (!state.showImg) "Show image" else "Hide image",
-      onClick = onClick,
-      disabled = topic.images.isEmpty
+    <.button(
+      ^.`type`:="button",
+      if (topic.images.isEmpty) ^.disabled := true else EmptyVdom,
+      ^.onClick --> onClick,
+      ^.`class`:="btn btn-info",
+      <.i(^.`class`:="fa fa-trash-o fa-lg")
     )
 }

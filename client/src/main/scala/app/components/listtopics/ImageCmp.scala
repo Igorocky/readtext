@@ -1,8 +1,8 @@
 package app.components.listtopics
 
 import app.components.Button
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{ReactComponentB, _}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 
 object ImageCmp {
   type ID = String
@@ -19,13 +19,13 @@ object ImageCmp {
             onDelete: ID => Callback,
             onUp: ID => Callback,
             onDown: ID => Callback) =
-    comp.withKey(id)(Props(id,
+    comp.withKey(id.toString)(Props(id,
       url,
       onDelete,
       onUp,
       onDown))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State())
     .renderPS{($,props,state)=>
       <.div(

@@ -16,6 +16,8 @@ lazy val server = (project in file("server")).settings(
   libraryDependencies ++= Seq(
     "com.vmunier" %% "play-scalajs-scripts" % "0.5.0"
     ,"org.webjars" % "jquery" % "1.11.1"
+    ,"org.webjars" % "font-awesome" % "4.7.0"
+    ,"org.webjars" % "bootstrap" % "3.3.7-1"
     ,ws
     ,evolutions
     ,cache
@@ -47,22 +49,22 @@ lazy val client = (project in file("client")).settings(
   persistLauncher in Test := false,
   libraryDependencies ++= Seq(
 //    "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3",
-    "com.github.japgolly.scalajs-react" %%% "core" % "0.11.1",
+    "com.github.japgolly.scalajs-react" %%% "core" % "1.0.0-RC2",
     "com.lihaoyi" %%% "upickle" % upickleVersion
   ),
   jsDependencies ++= Seq(
-    "org.webjars.bower" % "react" % "15.3.2"
+    "org.webjars.bower" % "react" % "15.4.2"
       /        "react-with-addons.js"
       minified "react-with-addons.min.js"
       commonJSName "React",
 
-    "org.webjars.bower" % "react" % "15.3.2"
+    "org.webjars.bower" % "react" % "15.4.2"
       /         "react-dom.js"
       minified  "react-dom.min.js"
       dependsOn "react-with-addons.js"
       commonJSName "ReactDOM",
 
-    "org.webjars.bower" % "react" % "15.3.2"
+    "org.webjars.bower" % "react" % "15.4.2"
       /         "react-dom-server.js"
       minified  "react-dom-server.min.js"
       dependsOn "react-dom.js"

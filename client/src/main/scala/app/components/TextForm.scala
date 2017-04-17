@@ -1,8 +1,8 @@
 package app.components
 
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton, TextArea}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants
 import shared.forms.{FormData, Forms}
 import shared.messages.{Language, Messages}
@@ -29,7 +29,7 @@ object TextForm {
              editMode: Boolean = false) =
     comp(Props(language, formData, cancelled, submitComplete, submitButtonName, editMode))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State(langOfFormData = p.language, formData = p.formData, waitPaneOpened = false))
     .renderPS{($,props,state)=>
       implicit val lang = props.language
@@ -61,12 +61,12 @@ object TextForm {
         <.div(if (state.formData.hasErrors) "There are errors" else ""),
         SubmitButton(props.submitButtonName),
         Button(id = "text-form-cancel-btn", name = "Cancel", onClick = props.cancelled),
-        if (state.waitPaneOpened) WaitPane() else EmptyTag
+        if (state.waitPaneOpened) WaitPane() else EmptyVdom
       )
     }.componentWillReceiveProps{$=>
-      if ($.nextProps.language != $.currentState.langOfFormData) {
-        $.$.modState(_.copy(
-          formData = $.currentState.formData
+      if ($.nextProps.language != $.state.langOfFormData) {
+        $.modState(_.copy(
+          formData = $.state.formData
             .copy(language = $.nextProps.language)
             .validate(Forms.textForm.transformations)
         ))

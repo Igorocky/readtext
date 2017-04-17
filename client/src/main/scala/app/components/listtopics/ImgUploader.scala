@@ -2,8 +2,8 @@ package app.components.listtopics
 
 import app.Utils
 import app.components.forms.FormCommonParams
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{ReactComponentB, _}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react._
 import org.scalajs.dom.raw.{File, FormData}
 import shared.SharedConstants._
 import shared.dto.Topic
@@ -31,7 +31,7 @@ object ImgUploader {
       ).void
     ))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State(p.topic.images))
     .renderBackend[Backend]
     .componentWillMount { $ =>
@@ -45,10 +45,10 @@ object ImgUploader {
       <.div(
         <.input.file(
           ^.value := "",
-          ^.onChange ==> { (e: ReactEventI) => uploadImage(e.target.files(0)) }
+          ^.onChange ==> { (e: ReactEventFromInput) => uploadImage(e.target.files(0)) }
           , ^.accept := "image/*"
         ),
-        state.images.map { img =>
+        state.images.toVdomArray { img =>
           ImageCmp(
             id = img,
             url = props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img,

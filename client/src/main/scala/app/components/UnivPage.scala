@@ -1,7 +1,7 @@
 package app.components
 
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.messages.Language
 
 object UnivPage {
@@ -10,10 +10,10 @@ object UnivPage {
 
   def apply(language: Language, changeLangUrl: String,
             onLanguageChange: Language => Callback,
-            content: ReactElement) =
+            content: VdomElement) =
     comp(Props(language, changeLangUrl, onLanguageChange, content))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .render_P { props =>
       <.div(
         <.div(

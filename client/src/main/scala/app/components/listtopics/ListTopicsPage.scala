@@ -2,10 +2,11 @@ package app.components.listtopics
 
 import app.components._
 import app.{JsGlobalScope, Utils}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactExt_DomNodeO, Ref}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.component.Scala.Unmounted
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
-import org.scalajs.dom.raw.{ClipboardEvent, HTMLInputElement}
+import org.scalajs.dom.raw.ClipboardEvent
 import shared.forms.{DataResponse, ErrorResponse}
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
@@ -17,9 +18,9 @@ object ListTopicsPage {
 
   protected type State = ListTopicsState
 
-  def apply(str: String) = comp(read[Props](str))
+  def apply(str: String): Unmounted[Props, State, Backend] = comp(read[Props](str))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(_ => ListTopicsState())
     .renderBackend[Backend]
     .componentWillMount { $ =>
@@ -89,7 +90,7 @@ object ListTopicsPage {
       content =
         <.div(
           header(state, props),
-          state.paragraphs.map{paragraph =>
+          state.paragraphs.toVdomArray{paragraph =>
             ParagraphCmp(paragraph, state.globalScope)
           },
           waitPaneIfNecessary(state),
@@ -103,10 +104,10 @@ object ListTopicsPage {
     def waitPaneIfNecessary(state: State): TagMod =
       if (state.waitPane) {
         if (state.okDiagText.isDefined || state.okCancelDiagText.isDefined) WaitPane() else WaitPane("rgba(255,255,255,0.0)")
-      } else EmptyTag
+      } else EmptyVdom
 
     def okDialogIfNecessary(state: State): TagMod =
-      if (state.okDiagText.isDefined) {
+      state.okDiagText.whenDefined(text=>
         ModalDialog(
           width = "400px",
           content = <.div(
@@ -114,25 +115,21 @@ object ListTopicsPage {
             <.div(Button(id = "ok-diag-ok-btn", name = "OK", onClick = closeOkDialog))
           )
         )
-      } else {
-        EmptyTag
-      }
+      )
 
     def okCancelDialogIfNecessary(state: State): TagMod =
-      if (state.okCancelDiagText.isDefined) {
+      state.okCancelDiagText.whenDefined(text =>
         ModalDialog(
           width = "400px",
           content = <.div(
-            <.div(state.okCancelDiagText.get),
+            <.div(text),
             <.div(
               Button(id = "ok-cancel-diag-ok-btn", name = "OK", onClick = closeOkCancelDialog >> state.onOk),
               Button(id = "ok-cancel-diag-cancel-btn", name = "Cancel", onClick = closeOkCancelDialog >> state.onCancel)
             )
           )
         )
-      } else {
-        EmptyTag
-      }
+      )
 
     def openWaitPane: Callback = $.modState(_.copy(waitPane = true))
     def closeWaitPane: Callback = $.modState(_.copy(waitPane = false))

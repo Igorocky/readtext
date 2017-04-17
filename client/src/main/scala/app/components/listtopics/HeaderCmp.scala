@@ -1,8 +1,8 @@
 package app.components.listtopics
 
 import app.components.Button
-import japgolly.scalajs.react.ReactComponentB
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.ScalaComponent
+import japgolly.scalajs.react.vdom.html_<^._
 import shared.dto.Paragraph
 import shared.forms.Forms
 import upickle.default.read
@@ -15,7 +15,7 @@ object HeaderCmp {
 
   def apply(globalScope: GlobalScope, paragraphs: List[Paragraph]) = comp(Props(globalScope, paragraphs))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
     .renderPS { ($, p, s) =>
       <.div(^.`class`:=this.getClass.getSimpleName,
@@ -53,7 +53,7 @@ object HeaderCmp {
             )
           )
         else
-          EmptyTag
+          EmptyVdom
       )
     }.build
 

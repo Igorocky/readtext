@@ -1,7 +1,7 @@
 package app.components
 
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
+import japgolly.scalajs.react.{Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.Ajax
 import shared.messages.{Language, Languages}
 
@@ -17,12 +17,12 @@ object LanguageSelector {
             onChange: Language => Callback) =
     comp(Props(currLang, supportedLanguages, url, onChange))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .render_P{props =>
       <.table(
         <.tbody(
           <.tr(
-            props.supportedLanguages.map{ lang=>
+            props.supportedLanguages.toTagMod{ lang=>
               <.td(
                 if (lang == props.currLang) {
                   <.b(lang.code)

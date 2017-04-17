@@ -2,8 +2,8 @@ package app.components.listtopics
 
 import app.Utils.post
 import app.components.{Button, Checkbox}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react._
 import shared.SharedConstants.{HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, ParagraphUpdate, Topic}
 import shared.forms.Forms
@@ -18,9 +18,10 @@ object ParagraphCmp {
   protected case class State(editMode: Boolean = false,
                              createTopicDiagOpened: Boolean = false)
 
-  def apply(paragraph: Paragraph, globalScope: GlobalScope) = comp.withKey(paragraph.id.get)(Props(paragraph, globalScope))
+  def apply(paragraph: Paragraph, globalScope: GlobalScope) =
+    comp.withKey(paragraph.id.get.toString)(Props(paragraph, globalScope))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
     .renderBackend[Backend]
     .build
@@ -42,7 +43,7 @@ object ParagraphCmp {
             deleteParagraphButton(props, props.paragraph, props.globalScope.paragraphDeleted(props.paragraph.id.get)),
             if (state.createTopicDiagOpened) {
               createNewTopicDiag(props.paragraph, props, $.modState(_.copy(createTopicDiagOpened = false)))
-            } else EmptyTag
+            } else EmptyVdom
           )
         } else {
           ParagraphForm(
@@ -60,7 +61,7 @@ object ParagraphCmp {
             submitButtonName = "Save"
           )
         },
-        if (props.paragraph.expanded) listTopics(props.paragraph, props) else EmptyTag
+        if (props.paragraph.expanded) listTopics(props.paragraph, props) else EmptyVdom
       )
 
     def editParagraphButton(paragraph: Paragraph) =
@@ -133,7 +134,7 @@ object ParagraphCmp {
       )
 
     def listTopics(p: Paragraph, props: Props) =
-      p.topics.map{topic=>
+      p.topics.toVdomArray{topic=>
         TopicCmp(
           globalScope = props.globalScope,
           topic = topic

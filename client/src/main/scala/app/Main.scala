@@ -2,15 +2,15 @@ package app
 
 import app.components.listtopics.ListTopicsPage
 import app.components.{ListTextsPage, SimplePage}
-import japgolly.scalajs.react.{ReactDOM, ReactElement}
+import japgolly.scalajs.react.component.Scala.Unmounted
 import org.scalajs.dom
-import shared.{SharedConstants, StrUtils}
 import shared.pageparams.{ListTextsPageParams, ListTopicsPageParams, SimplePageParams}
+import shared.{SharedConstants, StrUtils}
 
 import scala.scalajs.js
 
 object Main extends js.JSApp {
-  private val componentMap = Map[String, String => ReactElement](
+  private val componentMap = Map[String, String => Unmounted[_, _, _]](
     SimplePageParams.getClass.getName -> SimplePage.apply
     ,ListTextsPageParams.getClass.getName -> ListTextsPage.apply
     ,ListTopicsPageParams.getClass.getName -> ListTopicsPage.apply
@@ -21,10 +21,7 @@ object Main extends js.JSApp {
     println("pageType = " + pageType)
     val customData: String = StrUtils.fromBytesStr(cropCdata(getValueFromDiv(SharedConstants.CUSTOM_DATA_DIV_ID)))
     println("customData = |>" + customData + "<|")
-    ReactDOM.render(
-      componentMap(pageType)(customData),
-      dom.document.getElementById(SharedConstants.UNIV_PAGE_CONTENT_DIV_ID)
-    )
+    componentMap(pageType)(customData).renderIntoDOM(dom.document.getElementById(SharedConstants.UNIV_PAGE_CONTENT_DIV_ID))
   }
 
   private def getValueFromDiv(id: String) = dom.document.getElementById(id).innerHTML

@@ -1,13 +1,11 @@
 package app.components.listtopics
 
+import app.components.Button
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
-import app.components.{Button, WaitPane}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants
-import shared.dto.Paragraph
 import shared.forms.{FormData, Forms}
-import upickle.default._
 
 object ParagraphForm {
 
@@ -38,7 +36,7 @@ object ParagraphForm {
       editMode
     ))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(props => State(formData = props.formData))
     .renderPS{($,props,state)=>
       implicit val lang = props.globalScope.language
@@ -62,9 +60,9 @@ object ParagraphForm {
         Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
       )
     }.componentWillReceiveProps{$=>
-      if ($.nextProps.globalScope.language != $.currentState.formData.language) {
-        $.$.modState(_.copy(
-          formData = $.currentState.formData
+      if ($.nextProps.globalScope.language != $.state.formData.language) {
+        $.modState(_.copy(
+          formData = $.state.formData
             .copy(language = $.nextProps.globalScope.language)
             .validate(Forms.textForm.transformations)
         ))

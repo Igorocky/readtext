@@ -1,8 +1,8 @@
 package app.components.forms
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom.raw.HTMLInputElement
+import japgolly.scalajs.react.{ScalaComponent, _}
+import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.html
 import shared.SharedConstants._
 import shared.messages.Language
 
@@ -18,7 +18,7 @@ object TextArea {
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
   def apply(name: String, width: Int = 150, rows: Int = 10)
-           (implicit formParams: FormCommonParams, language: Language): ReactElement =
+           (implicit formParams: FormCommonParams, language: Language): VdomElement =
     comp(Props(
       name = name
       ,value = formParams.formData.get(name).value
@@ -29,17 +29,16 @@ object TextArea {
       ,editMode = formParams.editMode
     ))
 
-  private val theInput: RefSimple[HTMLInputElement] = Ref[HTMLInputElement]("theInput")
-
   private class Backend($: BackendScope[Props, State]) {
+    private var theInput: html.Element = _
+
     def render(props: Props, state: State) = {
       <.div(
         if (state.focused) {
-          <.textarea(
-            ^.ref:=theInput,
+          <.textarea.ref(theInput = _)(
             ^.name := props.name,
             ^.value := props.value,
-            ^.onChange ==> { (e: ReactEventI) =>
+            ^.onChange ==> { (e: ReactEventFromInput) =>
               val newValue = e.target.value
               props.onChange(newValue)>>$.modState(_.copy(value = newValue))
             },
@@ -52,17 +51,17 @@ object TextArea {
           <.div(
             ^.`class`:=EDITABLE_DIV +
               " " + (if (state.value != state.initialValue) EDITABLE_DIV_CHANGED else ""),
-            ^.onClick --> $.modState(_.copy(focused = true), Callback{theInput($).tryFocus.runNow()}),
+            ^.onClick --> $.modState(_.copy(focused = true), Callback(theInput.focus())),
             ^.minWidth:=s"${props.width}px",
             if (valueIsEmpty) <.div(^.`class`:=EDITABLE_DIV_EMPTY, ".") else state.value
           )
         },
-        props.errors.map(<.div(_))
+        props.errors.toTagMod(<.div(_))
       )
     }
   }
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
     .renderBackend[Backend]
     .build

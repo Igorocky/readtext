@@ -1,13 +1,12 @@
 package app.components.listtopics
 
+import app.components.Button
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
-import app.components.{Button, WaitPane}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{Callback, ReactComponentB}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants
 import shared.dto.Topic
 import shared.forms.{FormData, Forms}
-import upickle.default._
 
 object TopicForm {
   protected case class Props(globalScope: GlobalScope,
@@ -40,7 +39,7 @@ object TopicForm {
       editMode
     ))
 
-  private lazy val comp = ReactComponentB[Props](this.getClass.getName)
+  private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState_P(p => State(formData = p.formData))
     .renderPS{($,props,state)=>
       implicit val fParams = FormCommonParams(
@@ -63,14 +62,14 @@ object TopicForm {
           props.globalScope,
           props.topic.get,
           name = SharedConstants.IMAGES
-        ) else EmptyTag,
+        ) else EmptyVdom,
         SubmitButton(props.submitButtonName),
         Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
       )
     }.componentWillReceiveProps{$=>
-      if ($.nextProps.globalScope.language != $.currentState.formData.language) {
-        $.$.modState(_.copy(
-          formData = $.currentState.formData
+      if ($.nextProps.globalScope.language != $.state.formData.language) {
+        $.modState(_.copy(
+          formData = $.state.formData
             .copy(language = $.nextProps.globalScope.language)
             .validate(Forms.textForm.transformations)
         ))
