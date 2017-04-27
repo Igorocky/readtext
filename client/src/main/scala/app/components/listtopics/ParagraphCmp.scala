@@ -1,9 +1,9 @@
 package app.components.listtopics
 
-import app.Utils.post
-import app.components.{Button, Checkbox}
-import japgolly.scalajs.react.vdom.html_<^._
+import app.Utils._
+import app.components.Checkbox
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants.{HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, ParagraphUpdate, Topic}
 import shared.forms.Forms
@@ -27,6 +27,8 @@ object ParagraphCmp {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
+    private val checkUncheckAllBtnSize = "16"
+
     def render(props: Props, state: State) =
       <.div(^.`class` := ParagraphCmp.getClass.getSimpleName + (if (props.paragraph.checked) " checked" else ""),
         if (!state.editMode) {
@@ -64,46 +66,43 @@ object ParagraphCmp {
         if (props.paragraph.expanded) listTopics(props.paragraph, props) else EmptyVdom
       )
 
-    def editParagraphButton(paragraph: Paragraph) =
-      Button(
-        id = "edit-paragraph-btn-" + paragraph.id.get,
-        name = "Rename",
-        onClick = $.modState(_.copy(editMode = true))
-      )
+    def editParagraphButton(paragraph: Paragraph) = buttonWithIcon(
+      onClick = $.modState(_.copy(editMode = true)),
+      btnType = BTN_INFO,
+      iconType = "fa-pencil-square-o"
+    )
 
-    def checkAllTopicsButton(paragraph: Paragraph, props: Props) =
-      Button(
-        id = "checkAllTopicsButton-" + paragraph.id.get,
-        name = "Check all",
-        onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, true)))
-      )
+    def checkAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
+      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, true))),
+      btnType = BTN_INFO,
+      imgUrl = "assets/images/check-all.png",
+      imgSize = checkUncheckAllBtnSize
+    )
 
-    def uncheckAllTopicsButton(paragraph: Paragraph, props: Props) =
-      Button(
-        id = "uncheckAllTopicsButton-" + paragraph.id.get,
-        name = "Uncheck all",
-        onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, false)))
-      )
+    def uncheckAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
+      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, false))),
+      btnType = BTN_INFO,
+      imgUrl = "assets/images/uncheck-all.png",
+      imgSize = checkUncheckAllBtnSize
+    )
 
-    def createTopicButton(paragraph: Paragraph) =
-      Button(
-        id = "create-topic-btn-" + paragraph.id.get,
-        name = "Create topic",
-        onClick = $.modState(_.copy(createTopicDiagOpened = true))
-      )
+    def createTopicButton(paragraph: Paragraph) = buttonWithText(
+      onClick = $.modState(_.copy(createTopicDiagOpened = true)),
+      btnType = BTN_INFO,
+      text = "Create topic"
+    )
 
-    def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) =
-      Button(
-        id = "delete-paragraph-btn-" + paragraph.id.get,
-        name = "Delete paragraph",
-        onClick = props.globalScope.openOkCancelDialog1(
-          s"Delete paragraph '${paragraph.name}'?",
-          post(props.globalScope.pageParams.deleteParagraphUrl, paragraph.id.get.toString){
-            case Success(_) => onDeleted
-            case Failure(th) => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
-          }.void
-        )
-      )
+    def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) = buttonWithIcon(
+      onClick = props.globalScope.openOkDialog1(
+        s"Delete paragraph '${paragraph.name}'?",
+        post(props.globalScope.pageParams.deleteParagraphUrl, paragraph.id.get.toString){
+          case Success(_) => onDeleted
+          case Failure(th) => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
+        }.void
+      ),
+      btnType = BTN_DANGER,
+      iconType = "fa-trash-o"
+    )
 
   def checkboxForParagraph(paragraph: Paragraph, props: Props) =
     Checkbox(
@@ -112,26 +111,23 @@ object ParagraphCmp {
       checked = paragraph.checked
     )
 
-  def expandParagraphButton(paragraph: Paragraph, props: Props) =
-    Button(
-      id = "expandPar-" + paragraph.id.get,
-      name = if (paragraph.expanded) "-" else "+",
-      onClick = props.globalScope.expandParagraphsAction(List((paragraph.id.get, !paragraph.expanded)))
+  def expandParagraphButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
+    onClick = props.globalScope.expandParagraphsAction(List((paragraph.id.get, !paragraph.expanded))),
+    btnType = BTN_LINK,
+    iconType = if (paragraph.expanded) "fa-minus-square" else "fa-plus-square"
+  )
+
+    def moveUpButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
+      onClick = props.globalScope.moveUpParagraphAction(paragraph.id.get),
+      btnType = BTN_INFO,
+      iconType = "fa-long-arrow-up"
     )
 
-    def moveUpButton(paragraph: Paragraph, props: Props) =
-      Button(
-        id = "move-up-Par-" + paragraph.id.get,
-        name = "Up",
-        onClick = props.globalScope.moveUpParagraphAction(paragraph.id.get)
-      )
-
-    def moveDownButton(paragraph: Paragraph, props: Props) =
-      Button(
-        id = "move-down-Par-" + paragraph.id.get,
-        name = "Down",
-        onClick = props.globalScope.moveDownParagraphAction(paragraph.id.get)
-      )
+    def moveDownButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
+      onClick = props.globalScope.moveDownParagraphAction(paragraph.id.get),
+      btnType = BTN_INFO,
+      iconType = "fa-long-arrow-down"
+    )
 
     def listTopics(p: Paragraph, props: Props) =
       p.topics.toVdomArray{topic=>
@@ -150,7 +146,7 @@ object ParagraphCmp {
         ),
         cancelled = closeDiag,
         submitComplete = str => closeDiag >> props.globalScope.topicCreated(read[Topic](str)),
-        textFieldLabel = "New topic",
+        textFieldLabel = "New topic:",
         globalScope = props.globalScope,
         submitButtonName = "Create"
       )

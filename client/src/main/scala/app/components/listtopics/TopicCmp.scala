@@ -1,7 +1,7 @@
 package app.components.listtopics
 
-import app.Utils
-import app.components.{Button, Checkbox}
+import app.Utils._
+import app.components.Checkbox
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants.HIGHLIGHT_CHILD_SPAN_ON_HOVER
@@ -70,46 +70,40 @@ object TopicCmp {
       checked = topic.checked
     )
 
-  def moveUpButton(topic: Topic, props: Props) =
-    Button(
-      id = "move-up-topic-" + topic.id.get,
-      name = "Up",
-      onClick = props.globalScope.moveUpTopicAction(topic.id.get)
-    )
+  def moveUpButton(topic: Topic, props: Props) = buttonWithIcon(
+    onClick = props.globalScope.moveUpTopicAction(topic.id.get),
+    btnType = BTN_INFO,
+    iconType = "fa-long-arrow-up"
+  )
 
-  def moveDownButton(topic: Topic, props: Props) =
-    Button(
-      id = "move-down-topic-" + topic.id.get,
-      name = "Down",
-      onClick = props.globalScope.moveDownTopicAction(topic.id.get)
-    )
+  def moveDownButton(topic: Topic, props: Props) = buttonWithIcon(
+    onClick = props.globalScope.moveDownTopicAction(topic.id.get),
+    btnType = BTN_INFO,
+    iconType = "fa-long-arrow-down"
+  )
 
-  def editTopicButton(topic: Topic, props: Props, onClick: Callback) =
-    Button(
-      id = "edit-topic-btn-" + topic.id.get,
-      name = "Edit",
-      onClick = onClick
-    )
+  def editTopicButton(topic: Topic, props: Props, onClick: Callback) = buttonWithIcon(
+    onClick = onClick,
+    btnType = BTN_INFO,
+    iconType = "fa-pencil-square-o"
+  )
 
-  def deleteTopicButton(topic: Topic, props: Props) =
-    Button(
-      id = "delete-topic-btn-" + topic.id.get,
-      name = "Delete topic",
-      onClick = props.globalScope.openOkCancelDialog1(
-        s"Delete topic '${topic.title}'?",
-        Utils.post(url = props.globalScope.pageParams.deleteTopicUrl, data = topic.id.get.toString) {
-          case Success(_) => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
-          case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
-        }.void
-      )
-    )
+  def deleteTopicButton(topic: Topic, props: Props) = buttonWithIcon(
+    onClick = props.globalScope.openOkDialog1(
+      s"Delete topic '${topic.title}'?",
+      post(url = props.globalScope.pageParams.deleteTopicUrl, data = topic.id.get.toString) {
+        case Success(_) => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
+        case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
+      }.void
+    ),
+    btnType = BTN_DANGER,
+    iconType = "fa-trash-o"
+  )
 
-  def showImgButton(topic: Topic, state: State, onClick: Callback) =
-    <.button(
-      ^.`type`:="button",
-      if (topic.images.isEmpty) ^.disabled := true else EmptyVdom,
-      ^.onClick --> onClick,
-      ^.`class`:="btn btn-info",
-      <.i(^.`class`:="fa fa-trash-o fa-lg")
-    )
+  def showImgButton(topic: Topic, state: State, onClick: Callback) = buttonWithIcon(
+    onClick = onClick,
+    btnType = if (topic.images.isEmpty) BTN_DEFAULT else BTN_INFO,
+    iconType = "fa-bars",
+    disabled = topic.images.isEmpty
+  )
 }

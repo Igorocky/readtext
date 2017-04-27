@@ -1,6 +1,6 @@
 package app.components.listtopics
 
-import app.components.Button
+import app.Utils.{BTN_DEFAULT, buttonWithText}
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
@@ -55,16 +55,20 @@ object TopicForm {
         editMode = false
       )
       <.div(
-        <.div(if (state.formData.hasErrors) "There are errors" else ""),
+        ^.`class`:=this.getClass.getSimpleName + " form",
         props.textFieldLabel,
-        FormTextField(name = SharedConstants.TITLE, focusOnMount = !props.editMode),
+        FormTextField(name = SharedConstants.TITLE, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
         if (props.editMode) ImgUploader(
           props.globalScope,
           props.topic.get,
           name = SharedConstants.IMAGES
         ) else EmptyVdom,
         SubmitButton(props.submitButtonName),
-        Button(id = "topic-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
+        buttonWithText(
+          onClick = props.cancelled,
+          btnType = BTN_DEFAULT,
+          text = "Cancel"
+        )
       )
     }.componentWillReceiveProps{$=>
       if ($.nextProps.globalScope.language != $.state.formData.language) {

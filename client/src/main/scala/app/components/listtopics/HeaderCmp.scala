@@ -1,6 +1,6 @@
 package app.components.listtopics
 
-import app.components.Button
+import app.Utils._
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.html_<^._
 import shared.dto.Paragraph
@@ -20,20 +20,20 @@ object HeaderCmp {
     .renderPS { ($, p, s) =>
       <.div(^.`class`:=this.getClass.getSimpleName,
         <.div(
-          Button(
-            id = "Expand-All-btn",
-            name = "Expand All",
-            onClick = p.globalScope.expandParagraphsAction(p.paragraphs.map(p => (p.id.get, true)))
+          buttonWithText(
+            onClick = p.globalScope.expandParagraphsAction(p.paragraphs.map(p => (p.id.get, true))),
+            btnType = BTN_WARNING,
+            text = "Expand All"
           ),
-          Button(
-            id = "Collapse-All-btn",
-            name = "Collapse All",
-            onClick = p.globalScope.expandParagraphsAction(p.paragraphs.map(p => (p.id.get, false)))
+          buttonWithText(
+            onClick = p.globalScope.expandParagraphsAction(p.paragraphs.map(p => (p.id.get, false))),
+            btnType = BTN_WARNING,
+            text = "Collapse All"
           ),
-          Button(
-            id = "open-new-paragraph-diag-btn",
-            name = "Create paragraph",
-            onClick = $.modState(_.copy(newParagraphFormOpened = true))
+          buttonWithText(
+            onClick = $.modState(_.copy(newParagraphFormOpened = true)),
+            btnType = BTN_WARNING,
+            text = "Create paragraph"
           )
         ),
         if (s.newParagraphFormOpened)

@@ -9,7 +9,7 @@ import shared.pageparams.ListTopicsPageParams
 case class GlobalScope(pageParams: ListTopicsPageParams,
                        openOkDialog: String => Callback,
                        openOkCancelDialog: (String, Callback/*onOk*/, Callback/*onCancel*/) => Callback,
-                       openOkCancelDialog1: (String, Callback/*onOk*/) => Callback,
+                       openOkDialog1: (String, Callback/*onOk*/) => Callback,
                        openWaitPane: Callback,
                        closeWaitPane: Callback,
                        registerPasteListener: (Long, File => Callback) => Callback,

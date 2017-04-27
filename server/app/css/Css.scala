@@ -76,25 +76,37 @@ object Css extends StyleSheet.Standalone {
     def forCss = rgb(r,g,b)
   }
   val color = Color(76,201,63)
-  ".HeaderCmp button.new-par" - (
-    backgroundColor(color.forCss),
-    border(none),
-    borderRadius(5 px),
-    &.hover - (
-      backgroundColor(color.more(0.25).forCss)
-      )
-    )
+//  ".HeaderCmp button.new-par" - (
+//    backgroundColor(color.forCss),
+//    border(none),
+//    borderRadius(5 px),
+//    &.hover - (
+//      backgroundColor(color.more(0.25).forCss)
+//      )
+//    )
+
+  ".HeaderCmp" - (
+    margin(10 px)
+  )
+
+  ".ParagraphCmp" - (
+    padding(5 px),
+    borderRadius(10 px),
+    margin(10 px)
+  )
 
   ".ParagraphCmp.checked" - (
     backgroundColor(rgb(200,200,200))
   )
 
-  ".TopicCmp.checked" - (
-    backgroundColor(rgb(140,140,140))
+  ".TopicCmp" - (
+    margin(0 px, 5 px, 5 px, 45 px),
+    padding(5 px),
+    borderRadius(10 px)
   )
 
-  ".TopicCmp" - (
-    marginLeft(45 px)
+  ".TopicCmp.checked" - (
+    backgroundColor(rgb(140,140,140))
   )
 
   ".TopicCmp img" - (
@@ -102,10 +114,43 @@ object Css extends StyleSheet.Standalone {
   )
 
   "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover > span" - (
-    backgroundColor(yellow)
+    backgroundColor(yellow),
+    borderRadius(5 px)
   )
 
   "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover" - (
-    outline(solid, 2 px, yellow)
+//    outline(solid, 2 px, yellow)
   )
+
+  ".btn" - (
+    marginLeft(2 px),
+    marginRight(2 px)
+  )
+
+  ".form" - (
+    backgroundColor(c"#d9e9f7"),
+    marginTop(10 px),
+    borderRadius(10 px),
+    padding(10 px),
+    fontSize(14 px),
+    fontWeight.normal
+  )
+
+  ".form button" - (
+    marginTop(10 px)
+  )
+
+  ".modal-diag-content" - (
+    borderRadius(10 px)
+  )
+
+  ".modal-diag-content button" - (
+    borderRadius(10 px),
+    marginTop(10 px),
+    width(60 px)
+  )
+
+
+
+
 }

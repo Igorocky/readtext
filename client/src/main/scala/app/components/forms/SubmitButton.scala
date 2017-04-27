@@ -1,14 +1,12 @@
 package app.components.forms
 
-import app.components.Button
-import japgolly.scalajs.react.vdom.VdomElement
+import app.Utils._
 
 object SubmitButton {
-  def apply(name: String)(implicit formParams: FormCommonParams): VdomElement =
-    Button(
-      id = formParams.id + "-submit-btn",
-      name = name,
-      disabled = formParams.formData.hasErrors,
-      onClick = formParams.submit
-    )
+  def apply(name: String)(implicit formParams: FormCommonParams) = buttonWithText(
+    onClick = formParams.submit,
+    btnType = if (formParams.formData.hasErrors) BTN_DANGER else BTN_PRIMARY,
+    text = name,
+    disabled = formParams.formData.hasErrors
+  )
 }

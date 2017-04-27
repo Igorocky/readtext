@@ -14,11 +14,12 @@ object FormTextField {
                              onChange: String => CallbackTo[_],
                              width: Int,
                              editMode: Boolean,
-                             onEnter: Callback)
+                             onEnter: Callback,
+                             placeholder: String)
 
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
-  def apply(name: String, width: Int = 150, focusOnMount: Boolean = false)
+  def apply(name: String, width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false)
            (implicit formParams: FormCommonParams) =
     comp(Props(
       name = name
@@ -29,6 +30,7 @@ object FormTextField {
       ,width = width
       ,editMode = formParams.editMode
       ,onEnter = formParams.submit
+      ,placeholder = placeholder
     ))
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -36,16 +38,19 @@ object FormTextField {
 
     def render(props: Props, state: State) = {
       <.div(
+        if (props.errors.nonEmpty) ^.`class`:="has-error" else EmptyVdom,
         if (state.focused) {
           <.input.text.ref(theInput = _)(
+            ^.`class`:="form-control",
             ^.name := props.name,
+            ^.placeholder:=props.placeholder,
             ^.value := props.value,
             ^.onChange ==> { (e: ReactEventFromInput) =>
               val newValue = e.target.value
               props.onChange(newValue)>>$.modState(_.copy(value = newValue))
             },
             ^.onBlur --> (if (props.editMode) $.modState(_.copy(focused = false)) else Callback.empty),
-            ^.minWidth:=s"${props.width}px",
+            ^.maxWidth:=s"${props.width}px",
             ^.onKeyPress ==> { (e: ReactKeyboardEvent) =>
               if (e.charCode == 13) {
                 props.onEnter
@@ -64,7 +69,7 @@ object FormTextField {
             if (valueIsEmpty) <.div(^.`class`:=EDITABLE_DIV_EMPTY, ".") else state.value
           )
         },
-        props.errors.toTagMod(<.div(_))
+        props.errors.toTagMod(<.div(^.color:="#a94442", _))
       )
     }
   }

@@ -1,6 +1,6 @@
 package app.components.listtopics
 
-import app.components.Button
+import app.Utils._
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -53,11 +53,15 @@ object ParagraphForm {
         editMode = props.editMode
       )
       <.div(
-        <.div(if (state.formData.hasErrors) "There are errors" else ""),
+        ^.`class`:=this.getClass.getSimpleName + " form",
         props.textFieldLabel,
-        FormTextField(name = SharedConstants.TITLE, focusOnMount = true),
+        FormTextField(name = SharedConstants.TITLE, focusOnMount = true, width = 700, placeholder = "Paragraph Title"),
         SubmitButton(props.submitButtonName),
-        Button(id = "paragraph-form-cancel-btn", name = "Cancel", onClick = props.cancelled)
+        buttonWithText(
+          onClick = props.cancelled,
+          btnType = BTN_DEFAULT,
+          text = "Cancel"
+        )
       )
     }.componentWillReceiveProps{$=>
       if ($.nextProps.globalScope.language != $.state.formData.language) {

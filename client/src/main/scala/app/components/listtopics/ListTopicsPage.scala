@@ -1,5 +1,6 @@
 package app.components.listtopics
 
+import app.Utils._
 import app.components._
 import app.{JsGlobalScope, Utils}
 import japgolly.scalajs.react._
@@ -32,7 +33,7 @@ object ListTopicsPage {
         pageParams = $.props,
         openOkDialog = str => $.backend.openOkDialog(str),
         openOkCancelDialog = (text, onOk, onCancel) => $.backend.openOkCancelDialog(text, onOk, onCancel),
-        openOkCancelDialog1 = (text, onOk) => $.backend.openOkCancelDialog(text, onOk),
+        openOkDialog1 = (text, onOk) => $.backend.openOkCancelDialog(text, onOk),
         openWaitPane = $.backend.openWaitPane,
         closeWaitPane = $.backend.closeWaitPane,
         registerPasteListener = (id, listener) => $.modState(_.registerListener(id,listener)),
@@ -112,7 +113,11 @@ object ListTopicsPage {
           width = "400px",
           content = <.div(
             <.div(state.okDiagText.get),
-            <.div(Button(id = "ok-diag-ok-btn", name = "OK", onClick = closeOkDialog))
+            buttonWithText(
+              onClick = closeOkDialog,
+              btnType = BTN_PRIMARY,
+              text = "OK"
+            )
           )
         )
       )
@@ -124,8 +129,16 @@ object ListTopicsPage {
           content = <.div(
             <.div(text),
             <.div(
-              Button(id = "ok-cancel-diag-ok-btn", name = "OK", onClick = closeOkCancelDialog >> state.onOk),
-              Button(id = "ok-cancel-diag-cancel-btn", name = "Cancel", onClick = closeOkCancelDialog >> state.onCancel)
+              buttonWithText(
+                onClick = closeOkCancelDialog >> state.onOk,
+                btnType = BTN_PRIMARY,
+                text = "OK"
+              ),
+              buttonWithText(
+                onClick = closeOkCancelDialog >> state.onCancel,
+                btnType = BTN_DEFAULT,
+                text = "Cancel"
+              )
             )
           )
         )
