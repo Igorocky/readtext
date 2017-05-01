@@ -89,6 +89,10 @@ case class ListTopicsState(globalScope: GlobalScope = null,
     modParagraphById(par.id.get, _.copy(topics = moveDown(id, par.topics)))
   }
 
+  def setTags(topicId: Long, tags: List[String]): ListTopicsState = {
+    modTopicById(topicId, _.copy(tags = tags))
+  }
+
   private def moveUp[E <: {val id: Option[Long]}](id: Long, elems: List[E]): List[E] = {
     val idx = elems.indexWhere(_.id.get == id)
     if (idx == 0) elems else {

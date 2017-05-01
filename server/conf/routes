@@ -32,3 +32,5 @@ POST     /upParagraph                         controllers.TopicController.upPara
 POST     /upTopic                         controllers.TopicController.upTopic
 POST     /downParagraph                         controllers.TopicController.downParagraph
 POST     /downTopic                         controllers.TopicController.downTopic
+POST     /addTagForTopic                         controllers.TopicController.addTagForTopic
+POST     /removeTagFromTopic                         controllers.TopicController.removeTagFromTopic

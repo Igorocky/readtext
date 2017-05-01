@@ -75,7 +75,7 @@ object Css extends StyleSheet.Standalone {
     }
     def forCss = rgb(r,g,b)
   }
-  val color = Color(76,201,63)
+//  val color = Color(76,201,63)
 //  ".HeaderCmp button.new-par" - (
 //    backgroundColor(color.forCss),
 //    border(none),
@@ -113,14 +113,14 @@ object Css extends StyleSheet.Standalone {
     marginLeft(10 px)
   )
 
-  "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover > span" - (
+  "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover > span." + HIGHLIGHTED - (
     backgroundColor(yellow),
     borderRadius(5 px)
   )
 
-  "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover" - (
+//  "div." + HIGHLIGHT_CHILD_SPAN_ON_HOVER + ":hover" - (
 //    outline(solid, 2 px, yellow)
-  )
+//  )
 
   ".btn" - (
     marginLeft(2 px),
@@ -150,7 +150,32 @@ object Css extends StyleSheet.Standalone {
     width(60 px)
   )
 
+  ".TagsCmp > div" - (
+    display.inlineBlock
+  )
 
+  ".TagsCmp > div.has-error > div" - (
+    display.none
+  )
+
+  ".tag" - (
+    backgroundColor(c"#2af32a"),
+    borderRadius(10 px),
+    padding(1 px, 0 px, 1 px, 10 px),
+    margin(2 px)
+  )
+
+  ".rem-tag-btn" - (
+    backgroundColor.grey,
+    borderRadius(10 px),
+    color.white,
+    padding(0 px, 5 px),
+    marginLeft(3 px),
+    cursor.pointer,
+    &.hover - (
+      backgroundColor.lightgrey
+    )
+  )
 
 
 }

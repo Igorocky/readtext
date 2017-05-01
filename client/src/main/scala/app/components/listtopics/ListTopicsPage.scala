@@ -73,6 +73,12 @@ object ListTopicsPage {
           id.toString,
           _ => $.modState(_.moveDownTopic(id))
         ),
+        tagAdded = (topicId, newTags) => $.modState(_.setTags(topicId, newTags)),
+        removeTagAction = (topicId, tag) => $.backend.doAction(
+          $.props.removeTagFromTopicUrl,
+          write((topicId, tag)),
+          ans => $.modState(_.setTags(topicId, read[List[String]](ans)))
+        ),
         paragraphCreated = p => $.modState(_.addParagraph(p)),
         paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),
         paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> $.backend.closeWaitPane,

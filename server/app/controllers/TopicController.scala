@@ -68,6 +68,8 @@ class TopicController @Inject()(
             moveDownTopicUrl = routes.TopicController.downTopic.url,
             checkParagraphUrl = routes.TopicController.checkParagraph.url,
             checkTopicsUrl = routes.TopicController.checkTopics.url,
+            addTagForTopicUrl = routes.TopicController.addTagForTopic.url,
+            removeTagFromTopicUrl = routes.TopicController.removeTagFromTopic.url,
             paragraphs = ps
           )),
           pageTitle = "Topics"
@@ -95,21 +97,6 @@ class TopicController @Inject()(
         Future.successful(Ok(formWithErrors(fd)))
     }
   }
-
-//  def deleteParagraph = Action.async { request =>
-//    val parId = request.body.asText.get.toLong
-//    db.run(for {
-//      deletedPar <- paragraphTable.filter(_.id === parId).result.head
-//      _ <- paragraphTable.filter(_.id === parId).delete
-//      seq <- paragraphTable.filter(_.order > deletedPar.order).map(p => (p.id,p.order)).result
-//      _ <- DBIO.sequence(seq.map{
-//        case (movingParId, movingParOrder) =>
-//          paragraphTable.filter(_.id === movingParId).map(_.order).update(movingParOrder - 1)
-//      })
-//    } yield ()) map {_ =>
-//      Ok(dataResponse(SharedConstants.OK))
-//    }
-//  }
 
   def deleteParagraph = Action.async { request =>
     val parId = request.body.asText.get.toLong
@@ -164,21 +151,6 @@ class TopicController @Inject()(
         Future.successful(Ok(formWithErrors(fd)))
     }
   }
-
-//  def deleteTopic = Action.async { request =>
-//    val topId = request.body.asText.get.toLong
-//    db.run(for {
-//      deletedOrder <- topicTable.filter(_.id === topId).map(_.order).result.head
-//      _ <- topicTable.filter(_.id === topId).delete
-//      seq <- topicTable.filter(_.order > deletedOrder).map(t => (t.id,t.order)).result
-//      _ <- DBIO.sequence(seq.map{
-//        case (movingTopId, movingTopOrder) =>
-//          topicTable.filter(_.id === movingTopId).map(_.order).update(movingTopOrder - 1)
-//      })
-//    } yield ()) map {_ =>
-//      Ok(dataResponse(SharedConstants.OK))
-//    }
-//  }
 
   def deleteTopic = Action.async { request =>
     val topId = request.body.asText.get.toLong
@@ -362,6 +334,40 @@ class TopicController @Inject()(
       } yield ()
     ) map {_ =>
       Ok(dataResponse(SharedConstants.OK))
+    }
+  }
+
+  def addTagForTopic = Action.async { request =>
+    readFormDataFromPostRequest(request).values(Forms.tagForm.transformations) match {
+      case Right(values) =>
+        val (topId, tagToAdd) = (
+          values(SharedConstants.ID).asInstanceOf[Long],
+          values(SharedConstants.TAG).asInstanceOf[String]
+        )
+        db.run(
+          for {
+            topic <- topicTable.filter(_.id === topId).result.head
+            topicWithNewTags = topic.copy(tags = tagToAdd::topic.tags)
+            _ <- topicTable.filter(_.id === topId).map(_.tags).update(topicWithNewTags.tagsStr)
+          } yield (topicWithNewTags.tags)
+        ) map {tagsAfterUpdate =>
+          Ok(dataResponse(write(tagsAfterUpdate)))
+        }
+      case Left(fd) =>
+        Future.successful(Ok(formWithErrors(fd)))
+    }
+  }
+
+  def removeTagFromTopic = Action.async { request =>
+    val (topId, tagToRemove) = read[(Long, String)](request.body.asText.get)
+    db.run(
+      for {
+        topic <- topicTable.filter(_.id === topId).result.head
+        topicWithNewTags = topic.copy(tags = topic.tags.filterNot(_ == tagToRemove))
+        _ <- topicTable.filter(_.id === topId).map(_.tags).update(topicWithNewTags.tagsStr)
+      } yield (topicWithNewTags.tags)
+    ) map {tagsAfterUpdate =>
+      Ok(dataResponse(write(tagsAfterUpdate)))
     }
   }
 

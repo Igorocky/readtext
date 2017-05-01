@@ -15,11 +15,12 @@ object FormTextField {
                              width: Int,
                              editMode: Boolean,
                              onEnter: Callback,
-                             placeholder: String)
+                             placeholder: String,
+                             onEscape: Callback)
 
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
-  def apply(name: String, width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false)
+  def apply(name: String, width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false, onEscape: Callback = Callback.empty)
            (implicit formParams: FormCommonParams) =
     comp(Props(
       name = name
@@ -31,6 +32,7 @@ object FormTextField {
       ,editMode = formParams.editMode
       ,onEnter = formParams.submit
       ,placeholder = placeholder
+      ,onEscape = onEscape
     ))
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -51,9 +53,11 @@ object FormTextField {
             },
             ^.onBlur --> (if (props.editMode) $.modState(_.copy(focused = false)) else Callback.empty),
             ^.maxWidth:=s"${props.width}px",
-            ^.onKeyPress ==> { (e: ReactKeyboardEvent) =>
-              if (e.charCode == 13) {
+            ^.onKeyDown ==> { (e: ReactKeyboardEvent) =>
+              if (e.keyCode == 13) {
                 props.onEnter
+              } else if (e.keyCode == 27) {
+                props.onEscape
               } else {
                 Callback.empty
               }

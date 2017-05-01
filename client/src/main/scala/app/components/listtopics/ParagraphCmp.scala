@@ -4,7 +4,7 @@ import app.Utils._
 import app.components.Checkbox
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shared.SharedConstants.{HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
+import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, ParagraphUpdate, Topic}
 import shared.forms.Forms
 import upickle.default.read
@@ -27,7 +27,7 @@ object ParagraphCmp {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    private val checkUncheckAllBtnSize = "16"
+    private val checkUncheckAllBtnSize = "16px"
 
     def render(props: Props, state: State) =
       <.div(^.`class` := ParagraphCmp.getClass.getSimpleName + (if (props.paragraph.checked) " checked" else ""),
@@ -35,7 +35,10 @@ object ParagraphCmp {
           <.div(^.`class` := PARAGRAPH_NAME + " " + HIGHLIGHT_CHILD_SPAN_ON_HOVER,
             checkboxForParagraph(props.paragraph, props),
             expandParagraphButton(props.paragraph, props),
-            <.span(props.paragraph.name),
+            <.span(
+              ^.`class`:=HIGHLIGHTED,
+              props.paragraph.name
+            ),
             checkAllTopicsButton(props.paragraph, props),
             uncheckAllTopicsButton(props.paragraph, props),
             editParagraphButton(props.paragraph),

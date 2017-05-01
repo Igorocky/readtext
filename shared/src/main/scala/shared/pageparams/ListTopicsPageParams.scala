@@ -18,6 +18,8 @@ case class ListTopicsPageParams(headerParams: HeaderParams,
                                 moveDownParagraphUrl: String,
                                 moveDownTopicUrl: String,
                                 checkParagraphUrl: String,
-                                checkTopicsUrl: String) {
+                                checkTopicsUrl: String,
+                                addTagForTopicUrl: String,
+                                removeTagFromTopicUrl: String) {
   lazy val eraseData = copy(paragraphs = null)
 }

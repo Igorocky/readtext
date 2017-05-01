@@ -35,4 +35,9 @@ object Forms {
     SharedConstants.IMAGES -> separatedValues(";") ->
       ((_: Topic).imagesStr)
   )
+
+  lazy val tagForm = form[(Long, String)](
+    SharedConstants.ID -> long -> ((t: (Long, String)) => t._1.toString),
+    SharedConstants.TAG -> nonEmpty -> ((t: (Long, String)) => t._2)
+  )
 }

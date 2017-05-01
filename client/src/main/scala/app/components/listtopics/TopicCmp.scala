@@ -4,7 +4,7 @@ import app.Utils._
 import app.components.Checkbox
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import shared.SharedConstants.HIGHLIGHT_CHILD_SPAN_ON_HOVER
+import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
 import shared.dto.{Topic, TopicUpdate}
 import shared.forms.Forms
 import upickle.default._
@@ -30,11 +30,22 @@ object TopicCmp {
           <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
             checkboxForTopic(props.topic, props),
             showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
-            <.span(props.topic.title),
+            <.span(
+              ^.`class`:=HIGHLIGHTED,
+              props.topic.title
+            ),
             editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
             moveUpButton(props.topic, props),
             moveDownButton(props.topic, props),
-            deleteTopicButton(props.topic, props)
+            deleteTopicButton(props.topic, props),
+            TagsCmp(
+              globalScope = props.globalScope,
+              addTagUrl = props.globalScope.pageParams.addTagForTopicUrl,
+              entityId = props.topic.id.get,
+              tags = props.topic.tags,
+              tagAdded = props.globalScope.tagAdded(props.topic.id.get, _),
+              removeTag = props.globalScope.removeTagAction(props.topic.id.get, _)
+            )
           ),
           if (state.showImg) {
             <.div(props.topic.images.toVdomArray { img =>
