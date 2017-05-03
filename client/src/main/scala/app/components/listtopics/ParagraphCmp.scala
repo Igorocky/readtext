@@ -13,13 +13,14 @@ import scala.util.{Failure, Success}
 
 object ParagraphCmp {
   protected case class Props(paragraph: Paragraph,
-                             globalScope: GlobalScope)
+                             globalScope: GlobalScope,
+                             tagFilter: String)
 
   protected case class State(editMode: Boolean = false,
                              createTopicDiagOpened: Boolean = false)
 
-  def apply(paragraph: Paragraph, globalScope: GlobalScope) =
-    comp.withKey(paragraph.id.get.toString)(Props(paragraph, globalScope))
+  def apply(paragraph: Paragraph, globalScope: GlobalScope, tagFilter: String) =
+    comp.withKey(paragraph.id.get.toString)(Props(paragraph, globalScope, tagFilter))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -133,7 +134,11 @@ object ParagraphCmp {
     )
 
     def listTopics(p: Paragraph, props: Props) =
-      p.topics.toVdomArray{topic=>
+      (if (props.tagFilter.trim.isEmpty) {
+        p.topics
+      } else {
+        p.topics.filter(topic => props.globalScope.filterTopic(props.tagFilter, topic))
+      }).toVdomArray{topic=>
         TopicCmp(
           globalScope = props.globalScope,
           topic = topic

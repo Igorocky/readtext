@@ -11,7 +11,8 @@ case class ListTopicsState(globalScope: GlobalScope = null,
                            okCancelDiagText: Option[String] = None,
                            onOk: Callback = Callback.empty,
                            onCancel: Callback = Callback.empty,
-                           pasteListeners: Map[(Long,Int), File => Callback] = Map()) {
+                           pasteListeners: Map[(Long,Int), File => Callback] = Map(),
+                           tagFilter: String = "") {
 
   def paragraphs = globalScope.pageParams.paragraphs
 

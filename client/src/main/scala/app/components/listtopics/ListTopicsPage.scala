@@ -84,7 +84,11 @@ object ListTopicsPage {
         paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> $.backend.closeWaitPane,
         topicCreated = topic => $.modState(_.addTopic(topic)),
         topicUpdated = topUpd => $.modState(_.updateTopic(topUpd)),
-        topicDeleted = topId => $.modState(_.deleteTopic(topId))
+        topicDeleted = topId => $.modState(_.deleteTopic(topId)),
+        filterTopic = (str, topic) => {
+          val strUpper = str.trim.toUpperCase
+          topic.tags.exists(tag => tag.toUpperCase.contains(strUpper))
+        }
       )))
     }
     .build
@@ -97,8 +101,16 @@ object ListTopicsPage {
       content =
         <.div(
           header(state, props),
-          state.paragraphs.toVdomArray{paragraph =>
-            ParagraphCmp(paragraph, state.globalScope)
+          (if (state.tagFilter.trim.isEmpty) {
+            state.paragraphs
+          } else {
+            state.paragraphs.filter(par =>
+              par.topics.exists(top =>
+                state.globalScope.filterTopic(state.tagFilter, top)
+              )
+            )
+          }).toVdomArray{paragraph =>
+            ParagraphCmp(paragraph, state.globalScope, state.tagFilter)
           },
           waitPaneIfNecessary(state),
           okDialogIfNecessary(state),
@@ -106,7 +118,12 @@ object ListTopicsPage {
         )
     )
 
-    def header(state: State, props: Props) = HeaderCmp(state.globalScope, props.paragraphs)
+    def header(state: State, props: Props) =
+      HeaderCmp(
+        globalScope = state.globalScope,
+        paragraphs = props.paragraphs,
+        filterChanged = str => $.modState(_.copy(tagFilter = str))
+      )
 
     def waitPaneIfNecessary(state: State): TagMod =
       if (state.waitPane) {

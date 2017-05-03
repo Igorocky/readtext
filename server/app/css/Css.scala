@@ -89,6 +89,11 @@ object Css extends StyleSheet.Standalone {
     margin(10 px)
   )
 
+  ".HeaderCmp input" - (
+    display.inlineBlock,
+    margin(0 px, 2 px)
+  )
+
   ".ParagraphCmp" - (
     padding(5 px),
     borderRadius(10 px),

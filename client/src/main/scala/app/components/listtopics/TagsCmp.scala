@@ -63,7 +63,6 @@ object TagsCmp {
             onEscape = $.modState(_.copy(formData = None))
           )
         },
-        " ",
         props.tags.toVdomArray(tag =>
           <.span(
             ^.key:=tag,
