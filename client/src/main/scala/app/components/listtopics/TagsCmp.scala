@@ -4,7 +4,7 @@ import app.Utils._
 import app.components.forms.{FormCommonParams, FormTextField}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import shared.SharedConstants
+import shared.FormKeys
 import shared.forms.{FormData, Forms}
 import upickle.default._
 
@@ -58,7 +58,7 @@ object TagsCmp {
             editMode = false
           )
           FormTextField(
-            name = SharedConstants.TAG,
+            key = FormKeys.TAG,
             focusOnMount = true,
             onEscape = $.modState(_.copy(formData = None))
           )

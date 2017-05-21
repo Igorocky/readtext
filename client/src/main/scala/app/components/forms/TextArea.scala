@@ -4,6 +4,7 @@ import japgolly.scalajs.react.{ScalaComponent, _}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import shared.SharedConstants._
+import shared.forms.FormKey
 import shared.messages.Language
 
 object TextArea {
@@ -17,13 +18,13 @@ object TextArea {
 
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
-  def apply(name: String, width: Int = 150, rows: Int = 10)
+  def apply(key: FormKey, width: Int = 150, rows: Int = 10)
            (implicit formParams: FormCommonParams, language: Language): VdomElement =
     comp(Props(
-      name = name
-      ,value = formParams.formData.get(name).value
-      ,errors = formParams.formData.get(name).errors
-      ,onChange = formParams.onChange compose formParams.formData.createSetter(name, formParams.transformations)
+      name = key.name
+      ,value = formParams.formData.get(key).value
+      ,errors = formParams.formData.get(key).errors
+      ,onChange = formParams.onChange compose formParams.formData.createSetter(key, formParams.transformations)
       ,width = width
       ,rows = rows
       ,editMode = formParams.editMode

@@ -48,16 +48,16 @@ object FormUtils {
 
   implicit def tuple2ToTuple3[A, B, C](t: ((A, B), C)): (A, B, C) = (t._1._1, t._1._2, t._2)
 
-  def form[T](elems: (String, InputTransformation[String, _], T => String)*): FormParts[T] = {
-    implicit def forUnzip(elem: (InputElem, (String, InputTransformation[String, _], T => String))) = elem
+  def form[T](elems: (FormKey, InputTransformation[String, _], T => String)*): FormParts[T] = {
+    implicit def forUnzip(elem: (InputElem, (FormKey, InputTransformation[String, _], T => String))) = elem
     val (inputElems, transforms) = elems.toList.map {
-      case (name, transformation, fromObj) => (
-        InputElem(name = name), (name, transformation, fromObj)
+      case (key, transformation, fromObj) => (
+        InputElem(name = key.name), (key, transformation, fromObj)
       )
     }.unzip
     new FormParts[T] {
       def formData(language: Language, submitUrl: String) = FormData(language = language, inputElems, submitUrl = submitUrl)
-      val transformations: Map[String, InputTransformation[String, _]] = transforms.map(t => (t._1, t._2)).toMap
+      val transformations: Map[String, InputTransformation[String, _]] = transforms.map(t => (t._1.name, t._2)).toMap
       def formData(language: Language, obj: T, submitUrl: String): FormData = (formData(language, submitUrl) /: transforms){(fd, tpl) => fd.set(tpl._1, tpl._3(obj))}
     }
   }

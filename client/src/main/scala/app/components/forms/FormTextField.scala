@@ -5,6 +5,7 @@ import japgolly.scalajs.react.{Callback, _}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import shared.SharedConstants._
+import shared.forms.FormKey
 
 object FormTextField {
   protected case class Props(name: String,
@@ -20,14 +21,14 @@ object FormTextField {
 
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
-  def apply(name: String, width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false, onEscape: Callback = Callback.empty)
+  def apply(key: FormKey, width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false, onEscape: Callback = Callback.empty)
            (implicit formParams: FormCommonParams) =
     comp(Props(
-      name = name
+      name = key.name
       ,focusOnMount = focusOnMount
-      ,value = formParams.formData.get(name).value
-      ,errors = formParams.formData.get(name).errors
-      ,onChange = formParams.onChange compose formParams.formData.createSetter(name, formParams.transformations)
+      ,value = formParams.formData.get(key).value
+      ,errors = formParams.formData.get(key).errors
+      ,onChange = formParams.onChange compose formParams.formData.createSetter(key, formParams.transformations)
       ,width = width
       ,editMode = formParams.editMode
       ,onEnter = formParams.submit

@@ -34,25 +34,6 @@ object ServerUtils {
     (Session.SESSION -> write(f(getSession(request))))
   }
 
-  def formOld(initialFormData: FormData,
-           transformations: Map[String, InputTransformation[String, _]],
-           onErrors: (FormData, Language) => Result)
-          (implicit ec: ExecutionContext): BodyParser[Map[String, Any]] =
-    BodyParser { requestHeader =>
-      parse.anyContent(None)(requestHeader).map { resultOrBody =>
-        resultOrBody.right.flatMap { body =>
-          val lang = getSession(requestHeader).language
-          val formData = body.asFormUrlEncoded.get
-            .map{case (k,v) => (k,v.head)}
-            .foldLeft(initialFormData)((fd,kv) => fd.set(kv._1, kv._2))
-          formData.values(transformations) match {
-            case Left(formData) => Left(onErrors(formData, lang))
-            case Right(values) => Right(values)
-          }
-        }
-      }
-    }
-
   def headerParams(language: Language) = HeaderParams (
     language = language,
     changeLanguageUrl = routes.LanguageController.changeLanguage.url

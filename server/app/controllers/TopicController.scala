@@ -9,7 +9,7 @@ import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import shared.SharedConstants
+import shared.{FormKeys, SharedConstants}
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.forms.PostData.{dataResponse, errorResponse, formWithErrors}
@@ -82,7 +82,7 @@ class TopicController @Inject()(
     readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations) match {
       case Right(values) =>
         val paragraph = Paragraph(
-          name = values(SharedConstants.TITLE).asInstanceOf[String]
+          name = values(FormKeys.TITLE)
         )
         db.run(for {
           maxOrder <- paragraphTable.map(_.order).max.result.map(_.getOrElse(0))
@@ -115,8 +115,8 @@ class TopicController @Inject()(
     readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations) match {
       case Right(values) =>
         val paragraph = Paragraph(
-          id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
-          name = values(SharedConstants.TITLE).asInstanceOf[String]
+          id = values(FormKeys.ID),
+          name = values(FormKeys.TITLE)
         )
         db.run(
           for {
@@ -135,8 +135,8 @@ class TopicController @Inject()(
     readFormDataFromPostRequest(request).values(Forms.topicForm.transformations) match {
       case Right(values) =>
         val topic = Topic(
-          paragraphId = values(SharedConstants.PARAGRAPH_ID).asInstanceOf[Option[Long]],
-          title = values(SharedConstants.TITLE).asInstanceOf[String]
+          paragraphId = values(FormKeys.PARAGRAPH_ID),
+          title = values(FormKeys.TITLE)
         )
         db.run(for {
           maxOrder <- topicTable.filter(_.paragraphId === topic.paragraphId.get).map(_.order).max.result.map(_.getOrElse(0))
@@ -170,9 +170,9 @@ class TopicController @Inject()(
     readFormDataFromPostRequest(request).values(Forms.topicForm.transformations) match {
       case Right(values) =>
         val topic = Topic(
-          id = values(SharedConstants.ID).asInstanceOf[Option[Long]],
-          title = values(SharedConstants.TITLE).asInstanceOf[String],
-          images = values(SharedConstants.IMAGES).asInstanceOf[List[String]]
+          id = values(FormKeys.ID),
+          title = values(FormKeys.TITLE),
+          images = values(FormKeys.IMAGES)
         )
         db.run(
           for {
@@ -293,10 +293,8 @@ class TopicController @Inject()(
   def addTagForTopic = Action.async { request =>
     readFormDataFromPostRequest(request).values(Forms.tagForm.transformations) match {
       case Right(values) =>
-        val (topId, tagToAdd) = (
-          values(SharedConstants.ID).asInstanceOf[Long],
-          values(SharedConstants.TAG).asInstanceOf[String]
-        )
+        val topId = values(FormKeys.PARENT_ID)
+        val tagToAdd = values(FormKeys.TAG)
         db.run(
           for {
             topic <- topicTable.filter(_.id === topId).result.head

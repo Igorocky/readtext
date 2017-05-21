@@ -4,7 +4,7 @@ import app.Utils.{BTN_DEFAULT, buttonWithText}
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import shared.SharedConstants
+import shared.FormKeys
 import shared.dto.Topic
 import shared.forms.{FormData, Forms}
 
@@ -57,11 +57,11 @@ object TopicForm {
       <.div(
         ^.`class`:=this.getClass.getSimpleName + " form",
         props.textFieldLabel,
-        FormTextField(name = SharedConstants.TITLE, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
+        FormTextField(key = FormKeys.TITLE, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
         if (props.editMode) ImgUploader(
           props.globalScope,
           props.topic.get,
-          name = SharedConstants.IMAGES
+          key = FormKeys.IMAGES
         ) else EmptyVdom,
         SubmitButton(props.submitButtonName),
         buttonWithText(
@@ -75,7 +75,7 @@ object TopicForm {
         $.modState(_.copy(
           formData = $.state.formData
             .copy(language = $.nextProps.globalScope.language)
-            .validate(Forms.textForm.transformations)
+            .validate(Forms.topicForm.transformations)
         ))
       } else {
         Callback.empty

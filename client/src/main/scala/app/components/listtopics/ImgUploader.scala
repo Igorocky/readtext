@@ -7,7 +7,7 @@ import japgolly.scalajs.react._
 import org.scalajs.dom.raw.{File, FormData}
 import shared.SharedConstants._
 import shared.dto.Topic
-import shared.forms.{DataResponse, ErrorResponse}
+import shared.forms.{DataResponse, ErrorResponse, FormKey}
 
 import scala.util.{Failure, Success}
 
@@ -21,13 +21,13 @@ object ImgUploader {
 
   def apply(globalScope: GlobalScope,
             topic: Topic,
-            name: String)
+            key: FormKey)
            (implicit formParams: FormCommonParams) =
     comp(Props(
       globalScope = globalScope,
       topic = topic,
       onChange = imgs => formParams.onChange(
-        formParams.formData.set(name, imgs.mkString(";"), formParams.transformations)
+        formParams.formData.set(key, imgs.mkString(";"), formParams.transformations)
       ).void
     ))
 

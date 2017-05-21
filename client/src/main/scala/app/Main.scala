@@ -1,10 +1,10 @@
 package app
 
+import app.components.SimplePage
 import app.components.listtopics.ListTopicsPage
-import app.components.{ListTextsPage, SimplePage}
 import japgolly.scalajs.react.component.Scala.Unmounted
 import org.scalajs.dom
-import shared.pageparams.{ListTextsPageParams, ListTopicsPageParams, SimplePageParams}
+import shared.pageparams.{ListTopicsPageParams, SimplePageParams}
 import shared.{SharedConstants, StrUtils}
 
 import scala.scalajs.js
@@ -12,7 +12,6 @@ import scala.scalajs.js
 object Main extends js.JSApp {
   private val componentMap = Map[String, String => Unmounted[_, _, _]](
     SimplePageParams.getClass.getName -> SimplePage.apply
-    ,ListTextsPageParams.getClass.getName -> ListTextsPage.apply
     ,ListTopicsPageParams.getClass.getName -> ListTopicsPage.apply
   )
 

@@ -4,7 +4,7 @@ import app.Utils._
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shared.SharedConstants
+import shared.FormKeys
 import shared.forms.{FormData, Forms}
 
 object ParagraphForm {
@@ -55,7 +55,7 @@ object ParagraphForm {
       <.div(
         ^.`class`:=this.getClass.getSimpleName + " form",
         props.textFieldLabel,
-        FormTextField(name = SharedConstants.TITLE, focusOnMount = true, width = 700, placeholder = "Paragraph Title"),
+        FormTextField(key = FormKeys.TITLE, focusOnMount = true, width = 700, placeholder = "Paragraph Title"),
         SubmitButton(props.submitButtonName),
         buttonWithText(
           onClick = props.cancelled,
@@ -68,7 +68,7 @@ object ParagraphForm {
         $.modState(_.copy(
           formData = $.state.formData
             .copy(language = $.nextProps.globalScope.language)
-            .validate(Forms.textForm.transformations)
+            .validate(Forms.paragraphForm.transformations)
         ))
       } else {
         Callback.empty
