@@ -4,7 +4,7 @@ import java.io.File
 import javax.inject._
 
 import db.Tables.{paragraphTable, topicTable}
-import db.{PrintSchema, Tables, TopicTable}
+import db.{HasIdAndOrder, PrintSchema}
 import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -12,21 +12,17 @@ import play.api.mvc._
 import shared.SharedConstants
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
-import shared.forms.{Forms, PostData}
 import shared.forms.PostData.{dataResponse, formWithErrors}
+import shared.forms.{Forms, PostData}
 import shared.pageparams.ListTopicsPageParams
 import slick.dbio.DBIOAction
 import slick.dbio.Effect.Read
+import slick.driver.H2Driver.api._
 import slick.driver.JdbcProfile
 import upickle.default._
 import utils.ServerUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
-import slick.driver.H2Driver.api._
-import slick.lifted.QueryBase
-import slick.profile.FixedSqlStreamingAction
-
-import scalaz.Maybe
 
 @Singleton
 class TopicController @Inject()(
@@ -273,47 +269,20 @@ class TopicController @Inject()(
     }
   }
 
-  def upParagraph = Action.async { request =>
-    val id = request.body.asText.get.toLong
-    db.run {
-      for {
-        order <- paragraphTable.filter(_.id === id).map(_.order).result.head
-        min <- paragraphTable.map(_.order).min.result.map(_.get)
-        _ <- if (order == min) DBIO.successful(()) else for {
-          _ <- paragraphTable.filter(_.order === order - 1).map(_.order).update(order)
-          _ <- paragraphTable.filter(_.id === id).map(_.order).update(order - 1)
-        } yield ()
-      } yield ()
-    } map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
-  }
+  def maxFn[C[_]](down: Boolean, q: Query[Rep[Int], Int, C]) = if (down) q.max else q.min
+  def changeOrder(down: Boolean, oldOrder: Int) = if (down) oldOrder + 1 else oldOrder - 1
 
-  def upTopic = Action.async { request =>
-    val topId = request.body.asText.get.toLong
-    db.run(
-      for {
-        (parId, order) <- topicTable.filter(_.id === topId).map(t => (t.paragraphId, t.order)).result.head
-        min <- topicTable.filter(_.paragraphId === parId).map(_.order).min.result.map(_.get)
-        _ <- if (order == min) DBIO.successful(()) else for {
-          _ <- topicTable.filter(t => t.paragraphId === parId && t.order === order - 1).map(_.order).update(order)
-          _ <- topicTable.filter(_.id === topId).map(_.order).update(order - 1)
-        } yield ()
-      } yield ()
-    ) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
-  }
-
-  def downParagraph = Action.async { request =>
+  def move[M <: HasIdAndOrder,U,C[_]](table: Query[M,U,C], down: Boolean)
+                                     (groupIdExtractor: M => Rep[Long]) = Action.async { request =>
     val id = request.body.asText.get.toLong
     db.run(
       for {
-        order <- paragraphTable.filter(_.id === id).map(_.order).result.head
-        max <- paragraphTable.map(_.order).max.result.map(_.get)
-        _ <- if (order == max) DBIO.successful(()) else for {
-          _ <- paragraphTable.filter(_.order === order + 1).map(_.order).update(order)
-          _ <- paragraphTable.filter(_.id === id).map(_.order).update(order + 1)
+        (groupId, oldOrder) <- table.filter(_.id === id).map(r => (groupIdExtractor(r), r.order)).result.head
+        max <- maxFn(down, table.filter(groupIdExtractor(_) === groupId).map(_.order)).result.map(_.get)
+        newOrder = changeOrder(down, oldOrder)
+        _ <- if (oldOrder == max) DBIO.successful(()) else for {
+          _ <- table.filter(r => groupIdExtractor(r) === groupId && r.order === newOrder).map(_.order).update(oldOrder)
+          _ <- table.filter(_.id === id).map(_.order).update(newOrder)
         } yield ()
       } yield ()
     ) map {_ =>
@@ -321,21 +290,10 @@ class TopicController @Inject()(
     }
   }
 
-  def downTopic = Action.async { request =>
-    val topId = request.body.asText.get.toLong
-    db.run(
-      for {
-        (parId, order) <- topicTable.filter(_.id === topId).map(t => (t.paragraphId, t.order)).result.head
-        max <- topicTable.filter(_.paragraphId === parId).map(_.order).max.result.map(_.get)
-        _ <- if (order == max) DBIO.successful(()) else for {
-          _ <- topicTable.filter(t => t.paragraphId === parId && t.order === order + 1).map(_.order).update(order)
-          _ <- topicTable.filter(_.id === topId).map(_.order).update(order + 1)
-        } yield ()
-      } yield ()
-    ) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
-  }
+  def upParagraph = move(paragraphTable, false)(_ => 1L)
+  def upTopic = move(topicTable, false)(_.paragraphId)
+  def downParagraph = move(paragraphTable, true)(_ => 1L)
+  def downTopic = move(topicTable, true)(_.paragraphId)
 
   def addTagForTopic = Action.async { request =>
     readFormDataFromPostRequest(request).values(Forms.tagForm.transformations) match {

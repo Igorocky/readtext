@@ -11,10 +11,6 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 GET         /styles.css                                    @controllers.HomeController.css
 GET    /r                           controllers.HomeController.pageWithReact
 POST    /changeLanguage                           controllers.LanguageController.changeLanguage
-POST    /mergeText                           controllers.HomeController.mergeText
-POST    /deleteText                           controllers.HomeController.deleteText
-POST    /fullTextById                           controllers.HomeController.fullTextById
-GET    /allTexts                           controllers.HomeController.allTexts
 
 GET    /topics                           controllers.TopicController.topics
 POST    /createParagraph                           controllers.TopicController.createParagraph
