@@ -4,7 +4,7 @@ import java.io.File
 import javax.inject._
 
 import db.Tables.{paragraphTable, topicTable}
-import db.{HasIdAndOrder, PrintSchema}
+import db.{Dao, HasIdAndOrder, PrintSchema}
 import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -12,7 +12,7 @@ import play.api.mvc._
 import shared.SharedConstants
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
-import shared.forms.PostData.{dataResponse, formWithErrors}
+import shared.forms.PostData.{dataResponse, errorResponse, formWithErrors}
 import shared.forms.{Forms, PostData}
 import shared.pageparams.ListTopicsPageParams
 import slick.dbio.DBIOAction
@@ -23,12 +23,15 @@ import upickle.default._
 import utils.ServerUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success}
 
 @Singleton
 class TopicController @Inject()(
                                 val messagesApi: MessagesApi,
                                 protected val dbConfigProvider: DatabaseConfigProvider,
-                                val configuration: play.api.Configuration
+                                val configuration: play.api.Configuration,
+                                val dao: Dao
                               )(implicit private val environment: Environment,
                                 implicit private val ec: ExecutionContext)
   extends Controller with HasDatabaseConfigProvider[JdbcProfile] with I18nSupport {
@@ -202,7 +205,7 @@ class TopicController @Inject()(
       file.ref.moveTo(new File(topicFilesDir, topicFileName))
       Ok(PostData.dataResponse(topicFileName))
     }.getOrElse {
-      Ok(PostData.errorResponse("Could not upload file."))
+      Ok(errorResponse("Could not upload file."))
     }
   }
 
@@ -269,31 +272,23 @@ class TopicController @Inject()(
     }
   }
 
-  def maxFn[C[_]](down: Boolean, q: Query[Rep[Int], Int, C]) = if (down) q.max else q.min
-  def changeOrder(down: Boolean, oldOrder: Int) = if (down) oldOrder + 1 else oldOrder - 1
-
-  def move[M <: HasIdAndOrder,U,C[_]](table: Query[M,U,C], down: Boolean)
-                                     (groupIdExtractor: M => Rep[Long]) = Action.async { request =>
+  private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean)
+                                      = Action.async { request =>
     val id = request.body.asText.get.toLong
     db.run(
-      for {
-        (groupId, oldOrder) <- table.filter(_.id === id).map(r => (groupIdExtractor(r), r.order)).result.head
-        max <- maxFn(down, table.filter(groupIdExtractor(_) === groupId).map(_.order)).result.map(_.get)
-        newOrder = changeOrder(down, oldOrder)
-        _ <- if (oldOrder == max) DBIO.successful(()) else for {
-          _ <- table.filter(r => groupIdExtractor(r) === groupId && r.order === newOrder).map(_.order).update(oldOrder)
-          _ <- table.filter(_.id === id).map(_.order).update(newOrder)
-        } yield ()
-      } yield ()
-    ) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
+      dao.changeOrder(id, table, down).asTry.map {
+        case Failure(ex) => errorResponse(ex.getMessage)
+        case Success(_) => dataResponse(SharedConstants.OK)
+      }
+    ) map {resp =>
+      Ok(resp)
     }
   }
 
-  def upParagraph = move(paragraphTable, false)(_ => 1L)
-  def upTopic = move(topicTable, false)(_.paragraphId)
-  def downParagraph = move(paragraphTable, true)(_ => 1L)
-  def downTopic = move(topicTable, true)(_.paragraphId)
+  def upParagraph = changeOrder(paragraphTable, false)
+  def upTopic = changeOrder(topicTable, false)
+  def downParagraph = changeOrder(paragraphTable, true)
+  def downTopic = changeOrder(topicTable, true)
 
   def addTagForTopic = Action.async { request =>
     readFormDataFromPostRequest(request).values(Forms.tagForm.transformations) match {

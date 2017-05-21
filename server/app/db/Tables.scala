@@ -13,6 +13,10 @@ trait HasOrder {
 
 trait HasIdAndOrder extends HasId with HasOrder
 
+trait HasParent {
+  def parentId: Rep[Long]
+}
+
 object TypeConversions {
   implicit val listOfStringsColumnType = MappedColumnType.base[List[String], String](
     _.mkString(";"),
@@ -21,11 +25,11 @@ object TypeConversions {
 }
 
 class ParagraphTable(tag: Tag) extends Table[Paragraph](tag, "PARAGRAPHS") with HasIdAndOrder {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  override def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def checked = column[Boolean]("checked")
   def name = column[String]("name")
   def expanded = column[Boolean]("expanded")
-  def order = column[Int]("order")
+  override def order = column[Int]("order")
 
   def * = (id.?, checked, name, expanded, order) <> (
     (t: (Option[Long], Boolean, String, Boolean, Int)) =>
@@ -34,12 +38,12 @@ class ParagraphTable(tag: Tag) extends Table[Paragraph](tag, "PARAGRAPHS") with 
   )
 }
 
-class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrder {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrder with HasParent{
+  override def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def paragraphId = column[Long]("paragraphId")
   def checked = column[Boolean]("checked")
   def title = column[String]("title")
-  def order = column[Int]("order")
+  override def order = column[Int]("order")
   def images = column[String]("images")
   def tags = column[String]("tags", O.Default(""))
 
@@ -50,6 +54,8 @@ class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrde
       Topic(t._1, t._2, t._3, t._4, t._5).setImages(t._6).setTags(t._7),
     (t: Topic) => Some((t.id, t.paragraphId, t.checked, t.title, t.order, t.imagesStr, t.tagsStr))
   )
+
+  override def parentId = paragraphId
 }
 
 object Tables {
