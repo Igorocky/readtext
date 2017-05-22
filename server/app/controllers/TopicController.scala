@@ -13,7 +13,7 @@ import shared.{FormKeys, SharedConstants}
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.forms.PostData.{dataResponse, errorResponse, formWithErrors}
-import shared.forms.{Forms, PostData}
+import shared.forms.{FormParts, FormValues, Forms, PostData}
 import shared.pageparams.ListTopicsPageParams
 import slick.dbio.DBIOAction
 import slick.dbio.Effect.Read
@@ -23,7 +23,7 @@ import upickle.default._
 import utils.ServerUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 import scala.util.{Failure, Success}
 
 @Singleton
@@ -78,24 +78,30 @@ class TopicController @Inject()(
     }
   }
 
-  def createParagraph = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations) match {
-      case Right(values) =>
-        val paragraph = Paragraph(
-          name = values(FormKeys.TITLE)
-        )
-        db.run(for {
-          maxOrder <- paragraphTable.map(_.order).max.result.map(_.getOrElse(0))
-          par = paragraph.copy(order = maxOrder + 1)
-          newId <- paragraphTable returning paragraphTable.map(_.id) += par
-        } yield par.copy(id = Some(newId))) map {par=>
-          println(s"action = create paragraph: $par")
-          Ok(dataResponse(write(par)))
-        }
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
+  private def formPostRequest(formParts: FormParts[_], onValidForm: FormValues => Future[Result]) = Action.async { request =>
+    readFormDataFromPostRequest(request).values(formParts.transformations) match {
+      case Right(values) => onValidForm(values)
+      case Left(fd) => Future.successful(Ok(formWithErrors(fd)))
     }
   }
+
+  private def idPostRequest(action: Long => Future[Result]) = Action.async { request =>
+    action(request.body.asText.get.toLong)
+  }
+
+  def createParagraph = formPostRequest(
+    formParts = Forms.paragraphForm,
+    onValidForm = values => {
+      val paragraph = Paragraph(name = values(FormKeys.TITLE))
+      runDbActionAndCreateHttpResponse(
+        dao.insertOrdered(paragraphTable)(
+          parentId = 0,
+          updateOrder = ord => paragraph.copy(order = ord),
+          updateId = (par, newId) => par.copy(id = Some(newId))
+        ).map(write[Paragraph](_))
+      )
+    }
+  )
 
   def deleteParagraph = Action.async { request =>
     val parId = request.body.asText.get.toLong
@@ -131,25 +137,28 @@ class TopicController @Inject()(
     }
   }
 
-  def createTopic = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.topicForm.transformations) match {
-      case Right(values) =>
-        val topic = Topic(
-          paragraphId = values(FormKeys.PARAGRAPH_ID),
-          title = values(FormKeys.TITLE)
-        )
-        db.run(for {
-          maxOrder <- topicTable.filter(_.paragraphId === topic.paragraphId.get).map(_.order).max.result.map(_.getOrElse(0))
-          top = topic.copy(order = maxOrder + 1)
-          newId <- topicTable returning topicTable.map(_.id) += top
-        } yield top.copy(id = Some(newId))) map {top=>
-          println(s"topic created - $top")
-          Ok(dataResponse(write(top)))
-        }
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
+  private def runDbActionAndCreateHttpResponse(action: DBIOAction[String, _, _]) = db.run(
+    action.asTry.map {
+      case Failure(ex) => errorResponse(ex.getMessage)
+      case Success(res) => dataResponse(res)
     }
+  ) map {resp =>
+    Ok(resp)
   }
+
+  def createTopic = formPostRequest(
+    formParts = Forms.topicForm,
+    onValidForm = values => {
+      val topic = Topic(paragraphId = values(FormKeys.PARAGRAPH_ID), title = values(FormKeys.TITLE))
+      runDbActionAndCreateHttpResponse(
+        dao.insertOrdered(topicTable)(
+          parentId = topic.paragraphId.get,
+          updateOrder = ord => topic.copy(order = ord),
+          updateId = (top, newId) => top.copy(id = Some(newId))
+        ).map(write[Topic](_))
+      )
+    }
+  )
 
   def deleteTopic = Action.async { request =>
     val topId = request.body.asText.get.toLong
@@ -272,18 +281,11 @@ class TopicController @Inject()(
     }
   }
 
-  private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean)
-                                      = Action.async { request =>
-    val id = request.body.asText.get.toLong
-    db.run(
-      dao.changeOrder(id, table, down).asTry.map {
-        case Failure(ex) => errorResponse(ex.getMessage)
-        case Success(_) => dataResponse(SharedConstants.OK)
-      }
-    ) map {resp =>
-      Ok(resp)
-    }
-  }
+  private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean) = idPostRequest(
+    id => runDbActionAndCreateHttpResponse(
+      dao.changeOrder(id, table, down).map(_ => SharedConstants.OK)
+    )
+  )
 
   def upParagraph = changeOrder(paragraphTable, false)
   def upTopic = changeOrder(topicTable, false)
