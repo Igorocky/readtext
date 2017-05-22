@@ -9,12 +9,12 @@ import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import shared.{FormKeys, SharedConstants}
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.forms.PostData.{dataResponse, errorResponse, formWithErrors}
 import shared.forms.{FormParts, FormValues, Forms, PostData}
 import shared.pageparams.ListTopicsPageParams
+import shared.{FormKeys, SharedConstants}
 import slick.dbio.DBIOAction
 import slick.dbio.Effect.Read
 import slick.driver.H2Driver.api._
@@ -23,7 +23,7 @@ import upickle.default._
 import utils.ServerUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
 @Singleton
@@ -78,17 +78,6 @@ class TopicController @Inject()(
     }
   }
 
-  private def formPostRequest(formParts: FormParts[_], onValidForm: FormValues => Future[Result]) = Action.async { request =>
-    readFormDataFromPostRequest(request).values(formParts.transformations) match {
-      case Right(values) => onValidForm(values)
-      case Left(fd) => Future.successful(Ok(formWithErrors(fd)))
-    }
-  }
-
-  private def idPostRequest(action: Long => Future[Result]) = Action.async { request =>
-    action(request.body.asText.get.toLong)
-  }
-
   def createParagraph = formPostRequest(
     formParts = Forms.paragraphForm,
     onValidForm = values => {
@@ -103,48 +92,22 @@ class TopicController @Inject()(
     }
   )
 
-  def deleteParagraph = Action.async { request =>
-    val parId = request.body.asText.get.toLong
-    db.run(for {
-      deletedParOrder <- paragraphTable.filter(_.id === parId).map(_.order).result.head
-      _ <- paragraphTable.filter(_.id === parId).delete
-      seq <- paragraphTable.filter(_.order > deletedParOrder).map(p => (p.id,p.order)).result
-      _ <- DBIO.sequence(for {
-        (lowerParId, lowerParOrder) <- seq
-      } yield paragraphTable.filter(_.id === lowerParId).map(_.order).update(lowerParOrder - 1))
-    } yield ()) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
-  }
+  def deleteParagraph = idPostRequest(
+    id => runDbActionAndCreateHttpResponse(
+      dao.deleteOrdered(id, paragraphTable).map(_ => SharedConstants.OK)
+    )
+  )
 
-  def updateParagraph = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.paragraphForm.transformations) match {
-      case Right(values) =>
-        val paragraph = Paragraph(
-          id = values(FormKeys.ID),
-          name = values(FormKeys.TITLE)
-        )
-        db.run(
-          for {
-            _ <- paragraphTable.filter(_.id === paragraph.id).map(_.name).update(paragraph.name)
-          } yield ()
-        ) map {_=>
-          println(s"action = rename paragraph: $paragraph")
-          Ok(dataResponse(write(ParagraphUpdate(id = paragraph.id.get, name = paragraph.name))))
-        }
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
+  def updateParagraph = formPostRequest(
+    formParts = Forms.paragraphForm,
+    onValidForm = values => {
+      val paragraph = Paragraph(id = values(FormKeys.ID), name = values(FormKeys.TITLE))
+      runDbActionAndCreateHttpResponse(
+        paragraphTable.filter(_.id === paragraph.id).map(_.name).update(paragraph.name)
+          .map(_ => write(ParagraphUpdate(id = paragraph.id.get, name = paragraph.name)))
+      )
     }
-  }
-
-  private def runDbActionAndCreateHttpResponse(action: DBIOAction[String, _, _]) = db.run(
-    action.asTry.map {
-      case Failure(ex) => errorResponse(ex.getMessage)
-      case Success(res) => dataResponse(res)
-    }
-  ) map {resp =>
-    Ok(resp)
-  }
+  )
 
   def createTopic = formPostRequest(
     formParts = Forms.topicForm,
@@ -160,47 +123,29 @@ class TopicController @Inject()(
     }
   )
 
-  def deleteTopic = Action.async { request =>
-    val topId = request.body.asText.get.toLong
-    db.run(for {
-      (deletedOrder, parId) <- topicTable.filter(_.id === topId).map(t => (t.order, t.paragraphId)).result.head
-      _ <- topicTable.filter(_.id === topId).delete
-      seq <- topicTable.filter(t => t.paragraphId === parId && t.order > deletedOrder).map(t => (t.id,t.order)).result
-      _ <- DBIO.sequence(for {
-        (lowerTopId, lowerTopOrder) <- seq
-      } yield topicTable.filter(_.id === lowerTopId).map(_.order).update(lowerTopOrder - 1))
-    } yield ()) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
+  def deleteTopic = idPostRequest(
+    id => runDbActionAndCreateHttpResponse(
+      dao.deleteOrdered(id, topicTable).map(_ => SharedConstants.OK)
+    )
+  )
+
+  def updateTopic = formPostRequest(
+    formParts = Forms.topicForm,
+    onValidForm = values => {
+      val topic = Topic(id = values(FormKeys.ID), title = values(FormKeys.TITLE), images = values(FormKeys.IMAGES))
+      runDbActionAndCreateHttpResponse(
+        topicTable.filter(_.id === topic.id).map(t => (t.title, t.images)).update((topic.title, topic.imagesStr))
+          .map{_ =>
+            removeUnusedImages(topic.id.get, topic.images)
+            write(TopicUpdate(id = topic.id.get, title = topic.title, images = topic.images))
+          }
+      )
     }
-  }
+  )
 
-
-  def updateTopic = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.topicForm.transformations) match {
-      case Right(values) =>
-        val topic = Topic(
-          id = values(FormKeys.ID),
-          title = values(FormKeys.TITLE),
-          images = values(FormKeys.IMAGES)
-        )
-        db.run(
-          for {
-            _ <- topicTable.filter(_.id === topic.id).map(t => (t.title, t.images)).update((topic.title, topic.imagesStr))
-            top <- topicTable.filter(_.id === topic.id).result.head
-          } yield top
-        ) map { top =>
-          removeUnusedImages(top)
-          println(s"action = update topic: $top")
-          Ok(dataResponse(write(TopicUpdate(id = top.id.get, title = top.title, images = top.images))))
-        }
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
-    }
-  }
-
-  def removeUnusedImages(topic: Topic): Unit = {
-    Some(getTopicImagesDir(topic.id.get, imgStorageDir).listFiles()).filterNot(_ eq null).foreach { files =>
-      files.filterNot(f => topic.images.exists(_ == f.getName))
+  private def removeUnusedImages(topicId: Long, images: List[String]): Unit = {
+    Some(getTopicImagesDir(topicId, imgStorageDir).listFiles()).filterNot(_ eq null).foreach { files =>
+      files.filterNot(f => images.exists(_ == f.getName))
         .foreach(_.delete())
     }
   }
@@ -250,35 +195,31 @@ class TopicController @Inject()(
     val ids = read[List[(Long, Boolean)]](request.body.asText.get)
     val trueIds = ids.filter(_._2).map(_._1)
     val falseIds = ids.filter(!_._2).map(_._1)
-    db.run(
+    runDbActionAndCreateHttpResponse(
       DBIO.seq(
         paragraphTable.filter(_.id inSet trueIds).map(_.expanded).update(true),
         paragraphTable.filter(_.id inSet falseIds).map(_.expanded).update(false)
-      )
-    ) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
+      ).map(_ => SharedConstants.OK)
+    )
   }
 
   def checkParagraph = Action.async { request =>
     val (id, newVal) = read[(Long, Boolean)](request.body.asText.get)
-    db.run(paragraphTable.filter(_.id === id).map(_.checked).update(newVal)) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
+    runDbActionAndCreateHttpResponse(
+      paragraphTable.filter(_.id === id).map(_.checked).update(newVal).map(_=>SharedConstants.OK)
+    )
   }
 
   def checkTopics = Action.async { request =>
     val ids = read[List[(Long, Boolean)]](request.body.asText.get)
     val trueIds = ids.filter(_._2).map(_._1)
     val falseIds = ids.filter(!_._2).map(_._1)
-    db.run(
+    runDbActionAndCreateHttpResponse(
       DBIO.seq(
         topicTable.filter(_.id inSet trueIds).map(_.checked).update(true),
         topicTable.filter(_.id inSet falseIds).map(_.checked).update(false)
-      )
-    ) map {_ =>
-      Ok(dataResponse(SharedConstants.OK))
-    }
+      ).map(_=>SharedConstants.OK)
+    )
   }
 
   private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean) = idPostRequest(
@@ -291,6 +232,17 @@ class TopicController @Inject()(
   def upTopic = changeOrder(topicTable, false)
   def downParagraph = changeOrder(paragraphTable, true)
   def downTopic = changeOrder(topicTable, true)
+
+//  def addTagForTopic = formPostRequest(
+//    formParts = Forms.tagForm,
+//    onValidForm = values => {
+//      val topId = values(FormKeys.PARENT_ID)
+//      val tagToAdd = values(FormKeys.TAG)
+//      runDbActionAndCreateHttpResponse(
+//        (dao.updateField(topicTable)(topId, _.tags)((tags: List[String]) => tagToAdd::tags)).map(write)
+//      )
+//    }
+//  )
 
   def addTagForTopic = Action.async { request =>
     readFormDataFromPostRequest(request).values(Forms.tagForm.transformations) match {
@@ -322,6 +274,26 @@ class TopicController @Inject()(
     ) map {tagsAfterUpdate =>
       Ok(dataResponse(write(tagsAfterUpdate)))
     }
+  }
+
+  private def formPostRequest(formParts: FormParts[_], onValidForm: FormValues => Future[Result]) = Action.async { request =>
+    readFormDataFromPostRequest(request).values(formParts.transformations) match {
+      case Right(values) => onValidForm(values)
+      case Left(fd) => Future.successful(Ok(formWithErrors(fd)))
+    }
+  }
+
+  private def idPostRequest(action: Long => Future[Result]) = Action.async { request =>
+    action(request.body.asText.get.toLong)
+  }
+
+  private def runDbActionAndCreateHttpResponse(action: DBIOAction[String, _, _]) = db.run(
+    action.asTry.map {
+      case Failure(ex) => errorResponse(ex.getMessage)
+      case Success(res) => dataResponse(res)
+    }
+  ) map {resp =>
+    Ok(resp)
   }
 
 }

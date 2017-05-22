@@ -3,6 +3,7 @@ package db
 import javax.inject.{Inject, Singleton}
 
 import slick.driver.H2Driver.api._
+import slick.profile.RelationalProfile
 
 import scala.concurrent.ExecutionContext
 import scala.reflect.{ClassTag, classTag}
@@ -35,18 +36,27 @@ class Dao @Inject()(implicit private val ec: ExecutionContext) {
     } yield (updateId(elemWithOrder, newId))).transactionally
   }
 
-//  def deleteOrdered[M <: HasIdAndOrder :ClassTag,U,C[_]](id: Long, table: TableQuery[M]) = {
-//    val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
-//    val groupIdExtractor = createGroupIdExtractor(hasParent)
-//    val groupIdCriteria =createGroupIdCriteria(hasParent)
-//    (for {
-//      (groupId, deletedOrder) <- table.filter(_.id === id).map(r => (groupIdExtractor(r), r.order)).result.head
-//      _ <- table.filter(_.id === id).delete
-//      seq <- table.filter(groupIdCriteria(groupId)).filter(_.order > deletedOrder).map(t => (t.id,t.order)).result
-//      _ <- DBIO.sequence(for {
-//        (lowerElemId, lowerElemOrder) <- seq
-//      } yield table.filter(_.id === lowerElemId).map(_.order).update(lowerElemOrder - 1))
-//    } yield ()).transactionally
+  def deleteOrdered[M <: HasIdAndOrder :ClassTag,U](id: Long, table: Query[M,U,Seq]) = {
+    val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
+    val groupIdExtractor = createGroupIdExtractor(hasParent)
+    val groupIdCriteria =createGroupIdCriteria(hasParent)
+    (for {
+      (groupId, deletedOrder) <- table.filter(_.id === id).map(r => (groupIdExtractor(r), r.order)).result.head
+      _ <- table.filter(_.id === id).asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+      seq <- table.filter(groupIdCriteria(groupId)).filter(_.order > deletedOrder).map(t => (t.id,t.order)).result
+      _ <- DBIO.sequence(for {
+        (lowerElemId, lowerElemOrder) <- seq
+      } yield table.filter(_.id === lowerElemId).map(_.order).update(lowerElemOrder - 1))
+    } yield ()).transactionally
+  }
+
+//  def updateField[M <: HasId, U, C[_], F](table: Query[M, U, C])(id: Long, extFunc: M => Rep[F])(mod: F => F) = {
+//    val selectionById = table.filter(_.id === id).map(extFunc).asInstanceOf[Query[_, F, C]]
+//    for {
+//      oldValue <- selectionById.result.head
+//      newValue = mod(oldValue)
+//      _ <- selectionById.update(newValue)
+//    } yield (newValue)
 //  }
 
   private def maxFn[C[_]](down: Boolean, q: Query[Rep[Int], Int, C]) = if (down) q.max else q.min
