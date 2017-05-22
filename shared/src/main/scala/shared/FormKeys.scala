@@ -12,23 +12,23 @@ object FormKeys {
   final val TAG = stringKey("TAG")
 
 
-  private def optLongKey(name: String) = new FormKey {
+  private def optLongKey(namePar: String) = new FormKey {
     override type ValueType = Option[Long]
-    override val name: String = name
+    override val name: String = namePar
   }
 
-  private def longKey(name: String) = new FormKey {
+  private def longKey(namePar: String) = new FormKey {
     override type ValueType = Long
-    override val name: String = name
+    override val name: String = namePar
   }
 
-  private def stringKey(name: String) = new FormKey {
+  private def stringKey(namePar: String) = new FormKey {
     override type ValueType = String
-    override val name: String = name
+    override val name: String = namePar
   }
 
-  private def listOfStringsKey(name: String) = new FormKey {
+  private def listOfStringsKey(namePar: String) = new FormKey {
     override type ValueType = List[String]
-    override val name: String = name
+    override val name: String = namePar
   }
 }
