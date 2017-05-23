@@ -1,6 +1,6 @@
 package app.components.listtopics
 
-import app.components.Button
+import app.Utils.{BTN_DANGER, BTN_INFO, buttonWithIcon}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 
@@ -29,9 +29,9 @@ object ImageCmp {
     .initialState_P(p => State())
     .renderPS{($,props,state)=>
       <.div(
-        Button(id = props.id + "-remove-btn", name = "X", onClick = props.onDelete(props.id))
-        ,Button(id = props.id + "-up-btn", name = "up", onClick = props.onUp(props.id))
-        ,Button(id = props.id + "-down-btn", name = "down", onClick = props.onDown(props.id))
+        buttonWithIcon(onClick = props.onDelete(props.id), btnType = BTN_DANGER, iconType = "fa-trash-o")
+        ,buttonWithIcon(onClick = props.onUp(props.id), btnType = BTN_INFO, iconType = "fa-long-arrow-up")
+        ,buttonWithIcon(onClick = props.onDown(props.id), btnType = BTN_INFO, iconType = "fa-long-arrow-down")
         ,<.img(
           ^.src:=props.url
         )

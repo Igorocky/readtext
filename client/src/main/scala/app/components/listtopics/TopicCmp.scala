@@ -49,7 +49,9 @@ object TopicCmp {
           ),
           if (state.showImg) {
             <.div(props.topic.images.toVdomArray { img =>
-              <.div(<.img(^.src := props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img))
+              <.div(^.key:= img,
+                <.img(^.src := props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img)
+              )
             })
           } else EmptyVdom
         )
