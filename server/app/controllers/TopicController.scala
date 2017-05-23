@@ -5,6 +5,7 @@ import javax.inject._
 
 import db.Tables.{paragraphTable, topicTable}
 import db.{Dao, HasIdAndOrder, PrintSchema}
+import db.TypeConversions._
 import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -94,17 +95,17 @@ class TopicController @Inject()(
 
   def deleteParagraph = idPostRequest(
     id => runDbActionAndCreateHttpResponse(
-      dao.deleteOrdered(id, paragraphTable).map(_ => SharedConstants.OK)
+      dao.deleteOrdered(paragraphTable, id).map(_ => SharedConstants.OK)
     )
   )
 
   def updateParagraph = formPostRequest(
     formParts = Forms.paragraphForm,
     onValidForm = values => {
-      val paragraph = Paragraph(id = values(FormKeys.ID), name = values(FormKeys.TITLE))
+      val parId = values(FormKeys.ID).get
       runDbActionAndCreateHttpResponse(
-        paragraphTable.filter(_.id === paragraph.id).map(_.name).update(paragraph.name)
-          .map(_ => write(ParagraphUpdate(id = paragraph.id.get, name = paragraph.name)))
+        dao.updateField(paragraphTable)(parId, _.name)(_ => values(FormKeys.TITLE))
+          .map(newName => write(ParagraphUpdate(id = parId, name = newName)))
       )
     }
   )
@@ -125,7 +126,7 @@ class TopicController @Inject()(
 
   def deleteTopic = idPostRequest(
     id => runDbActionAndCreateHttpResponse(
-      dao.deleteOrdered(id, topicTable).map(_ => SharedConstants.OK)
+      dao.deleteOrdered(topicTable, id).map(_ => SharedConstants.OK)
     )
   )
 
@@ -134,7 +135,7 @@ class TopicController @Inject()(
     onValidForm = values => {
       val topic = Topic(id = values(FormKeys.ID), title = values(FormKeys.TITLE), images = values(FormKeys.IMAGES))
       runDbActionAndCreateHttpResponse(
-        topicTable.filter(_.id === topic.id).map(t => (t.title, t.images)).update((topic.title, topic.imagesStr))
+        topicTable.filter(_.id === topic.id).map(t => (t.title, t.images)).update((topic.title, topic.images))
           .map{_ =>
             removeUnusedImages(topic.id.get, topic.images)
             write(TopicUpdate(id = topic.id.get, title = topic.title, images = topic.images))
@@ -191,89 +192,52 @@ class TopicController @Inject()(
     }
   }
 
-  def expand = Action.async { request =>
-    val ids = read[List[(Long, Boolean)]](request.body.asText.get)
-    val trueIds = ids.filter(_._2).map(_._1)
-    val falseIds = ids.filter(!_._2).map(_._1)
-    runDbActionAndCreateHttpResponse(
-      DBIO.seq(
-        paragraphTable.filter(_.id inSet trueIds).map(_.expanded).update(true),
-        paragraphTable.filter(_.id inSet falseIds).map(_.expanded).update(false)
-      ).map(_ => SharedConstants.OK)
+  def expand = postRequest(read[List[(Long, Boolean)]]) {
+    case ids =>
+      val trueIds = ids.filter(_._2).map(_._1)
+      val falseIds = ids.filter(!_._2).map(_._1)
+      runDbActionAndCreateHttpResponse(
+        DBIO.seq(
+          paragraphTable.filter(_.id inSet trueIds).map(_.expanded).update(true),
+          paragraphTable.filter(_.id inSet falseIds).map(_.expanded).update(false)
+        ).map(_ => SharedConstants.OK)
+      )
+  }
+
+  def checkParagraph = postRequest(read[(Long, Boolean)]) {
+    case (id, newVal) => runDbActionAndCreateHttpResponse(
+      dao.updateField(paragraphTable)(id, _.checked)(_ => newVal).map(_=>SharedConstants.OK)
     )
   }
 
-  def checkParagraph = Action.async { request =>
-    val (id, newVal) = read[(Long, Boolean)](request.body.asText.get)
-    runDbActionAndCreateHttpResponse(
-      paragraphTable.filter(_.id === id).map(_.checked).update(newVal).map(_=>SharedConstants.OK)
-    )
+  def checkTopics = postRequest(read[List[(Long, Boolean)]]) {
+    case ids =>
+      val trueIds = ids.filter(_._2).map(_._1)
+      val falseIds = ids.filter(!_._2).map(_._1)
+      runDbActionAndCreateHttpResponse(
+        DBIO.seq(
+          topicTable.filter(_.id inSet trueIds).map(_.checked).update(true),
+          topicTable.filter(_.id inSet falseIds).map(_.checked).update(false)
+        ).map(_=>SharedConstants.OK)
+      )
   }
-
-  def checkTopics = Action.async { request =>
-    val ids = read[List[(Long, Boolean)]](request.body.asText.get)
-    val trueIds = ids.filter(_._2).map(_._1)
-    val falseIds = ids.filter(!_._2).map(_._1)
-    runDbActionAndCreateHttpResponse(
-      DBIO.seq(
-        topicTable.filter(_.id inSet trueIds).map(_.checked).update(true),
-        topicTable.filter(_.id inSet falseIds).map(_.checked).update(false)
-      ).map(_=>SharedConstants.OK)
-    )
-  }
-
-  private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean) = idPostRequest(
-    id => runDbActionAndCreateHttpResponse(
-      dao.changeOrder(id, table, down).map(_ => SharedConstants.OK)
-    )
-  )
 
   def upParagraph = changeOrder(paragraphTable, false)
   def upTopic = changeOrder(topicTable, false)
   def downParagraph = changeOrder(paragraphTable, true)
   def downTopic = changeOrder(topicTable, true)
 
-//  def addTagForTopic = formPostRequest(
-//    formParts = Forms.tagForm,
-//    onValidForm = values => {
-//      val topId = values(FormKeys.PARENT_ID)
-//      val tagToAdd = values(FormKeys.TAG)
-//      runDbActionAndCreateHttpResponse(
-//        (dao.updateField(topicTable)(topId, _.tags)((tags: List[String]) => tagToAdd::tags)).map(write)
-//      )
-//    }
-//  )
+  def addTagForTopic = formPostRequest(
+    formParts = Forms.tagForm,
+    onValidForm = values => runDbActionAndCreateHttpResponse(
+      dao.updateField(topicTable)(values(FormKeys.PARENT_ID), _.tags)(values(FormKeys.TAG)::_).map(write(_))
+    )
+  )
 
-  def addTagForTopic = Action.async { request =>
-    readFormDataFromPostRequest(request).values(Forms.tagForm.transformations) match {
-      case Right(values) =>
-        val topId = values(FormKeys.PARENT_ID)
-        val tagToAdd = values(FormKeys.TAG)
-        db.run(
-          for {
-            topic <- topicTable.filter(_.id === topId).result.head
-            topicWithNewTags = topic.copy(tags = tagToAdd::topic.tags)
-            _ <- topicTable.filter(_.id === topId).map(_.tags).update(topicWithNewTags.tagsStr)
-          } yield (topicWithNewTags.tags)
-        ) map {tagsAfterUpdate =>
-          Ok(dataResponse(write(tagsAfterUpdate)))
-        }
-      case Left(fd) =>
-        Future.successful(Ok(formWithErrors(fd)))
-    }
-  }
-
-  def removeTagFromTopic = Action.async { request =>
-    val (topId, tagToRemove) = read[(Long, String)](request.body.asText.get)
-    db.run(
-      for {
-        topic <- topicTable.filter(_.id === topId).result.head
-        topicWithNewTags = topic.copy(tags = topic.tags.filterNot(_ == tagToRemove))
-        _ <- topicTable.filter(_.id === topId).map(_.tags).update(topicWithNewTags.tagsStr)
-      } yield (topicWithNewTags.tags)
-    ) map {tagsAfterUpdate =>
-      Ok(dataResponse(write(tagsAfterUpdate)))
-    }
+  def removeTagFromTopic = postRequest(read[(Long, String)]){
+    case (topId, tagToRemove) => runDbActionAndCreateHttpResponse(
+        dao.updateField(topicTable)(topId, _.tags)(_.filterNot(_ == tagToRemove)).map(write(_))
+      )
   }
 
   private def formPostRequest(formParts: FormParts[_], onValidForm: FormValues => Future[Result]) = Action.async { request =>
@@ -283,8 +247,10 @@ class TopicController @Inject()(
     }
   }
 
-  private def idPostRequest(action: Long => Future[Result]) = Action.async { request =>
-    action(request.body.asText.get.toLong)
+  private def idPostRequest = postRequest(_.toLong) _
+
+  private def postRequest[T](parser: String => T)(action: T => Future[Result]) = Action.async { request =>
+    (action compose parser) (request.body.asText.get)
   }
 
   private def runDbActionAndCreateHttpResponse(action: DBIOAction[String, _, _]) = db.run(
@@ -296,4 +262,9 @@ class TopicController @Inject()(
     Ok(resp)
   }
 
+  private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean) = idPostRequest(
+    id => runDbActionAndCreateHttpResponse(
+      dao.changeOrder(table, id, down).map(_ => SharedConstants.OK)
+    )
+  )
 }

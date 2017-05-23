@@ -1,7 +1,9 @@
 package db
 
+import shared.StrUtils
 import shared.dto.{Paragraph, Topic}
 import slick.driver.H2Driver.api._
+import TypeConversions._
 
 trait HasId {
   def id: Rep[Long]
@@ -19,8 +21,8 @@ trait HasParent {
 
 object TypeConversions {
   implicit val listOfStringsColumnType = MappedColumnType.base[List[String], String](
-    _.mkString(";"),
-    str => if (str == null || str.trim == "") Nil else str.split(";").toList
+    StrUtils.listToStr,
+    StrUtils.strToList
   )
 }
 
@@ -44,16 +46,12 @@ class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrde
   def checked = column[Boolean]("checked")
   def title = column[String]("title")
   override def order = column[Int]("order")
-  def images = column[String]("images")
-  def tags = column[String]("tags", O.Default(""))
+  def images = column[List[String]]("images")
+  def tags = column[List[String]]("tags", O.Default(Nil))
 
   def paragraph = foreignKey("PARAGRAPH_FK", paragraphId, Tables.paragraphTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (id.?,         paragraphId.?, checked, title,  order, images, tags) <> (
-    (t: (  Option[Long], Option[Long],  Boolean, String, Int,   String, String)) =>
-      Topic(t._1, t._2, t._3, t._4, t._5).setImages(t._6).setTags(t._7),
-    (t: Topic) => Some((t.id, t.paragraphId, t.checked, t.title, t.order, t.imagesStr, t.tagsStr))
-  )
+  def * = (id.?, paragraphId.?, checked, title,  order, images, tags) <> (Topic.tupled, Topic.unapply)
 
   override def parentId = paragraphId
 }

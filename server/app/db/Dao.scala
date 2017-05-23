@@ -10,7 +10,7 @@ import scala.reflect.{ClassTag, classTag}
 
 @Singleton
 class Dao @Inject()(implicit private val ec: ExecutionContext) {
-  def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](id: Long, table: Query[M,U,C], down: Boolean) = {
+  def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], id: Long, down: Boolean) = {
     val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
     val groupIdExtractor = createGroupIdExtractor(hasParent)
     val groupIdCriteria =createGroupIdCriteria(hasParent)
@@ -36,7 +36,7 @@ class Dao @Inject()(implicit private val ec: ExecutionContext) {
     } yield (updateId(elemWithOrder, newId))).transactionally
   }
 
-  def deleteOrdered[M <: HasIdAndOrder :ClassTag,U](id: Long, table: Query[M,U,Seq]) = {
+  def deleteOrdered[M <: HasIdAndOrder :ClassTag,U](table: Query[M,U,Seq], id: Long) = {
     val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
     val groupIdExtractor = createGroupIdExtractor(hasParent)
     val groupIdCriteria =createGroupIdCriteria(hasParent)
@@ -50,14 +50,14 @@ class Dao @Inject()(implicit private val ec: ExecutionContext) {
     } yield ()).transactionally
   }
 
-//  def updateField[M <: HasId, U, C[_], F](table: Query[M, U, C])(id: Long, extFunc: M => Rep[F])(mod: F => F) = {
-//    val selectionById = table.filter(_.id === id).map(extFunc).asInstanceOf[Query[_, F, C]]
-//    for {
-//      oldValue <- selectionById.result.head
-//      newValue = mod(oldValue)
-//      _ <- selectionById.update(newValue)
-//    } yield (newValue)
-//  }
+  def updateField[M <: HasId, U, C[_], F: ColumnType](table: Query[M, U, C])(id: Long, extFunc: M => Rep[F])(mod: F => F) = {
+    val selectionById = table.filter(_.id === id).map(extFunc)
+    for {
+      oldValue <- selectionById.result.head
+      newValue = mod(oldValue)
+      _ <- selectionById.update(newValue)
+    } yield (newValue)
+  }
 
   private def maxFn[C[_]](down: Boolean, q: Query[Rep[Int], Int, C]) = if (down) q.max else q.min
   private def calcNewOrder(down: Boolean, oldOrder: Int) = if (down) oldOrder + 1 else oldOrder - 1

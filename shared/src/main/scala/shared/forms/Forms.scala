@@ -1,6 +1,6 @@
 package shared.forms
 
-import shared.FormKeys
+import shared.{FormKeys, StrUtils}
 import shared.Transformations._
 import shared.Validations._
 import shared.dto.{Paragraph, Topic}
@@ -23,7 +23,7 @@ object Forms {
     FormKeys.TITLE -> nonEmpty ->
       ((_: Topic).title),
     FormKeys.IMAGES -> separatedValues(";") ->
-      ((_: Topic).imagesStr)
+      ((t: Topic) => StrUtils.listToStr(t.images))
   )
 
   lazy val tagForm = form[(Long, String)](
