@@ -1,6 +1,4 @@
-package shared
-
-import shared.forms.FormKey
+package shared.forms
 
 object FormKeys {
   final val ID = optLongKey("ID")

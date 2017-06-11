@@ -4,13 +4,12 @@ import app.Utils._
 import app.components.forms.{FormCommonParams, FormTextField}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import shared.FormKeys
-import shared.forms.{FormData, Forms}
+import shared.forms.{FormData, FormKeys, Forms}
 import upickle.default._
 
 object TagsCmp {
 
-  protected case class Props(globalScope: GlobalScope,
+  protected case class Props(globalScope: ListTopicsPageGlobalScope,
                              addTagUrl: String,
                              entityId: Long,
                              tags: List[String],
@@ -20,7 +19,7 @@ object TagsCmp {
   protected case class State(formData: Option[FormData] = None)
 
 
-  def apply(globalScope: GlobalScope,
+  def apply(globalScope: ListTopicsPageGlobalScope,
             addTagUrl: String, entityId: Long,
             tags: List[String], removeTag: String => Callback, tagAdded: List[String] => Callback) =
     comp(Props(globalScope, addTagUrl, entityId, tags, removeTag, tagAdded))

@@ -1,8 +1,8 @@
 package app.components.forms
 
 import japgolly.scalajs.react
-import japgolly.scalajs.react.{Callback, _}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, _}
 import org.scalajs.dom.html
 import shared.SharedConstants._
 import shared.forms.FormKey
@@ -80,7 +80,7 @@ object FormTextField {
   }
 
   private lazy val comp = react.ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
+    .initialStateFromProps(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
     .renderBackend[Backend]
     .componentDidMount{$ => if ($.props.focusOnMount) Callback($.backend.theInput.focus()) else Callback.empty}
     .build

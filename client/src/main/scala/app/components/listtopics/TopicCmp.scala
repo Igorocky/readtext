@@ -13,22 +13,22 @@ import scala.util.{Failure, Success}
 
 object TopicCmp {
 
-  protected case class Props(globalScope: GlobalScope,
+  protected case class Props(globalScope: ListTopicsPageGlobalScope,
                              topic: Topic)
 
   protected case class State(editMode: Boolean = false, showImg: Boolean = false)
 
 
-  def apply(globalScope: GlobalScope, topic: Topic) =
-    comp.withKey(topic.id.get.toString)(Props(globalScope, topic))
+  def apply(globalScope: ListTopicsPageGlobalScope, topic: Topic) =
+    comp.withKey("top-" + topic.id.get.toString)(Props(globalScope, topic))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
       .initialState(State())
     .renderPS{ ($,props,state) =>
       if (!state.editMode) {
-        <.div(^.`class` := this.getClass.getSimpleName + (if (props.topic.checked) " checked" else ""),
+        <.div(^.`class` := this.getClass.getSimpleName /*+ (if (props.topic.checked) " checked" else "")*/,
           <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
-            checkboxForTopic(props.topic, props),
+//            checkboxForTopic(props.topic, props),
             showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
             <.span(
               ^.`class`:=HIGHLIGHTED,
@@ -76,12 +76,12 @@ object TopicCmp {
 
     }.build
 
-  def checkboxForTopic(topic: Topic, props: Props) =
-    Checkbox(
-      id = "selectTopic-" + topic.id.get,
-      onChange = newVal => props.globalScope.checkTopicsAction(List((topic.id.get, newVal))),
-      checked = topic.checked
-    )
+//  def checkboxForTopic(topic: Topic, props: Props) =
+//    Checkbox(
+//      id = "selectTopic-" + topic.id.get,
+//      onChange = newVal => props.globalScope.checkTopicsAction(List((topic.id.get, newVal))),
+//      checked = topic.checked
+//    )
 
   def moveUpButton(topic: Topic, props: Props) = buttonWithIcon(
     onClick = props.globalScope.moveUpTopicAction(topic.id.get),

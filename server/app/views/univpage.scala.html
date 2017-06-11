@@ -28,6 +28,6 @@
         <div id="@SharedConstants.PAGE_TYPE_DIV_ID" hidden>@pageType</div>
         <div id="@SharedConstants.CUSTOM_DATA_DIV_ID" hidden><![CDATA[@StrUtils.toBytesStr(customData)]]></div>
         <div id="@SharedConstants.UNIV_PAGE_CONTENT_DIV_ID"></div>
-        @playscalajs.html.scripts("client")
+        <script src="@utils.ServerUtils.bundleUrl("client")"></script>
     </body>
 </html>

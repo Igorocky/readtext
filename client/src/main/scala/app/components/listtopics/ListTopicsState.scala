@@ -1,20 +1,20 @@
 package app.components.listtopics
 
+import app.LazyTreeNode
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.raw.File
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.messages.Language
 
-case class ListTopicsState(globalScope: GlobalScope = null,
+case class ListTopicsState(globalScope: ListTopicsPageGlobalScope = null,
+                           data: LazyTreeNode = LazyTreeNode(),
                            waitPane: Boolean = false,
                            okDiagText: Option[String] = None,
                            okCancelDiagText: Option[String] = None,
                            onOk: Callback = Callback.empty,
                            onCancel: Callback = Callback.empty,
-                           pasteListeners: Map[(Long,Int), File => Callback] = Map(),
+                           pasteListeners: Map[(Long, Int), File => Callback] = Map(),
                            tagFilter: String = "") {
-
-  def paragraphs = globalScope.pageParams.paragraphs
 
   def registerListener(id: Long, listener: File => Callback): ListTopicsState = {
     val order = if (pasteListeners.isEmpty) 1 else pasteListeners.map(_._1._2).max + 1
@@ -34,105 +34,86 @@ case class ListTopicsState(globalScope: GlobalScope = null,
     )
   )
 
-  def setGlobalScope(globalScope: GlobalScope): ListTopicsState = copy(globalScope = globalScope)
+  def setGlobalScope(globalScope: ListTopicsPageGlobalScope): ListTopicsState = copy(globalScope = globalScope)
 
-  def addParagraph(paragraph: Paragraph): ListTopicsState =
-    updateParagraphs(paragraphs:::paragraph::Nil)
+  def addParagraph(paragraph: Paragraph): ListTopicsState = changeData(_.addChild(
+    paragraphSelector(paragraph.paragraphId),
+    LazyTreeNode(Some(paragraph), None)
+  ))
 
-  def updateParagraph(parUpd: ParagraphUpdate): ListTopicsState = modParagraphById(parUpd.id, _.copy(name = parUpd.name))
+  def updateParagraph(parUpd: ParagraphUpdate): ListTopicsState = changeData(_.updateValue(
+    paragraphSelector(parUpd.id),
+    _.map(_.asInstanceOf[Paragraph].update(parUpd))
+  ))
 
-  def deleteParagraph(id: Long): ListTopicsState = {
-    val (rest, List(deletedPar)) = paragraphs.partition(_.id.get != id)
-    updateParagraphs(rest.map(p => if (p.order < deletedPar.order) p else p.copy(order = p.order-1)))
-  }
+  def deleteParagraph(id: Long): ListTopicsState = changeData(_.removeNode(paragraphSelector(id)))
 
-  def addTopic(topic: Topic): ListTopicsState =
-    modParagraphById(topic.paragraphId.get, p => p.copy(topics = p.topics:::topic::Nil))
+  def addTopic(topic: Topic): ListTopicsState = changeData(_.addChild(
+    paragraphSelector(topic.paragraphId),
+    LazyTreeNode(Some(topic), None)
+  ))
 
-  def updateTopic(topicUpd: TopicUpdate): ListTopicsState =
-    modTopicById(topicUpd.id, _.copy(title = topicUpd.title, images = topicUpd.images))
+  def updateTopic(topicUpd: TopicUpdate): ListTopicsState = changeData(_.updateValue(
+    topicSelector(topicUpd.id),
+    _.map(_.asInstanceOf[Topic].update(topicUpd))
+  ))
 
-  def deleteTopic(topId: Long) = {
-    val parWithTop = paragraphByTopicId(topId)
-    val (rest, List(deleted)) = parWithTop.topics.partition(_.id.get != topId)
-    modParagraphById(
-      parWithTop.id.get,
-      _.copy(topics = rest.map(t => if (t.order < deleted.order) t else t.copy(order = t.order-1)))
-    )
-  }
+  def deleteTopic(topId: Long) = changeData(_.removeNode(topicSelector(topId)))
 
-  def checkParagraph(parId: Long, newChecked: Boolean): ListTopicsState =
-    modParagraphById(parId, _.copy(checked = newChecked))
-
-  def checkTopics(ids: List[(Long, Boolean)]): ListTopicsState =
-    ids.foldLeft(this){case (s,t) => s.checkTopic(t._1, t._2)}
-
-  def checkTopic(topId: Long, newChecked: Boolean): ListTopicsState =
-    modTopicById(topId, _.copy(checked = newChecked))
-
-  def expandParagraph(id: Long, newExpanded: Boolean): ListTopicsState =
-    modParagraphById(id, _.copy(expanded = newExpanded))
+  def expandParagraph(id: Long, newExpanded: Boolean): ListTopicsState = changeData(_.updateValue(
+    paragraphSelector(id),
+    _.map(_.asInstanceOf[Paragraph].copy(expanded = newExpanded))
+  ))
 
   def expandParagraphs(ids: List[(Long, Boolean)]): ListTopicsState =
     ids.foldLeft(this){case (s,t) => s.expandParagraph(t._1, t._2)}
 
-  def moveUpTopic(id: Long): ListTopicsState = {
-    val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
-    modParagraphById(par.id.get, _.copy(topics = moveUp(id, par.topics)))
-  }
+  def moveUpTopic(id: Long): ListTopicsState = changeData(_.moveUp(topicSelector(id)))
 
-  def moveUpParagraph(id: Long): ListTopicsState = updateParagraphs(moveUp(id, paragraphs))
+  def moveUpParagraph(id: Long): ListTopicsState = changeData(_.moveUp(paragraphSelector(id)))
 
-  def moveDownParagraph(id: Long): ListTopicsState = updateParagraphs(moveDown(id, paragraphs))
+  def moveDownParagraph(id: Long): ListTopicsState = changeData(_.moveDown(paragraphSelector(id)))
 
-  def moveDownTopic(id: Long): ListTopicsState = {
-    val par = paragraphs.find(_.topics.exists(_.id.get == id)).get
-    modParagraphById(par.id.get, _.copy(topics = moveDown(id, par.topics)))
-  }
+  def moveDownTopic(id: Long): ListTopicsState = changeData(_.moveDown(topicSelector(id)))
 
-  def setTags(topicId: Long, tags: List[String]): ListTopicsState = {
-    modTopicById(topicId, _.copy(tags = tags))
-  }
+  def setTags(topicId: Long, tags: List[String]): ListTopicsState = changeData(_.updateValue(
+    topicSelector(topicId),
+    _.map(_.asInstanceOf[Topic].copy(tags = tags))
+  ))
 
-  private def moveUp[E <: {val id: Option[Long]}](id: Long, elems: List[E]): List[E] = {
-    val idx = elems.indexWhere(_.id.get == id)
-    if (idx == 0) elems else {
-      val vec = elems.toVector
-      vec.updated(idx - 1, vec(idx)).updated(idx, vec(idx - 1)).toList
-    }
-  }
-
-  private def moveDown[E <: {val id: Option[Long]}](id: Long, elems: List[E]): List[E] = {
-    val idx = elems.indexWhere(_.id.get == id)
-    if (idx == elems.size - 1) elems else {
-      val vec = elems.toVector
-      vec.updated(idx + 1, vec(idx)).updated(idx, vec(idx + 1)).toList
-    }
-  }
+  def setChildren(paragraphId: Option[Long], children: List[LazyTreeNode]): ListTopicsState = changeData(_.setChildren(
+    paragraphSelector(paragraphId),
+    children
+  ))
 
   //-------------------------
 
-  private def modParagraphById(ps: List[Paragraph], parId: Long, mod: Paragraph => Paragraph): List[Paragraph] =
-    ps.map(p => if (p.id.get == parId) mod(p) else p)
+  private def changeData(f: LazyTreeNode => LazyTreeNode): ListTopicsState = copy(data = f(data))
 
-  private def modParagraphById(parId: Long, mod: Paragraph => Paragraph): ListTopicsState =
-    updateParagraphs(modParagraphById(paragraphs, parId, mod))
+  private def paragraphSelector(idOpt: Option[Long]): LazyTreeNode => Boolean =
+    if (idOpt.isEmpty) {
+      node => {
+        node match {
+          case LazyTreeNode(None, _) => true
+          case _ => false
+        }
+      }
+    } else {
+      node => {
+        node match {
+          case LazyTreeNode(Some(p: Paragraph), _) if p.id == idOpt => true
+          case _ => false
+        }
+      }
+    }
 
-  private def paragraphByTopicId(topId: Long) = paragraphs.find(_.topics.exists(_.id.get == topId)).get
+  private def paragraphSelector(id: Long): LazyTreeNode => Boolean = paragraphSelector(Some(id))
 
-  private def modTopicById(topId: Long, mod: Topic => Topic): ListTopicsState = {
-    val parWithTop = paragraphByTopicId(topId)
-    modParagraphById(parWithTop.id.get, p => p.copy(topics = modTopicById(p.topics, topId, mod)))
-  }
+  private def topicSelector(idOpt: Option[Long]): LazyTreeNode => Boolean =
+    node => node match {
+      case LazyTreeNode(Some(t: Topic), _) if t.id == idOpt => true
+      case _ => false
+    }
 
-  private def modTopicById(ts: List[Topic], topId: Long, mod: Topic => Topic): List[Topic] =
-    ts.map(t => if (t.id.get == topId) mod(t) else t)
-
-  private def updateParagraphs(paragraphs: List[Paragraph]): ListTopicsState = copy(
-    globalScope = globalScope.copy(
-      pageParams = globalScope.pageParams.copy(
-        paragraphs = paragraphs
-      )
-    )
-  )
+  private def topicSelector(id: Long): LazyTreeNode => Boolean = topicSelector(Some(id))
 }

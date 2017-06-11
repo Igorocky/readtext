@@ -1,9 +1,6 @@
 package shared.pageparams
 
-import shared.dto.Paragraph
-
 case class ListTopicsPageParams(headerParams: HeaderParams,
-                                paragraphs: List[Paragraph],
                                 createParagraphUrl: String,
                                 updateParagraphUrl: String,
                                 deleteParagraphUrl: String,
@@ -17,9 +14,7 @@ case class ListTopicsPageParams(headerParams: HeaderParams,
                                 moveUpTopicUrl: String,
                                 moveDownParagraphUrl: String,
                                 moveDownTopicUrl: String,
-                                checkParagraphUrl: String,
-                                checkTopicsUrl: String,
                                 addTagForTopicUrl: String,
-                                removeTagFromTopicUrl: String) {
-  lazy val eraseData = copy(paragraphs = null)
-}
+                                removeTagFromTopicUrl: String,
+                                loadParagraphsByParentIdUrl: String,
+                                loadTopicsByParentIdUrl: String)

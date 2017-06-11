@@ -4,7 +4,7 @@ import java.io.File
 import javax.inject._
 
 import db.Tables.{paragraphTable, topicTable}
-import db.{Dao, HasIdAndOrder, PrintSchema}
+import db.{DaoCommon, HasIdAndOrder, PrintSchema}
 import db.TypeConversions._
 import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
@@ -13,9 +13,9 @@ import play.api.mvc._
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.forms.PostData.{dataResponse, errorResponse, formWithErrors}
-import shared.forms.{FormParts, FormValues, Forms, PostData}
+import shared.forms._
 import shared.pageparams.ListTopicsPageParams
-import shared.{FormKeys, SharedConstants}
+import shared.SharedConstants
 import slick.dbio.DBIOAction
 import slick.dbio.Effect.Read
 import slick.driver.H2Driver.api._
@@ -32,7 +32,7 @@ class TopicController @Inject()(
                                 val messagesApi: MessagesApi,
                                 protected val dbConfigProvider: DatabaseConfigProvider,
                                 val configuration: play.api.Configuration,
-                                val dao: Dao
+                                val dao: DaoCommon
                               )(implicit private val environment: Environment,
                                 implicit private val ec: ExecutionContext)
   extends Controller with HasDatabaseConfigProvider[JdbcProfile] with I18nSupport {
@@ -40,43 +40,33 @@ class TopicController @Inject()(
   new PrintSchema
 
   val getTopicImgUrl = """/\w+""".r.findFirstIn(routes.TopicController.topicImg(1,"").url).get
-  def topics = Action.async { implicit request =>
-
-    val ps: DBIOAction[List[Paragraph], NoStream, Read with Read] = for {
-      ts <- topicTable.sortBy(_.order).result.map(_.groupBy(_.paragraphId) mapValues (_.toList) withDefaultValue(Nil))
-      ps <- paragraphTable.sortBy(_.order).result
-    } yield ps.map(p => p.copy(topics = ts(p.id))).toList
-
-    db.run(ps).map{ps=>
-      Ok(
-        views.html.univpage(
-          pageType = ListTopicsPageParams.getClass.getName,
-          customData = write(ListTopicsPageParams(
-            headerParams = headerParams(getSession.language),
-            createParagraphUrl = routes.TopicController.createParagraph.url,
-            updateParagraphUrl = routes.TopicController.updateParagraph.url,
-            deleteParagraphUrl = routes.TopicController.deleteParagraph.url,
-            createTopicUrl = routes.TopicController.createTopic.url,
-            updateTopicUrl = routes.TopicController.updateTopic.url,
-            deleteTopicUrl = routes.TopicController.deleteTopic.url,
-            uploadTopicFileUrl = routes.TopicController.uploadTopicImage.url,
-            getTopicImgUrl = getTopicImgUrl,
-            expandUrl = routes.TopicController.expand.url,
-            moveUpParagraphUrl = routes.TopicController.upParagraph.url,
-            moveUpTopicUrl = routes.TopicController.upTopic.url,
-            moveDownParagraphUrl = routes.TopicController.downParagraph.url,
-            moveDownTopicUrl = routes.TopicController.downTopic.url,
-            checkParagraphUrl = routes.TopicController.checkParagraph.url,
-            checkTopicsUrl = routes.TopicController.checkTopics.url,
-            addTagForTopicUrl = routes.TopicController.addTagForTopic.url,
-            removeTagFromTopicUrl = routes.TopicController.removeTagFromTopic.url,
-            paragraphs = ps
-          )),
-          pageTitle = "Topics"
-        )
+  def topics = Action { implicit request =>
+    Ok(
+      views.html.univpage(
+        pageType = ListTopicsPageParams.getClass.getName,
+        customData = write(ListTopicsPageParams(
+          headerParams = headerParams(getSession.language),
+          createParagraphUrl = routes.TopicController.createParagraph.url,
+          updateParagraphUrl = routes.TopicController.updateParagraph.url,
+          deleteParagraphUrl = routes.TopicController.deleteParagraph.url,
+          createTopicUrl = routes.TopicController.createTopic.url,
+          updateTopicUrl = routes.TopicController.updateTopic.url,
+          deleteTopicUrl = routes.TopicController.deleteTopic.url,
+          uploadTopicFileUrl = routes.TopicController.uploadTopicImage.url,
+          getTopicImgUrl = getTopicImgUrl,
+          expandUrl = routes.TopicController.expand.url,
+          moveUpParagraphUrl = routes.TopicController.upParagraph.url,
+          moveUpTopicUrl = routes.TopicController.upTopic.url,
+          moveDownParagraphUrl = routes.TopicController.downParagraph.url,
+          moveDownTopicUrl = routes.TopicController.downTopic.url,
+          addTagForTopicUrl = routes.TopicController.addTagForTopic.url,
+          removeTagFromTopicUrl = routes.TopicController.removeTagFromTopic.url,
+          loadParagraphsByParentIdUrl = routes.TopicController.loadParagraphsByParentId.url,
+          loadTopicsByParentIdUrl = routes.TopicController.loadTopicsByParentId.url
+        )),
+        pageTitle = "Topics"
       )
-
-    }
+    )
   }
 
   def createParagraph = formPostRequest(
@@ -204,24 +194,6 @@ class TopicController @Inject()(
       )
   }
 
-  def checkParagraph = postRequest(read[(Long, Boolean)]) {
-    case (id, newVal) => runDbActionAndCreateHttpResponse(
-      dao.updateField(paragraphTable)(id, _.checked)(_ => newVal).map(_=>SharedConstants.OK)
-    )
-  }
-
-  def checkTopics = postRequest(read[List[(Long, Boolean)]]) {
-    case ids =>
-      val trueIds = ids.filter(_._2).map(_._1)
-      val falseIds = ids.filter(!_._2).map(_._1)
-      runDbActionAndCreateHttpResponse(
-        DBIO.seq(
-          topicTable.filter(_.id inSet trueIds).map(_.checked).update(true),
-          topicTable.filter(_.id inSet falseIds).map(_.checked).update(false)
-        ).map(_=>SharedConstants.OK)
-      )
-  }
-
   def upParagraph = changeOrder(paragraphTable, false)
   def upTopic = changeOrder(topicTable, false)
   def downParagraph = changeOrder(paragraphTable, true)
@@ -238,6 +210,18 @@ class TopicController @Inject()(
     case (topId, tagToRemove) => runDbActionAndCreateHttpResponse(
         dao.updateField(topicTable)(topId, _.tags)(_.filterNot(_ == tagToRemove)).map(write(_))
       )
+  }
+
+  def loadParagraphsByParentId = postRequest(read[Option[Long]]) {
+    case (parentParagraphIdOpt) => runDbActionAndCreateHttpResponse(
+      dao.loadOrderedChildren(paragraphTable, parentParagraphIdOpt).map(write(_))
+    )
+  }
+
+  def loadTopicsByParentId = postRequest(read[Long]) {
+    case (parentParagraphId) => runDbActionAndCreateHttpResponse(
+      dao.loadOrderedChildren(topicTable, parentParagraphId).map(write(_))
+    )
   }
 
   private def formPostRequest(formParts: FormParts[_], onValidForm: FormValues => Future[Result]) = Action.async { request =>
@@ -264,7 +248,7 @@ class TopicController @Inject()(
 
   private def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], down: Boolean) = idPostRequest(
     id => runDbActionAndCreateHttpResponse(
-      dao.changeOrder(table, id, down).map(_ => SharedConstants.OK)
+      dao.changeOrder(table, id, down).map(write(_))
     )
   )
 }

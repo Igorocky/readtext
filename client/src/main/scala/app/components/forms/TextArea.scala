@@ -63,7 +63,7 @@ object TextArea {
   }
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
+    .initialStateFromProps(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
     .renderBackend[Backend]
     .build
 }

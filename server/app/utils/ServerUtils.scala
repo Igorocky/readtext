@@ -41,4 +41,12 @@ object ServerUtils {
 
   def readFormDataFromPostRequest(request: Request[AnyContent]): FormData =
     readPostData(request.body.asText.get).asInstanceOf[FormSubmit].formData
+
+  def bundleUrl(projectName: String): String = {
+    val name = projectName.toLowerCase
+    Seq(s"$name-opt-bundle.js", s"$name-fastopt-bundle.js")
+      .find(name => getClass.getResource(s"/public/$name") != null)
+      .map(controllers.routes.Assets.versioned(_).url)
+      .get
+  }
 }

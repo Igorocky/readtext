@@ -4,12 +4,11 @@ import app.Utils._
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shared.FormKeys
-import shared.forms.{FormData, Forms}
+import shared.forms.{FormData, FormKeys, Forms}
 
 object ParagraphForm {
 
-  protected case class Props(globalScope: GlobalScope,
+  protected case class Props(globalScope: ListTopicsPageGlobalScope,
                              formData: FormData,
                              cancelled: Callback,
                              submitComplete: String => Callback,
@@ -19,7 +18,7 @@ object ParagraphForm {
 
   protected case class State(formData: FormData)
 
-  def apply(globalScope: GlobalScope,
+  def apply(globalScope: ListTopicsPageGlobalScope,
             formData: FormData,
             cancelled: Callback,
             submitComplete: String => Callback,
@@ -37,7 +36,7 @@ object ParagraphForm {
     ))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(props => State(formData = props.formData))
+    .initialStateFromProps(props => State(formData = props.formData))
     .renderPS{($,props,state)=>
       implicit val lang = props.globalScope.language
       implicit val fParams = FormCommonParams(

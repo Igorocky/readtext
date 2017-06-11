@@ -16,7 +16,7 @@ object SimplePage {
   def apply(str: String): Unmounted[Props, State, Backend] = comp(read[Props](str))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(p => State(p.param1))
+    .initialStateFromProps(p => State(p.param1))
     .renderBackend[Backend]
     .build
 

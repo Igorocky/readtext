@@ -22,11 +22,11 @@ POST    /deleteTopic                           controllers.TopicController.delet
 POST    /uploadTopicImage                           controllers.TopicController.uploadTopicImage
 GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)
 POST     /expand                         controllers.TopicController.expand
-POST     /checkParagraph                         controllers.TopicController.checkParagraph
-POST     /checkTopics                         controllers.TopicController.checkTopics
 POST     /upParagraph                         controllers.TopicController.upParagraph
 POST     /upTopic                         controllers.TopicController.upTopic
 POST     /downParagraph                         controllers.TopicController.downParagraph
 POST     /downTopic                         controllers.TopicController.downTopic
 POST     /addTagForTopic                         controllers.TopicController.addTagForTopic
 POST     /removeTagFromTopic                         controllers.TopicController.removeTagFromTopic
+POST     /loadParagraphsByParentId                         controllers.TopicController.loadParagraphsByParentId
+POST     /loadTopicsByParentId                         controllers.TopicController.loadTopicsByParentId

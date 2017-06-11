@@ -2,12 +2,13 @@ package app.components.listtopics
 
 import app.Utils._
 import app.components._
-import app.{JsGlobalScope, Utils}
+import app.{JsGlobalScope, LazyTreeNode, Utils}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.ClipboardEvent
+import shared.dto.{Paragraph, Topic}
 import shared.forms.{DataResponse, ErrorResponse}
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
@@ -22,14 +23,14 @@ object ListTopicsPage {
   def apply(str: String): Unmounted[Props, State, Backend] = comp(read[Props](str))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(_ => ListTopicsState())
+    .initialStateFromProps(_ => ListTopicsState())
     .renderBackend[Backend]
     .componentWillMount { $ =>
       dom.window.addEventListener[ClipboardEvent](
         "paste",
         (e: ClipboardEvent) => $.state.runPasteListener(JsGlobalScope.extractFileFromEvent(e))
       )
-      $.modState(_.setGlobalScope(GlobalScope(
+      $.modState(_.setGlobalScope(ListTopicsPageGlobalScope(
         pageParams = $.props,
         openOkDialog = str => $.backend.openOkDialog(str),
         openOkCancelDialog = (text, onOk, onCancel) => $.backend.openOkCancelDialog(text, onOk, onCancel),
@@ -42,16 +43,6 @@ object ListTopicsPage {
           $.props.expandUrl,
           write(ids),
           _ => $.modState(_.expandParagraphs(ids))
-        ),
-        checkParagraphAction = (id, newChecked) => $.backend.doAction(
-          $.props.checkParagraphUrl,
-          write((id, newChecked)),
-          _ => $.modState(_.checkParagraph(id, newChecked))
-        ),
-        checkTopicsAction = ids => $.backend.doAction(
-          $.props.checkTopicsUrl,
-          write(ids),
-          _ => $.modState(_.checkTopics(ids))
         ),
         moveUpParagraphAction = id => $.backend.doAction(
           $.props.moveUpParagraphUrl,
@@ -94,14 +85,14 @@ object ListTopicsPage {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    def render(props: Props, state: State) = UnivPage(
+    def render(implicit props: Props, state: State) = UnivPage(
       language = state.globalScope.pageParams.headerParams.language,
       changeLangUrl = props.headerParams.changeLanguageUrl,
       onLanguageChange = newLang => $.modState(_.setLanguage(newLang)),
       content =
         <.div(
-          header(state, props),
-          (if (state.tagFilter.trim.isEmpty) {
+          header,
+          /*(if (state.tagFilter.trim.isEmpty) {
             state.paragraphs
           } else {
             state.paragraphs.filter(par =>
@@ -111,17 +102,70 @@ object ListTopicsPage {
             )
           }).toVdomArray{paragraph =>
             ParagraphCmp(paragraph, state.globalScope, state.tagFilter)
-          },
+          },*/
+          Tree(mapLazyTreeNode(state.data)),
           waitPaneIfNecessary(state),
           okDialogIfNecessary(state),
           okCancelDialogIfNecessary(state)
         )
     )
 
-    def header(state: State, props: Props) =
+    def mapLazyTreeNode(node: LazyTreeNode)(implicit props: Props, state: State): TreeNodeModel =
+      (node.value: @unchecked) match {
+        case None => TreeNodeModel(
+          key = "rootNode",
+          nodeValue = None,
+          mayHaveChildren = true,
+          getChildren = node.children.map(_.map(mapLazyTreeNode)),
+          loadChildren = doAction(
+            props.loadParagraphsByParentIdUrl,
+            write[Option[Long]](None),
+            str => $.modState(_.setChildren(None, read[List[Paragraph]](str).map(par => LazyTreeNode(Some(par), None))))
+          ),
+          expanded = Some(true),
+          onExpand = Callback.empty,
+          onCollapse = Callback.empty
+        )
+        case Some(p: Paragraph) => TreeNodeModel(
+          key = "par-" + p.id.get,
+          nodeValue = Some(ParagraphCmp(p, state.globalScope, state.tagFilter)),
+          mayHaveChildren = true,
+          getChildren = node.children.map(_.map(mapLazyTreeNode)),
+          loadChildren = doAction(
+            props.loadParagraphsByParentIdUrl,
+            write(p.id),
+            str => {
+              println(s"[${Thread.currentThread().getName}] ${p.id} paragraphs loaded")
+              val paragraphs = read[List[Paragraph]](str).map(par => LazyTreeNode(Some(par), None))
+              doAction(
+                props.loadTopicsByParentIdUrl,
+                write(p.id.get),
+                topicsStr => {
+                  println(s"[${Thread.currentThread().getName}] ${p.id} topics loaded")
+                  val topics = read[List[Topic]](topicsStr).map(top => LazyTreeNode(Some(top), None))
+                  println(s"[${Thread.currentThread().getName}] ${p.id} children loaded")
+                  $.modState(_.setChildren(p.id, paragraphs ::: topics))
+                }
+              )
+            }
+          ),
+          expanded = Some(p.expanded),
+          onExpand = $.modState(_.expandParagraph(p.id.get, true)),
+          onCollapse = $.modState(_.expandParagraph(p.id.get, false))
+        )
+        case Some(t: Topic) => TreeNodeModel(
+          key = "top-" + t.id.get,
+          nodeValue = Some(TopicCmp(state.globalScope, t)),
+          mayHaveChildren = false,
+          getChildren = None,
+          loadChildren = Callback.empty
+        )
+      }
+
+    def header(implicit props: Props, state: State) =
       HeaderCmp(
         globalScope = state.globalScope,
-        paragraphs = props.paragraphs,
+        /*paragraphs = props.paragraphs,*/
         filterChanged = str => $.modState(_.copy(tagFilter = str))
       )
 

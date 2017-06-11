@@ -26,7 +26,7 @@ object ImageCmp {
       onDown))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(p => State())
+    .initialStateFromProps(p => State())
     .renderPS{($,props,state)=>
       <.div(
         buttonWithIcon(onClick = props.onDelete(props.id), btnType = BTN_DANGER, iconType = "fa-trash-o")

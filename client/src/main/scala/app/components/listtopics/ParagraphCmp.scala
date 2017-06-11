@@ -13,14 +13,14 @@ import scala.util.{Failure, Success}
 
 object ParagraphCmp {
   protected case class Props(paragraph: Paragraph,
-                             globalScope: GlobalScope,
+                             globalScope: ListTopicsPageGlobalScope,
                              tagFilter: String)
 
   protected case class State(editMode: Boolean = false,
                              createTopicDiagOpened: Boolean = false)
 
-  def apply(paragraph: Paragraph, globalScope: GlobalScope, tagFilter: String) =
-    comp.withKey(paragraph.id.get.toString)(Props(paragraph, globalScope, tagFilter))
+  def apply(paragraph: Paragraph, globalScope: ListTopicsPageGlobalScope, tagFilter: String): VdomElement =
+    comp.withKey("par-" + paragraph.id.get.toString)(Props(paragraph, globalScope, tagFilter))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -31,17 +31,16 @@ object ParagraphCmp {
     private val checkUncheckAllBtnSize = "16px"
 
     def render(props: Props, state: State) =
-      <.div(^.`class` := ParagraphCmp.getClass.getSimpleName + (if (props.paragraph.checked) " checked" else ""),
+      <.div(^.`class` := ParagraphCmp.getClass.getSimpleName /*+ (if (props.paragraph.checked) " checked" else "")*/,
         if (!state.editMode) {
           <.div(^.`class` := PARAGRAPH_NAME + " " + HIGHLIGHT_CHILD_SPAN_ON_HOVER,
-            checkboxForParagraph(props.paragraph, props),
-            expandParagraphButton(props.paragraph, props),
+//            checkboxForParagraph(props.paragraph, props),
             <.span(
               ^.`class`:=HIGHLIGHTED,
               props.paragraph.name
             ),
-            checkAllTopicsButton(props.paragraph, props),
-            uncheckAllTopicsButton(props.paragraph, props),
+//            checkAllTopicsButton(props.paragraph, props),
+//            uncheckAllTopicsButton(props.paragraph, props),
             editParagraphButton(props.paragraph),
             createTopicButton(props.paragraph),
             moveUpButton(props.paragraph, props),
@@ -66,8 +65,7 @@ object ParagraphCmp {
             textFieldLabel = "",
             submitButtonName = "Save"
           )
-        },
-        if (props.paragraph.expanded) listTopics(props.paragraph, props) else EmptyVdom
+        }
       )
 
     def editParagraphButton(paragraph: Paragraph) = buttonWithIcon(
@@ -76,19 +74,19 @@ object ParagraphCmp {
       iconType = "fa-pencil-square-o"
     )
 
-    def checkAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
-      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, true))),
-      btnType = BTN_INFO,
-      imgUrl = "assets/images/check-all.png",
-      imgSize = checkUncheckAllBtnSize
-    )
+//    def checkAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
+//      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, true))),
+//      btnType = BTN_INFO,
+//      imgUrl = "assets/images/check-all.png",
+//      imgSize = checkUncheckAllBtnSize
+//    )
 
-    def uncheckAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
-      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, false))),
-      btnType = BTN_INFO,
-      imgUrl = "assets/images/uncheck-all.png",
-      imgSize = checkUncheckAllBtnSize
-    )
+//    def uncheckAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
+//      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, false))),
+//      btnType = BTN_INFO,
+//      imgUrl = "assets/images/uncheck-all.png",
+//      imgSize = checkUncheckAllBtnSize
+//    )
 
     def createTopicButton(paragraph: Paragraph) = buttonWithText(
       onClick = $.modState(_.copy(createTopicDiagOpened = true)),
@@ -108,18 +106,12 @@ object ParagraphCmp {
       iconType = "fa-trash-o"
     )
 
-  def checkboxForParagraph(paragraph: Paragraph, props: Props) =
-    Checkbox(
-      id = "selectPar-" + paragraph.id.get,
-      onChange = props.globalScope.checkParagraphAction(paragraph.id.get, _),
-      checked = paragraph.checked
-    )
-
-  def expandParagraphButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
-    onClick = props.globalScope.expandParagraphsAction(List((paragraph.id.get, !paragraph.expanded))),
-    btnType = BTN_LINK,
-    iconType = if (paragraph.expanded) "fa-minus-square" else "fa-plus-square"
-  )
+//  def checkboxForParagraph(paragraph: Paragraph, props: Props) =
+//    Checkbox(
+//      id = "selectPar-" + paragraph.id.get,
+//      onChange = props.globalScope.checkParagraphAction(paragraph.id.get, _),
+//      checked = paragraph.checked
+//    )
 
     def moveUpButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
       onClick = props.globalScope.moveUpParagraphAction(paragraph.id.get),
@@ -132,18 +124,6 @@ object ParagraphCmp {
       btnType = BTN_INFO,
       iconType = "fa-long-arrow-down"
     )
-
-    def listTopics(p: Paragraph, props: Props) =
-      (if (props.tagFilter.trim.isEmpty) {
-        p.topics
-      } else {
-        p.topics.filter(topic => props.globalScope.filterTopic(props.tagFilter, topic))
-      }).toVdomArray{topic=>
-        TopicCmp(
-          globalScope = props.globalScope,
-          topic = topic
-        )
-      }
 
     def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
       TopicForm(

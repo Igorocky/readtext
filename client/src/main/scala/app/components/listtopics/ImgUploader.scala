@@ -13,13 +13,13 @@ import scala.util.{Failure, Success}
 
 object ImgUploader {
 
-  protected case class Props(globalScope: GlobalScope,
+  protected case class Props(globalScope: ListTopicsPageGlobalScope,
                              topic: Topic,
                              onChange: List[String] => Callback)
 
   protected case class State(images: List[String])
 
-  def apply(globalScope: GlobalScope,
+  def apply(globalScope: ListTopicsPageGlobalScope,
             topic: Topic,
             key: FormKey)
            (implicit formParams: FormCommonParams) =
@@ -32,7 +32,7 @@ object ImgUploader {
     ))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(p => State(p.topic.images))
+    .initialStateFromProps(p => State(p.topic.images))
     .renderBackend[Backend]
     .componentWillMount { $ =>
       $.props.globalScope.registerPasteListener($.props.topic.id.get, $.backend.uploadImage)
@@ -57,6 +57,7 @@ object ImgUploader {
               if (state.images.head == imgId) {
                 Callback.empty
               } else {
+                // TODO: try to use recursion here
                 val imgVec = state.images.toVector
                 val idx = imgVec.indexOf(imgId)
                 updateImages(props, imgVec.updated(idx, imgVec(idx - 1)).updated(idx - 1, imgId).toList)

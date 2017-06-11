@@ -4,12 +4,11 @@ import app.Utils.{BTN_DEFAULT, buttonWithText}
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import shared.FormKeys
 import shared.dto.Topic
-import shared.forms.{FormData, Forms}
+import shared.forms.{FormData, FormKeys, Forms}
 
 object TopicForm {
-  protected case class Props(globalScope: GlobalScope,
+  protected case class Props(globalScope: ListTopicsPageGlobalScope,
                              formData: FormData,
                              topic: Option[Topic] = None,
                              cancelled: Callback,
@@ -20,7 +19,7 @@ object TopicForm {
 
   protected case class State(formData: FormData)
 
-  def apply(globalScope: GlobalScope,
+  def apply(globalScope: ListTopicsPageGlobalScope,
             formData: FormData,
             topic: Option[Topic] = None,
             cancelled: Callback,
@@ -40,7 +39,7 @@ object TopicForm {
     ))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialState_P(p => State(formData = p.formData))
+    .initialStateFromProps(p => State(formData = p.formData))
     .renderPS{($,props,state)=>
       implicit val fParams = FormCommonParams(
         id = "topic-form",
