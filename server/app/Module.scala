@@ -1,6 +1,8 @@
 import java.time.Clock
 
-import com.google.inject.AbstractModule
+import com.google.inject.{AbstractModule, Provides}
+import controllers.{Router, TopicApiImpl}
+import shared.api.TopicApi
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -20,5 +22,7 @@ class Module extends AbstractModule {
 
 //    bind(classOf[PrintSchema]).asEagerSingleton()
   }
+
+  @Provides def router(topicApiImpl: TopicApiImpl): Router = topicApiImpl.router
 
 }

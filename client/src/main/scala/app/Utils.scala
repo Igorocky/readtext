@@ -5,7 +5,8 @@ import japgolly.scalajs.react.{Callback, CallbackTo}
 import org.scalajs.dom
 import org.scalajs.dom.ext.Ajax
 import shared.forms.PostData
-import upickle.default.read
+import shared.forms.PostData.readPostData
+import upickle.default._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -27,12 +28,37 @@ object Utils {
   def post[T](url: String, data: Ajax.InputData)(f: Try[PostData] => CallbackTo[T]): CallbackTo[Future[T]] =
     CallbackTo.future {
       Ajax.post(url = url, data = data).map {
-        r => Success(read[PostData](r.responseText))
+        r => Success(readPostData(r.responseText))
       }.recover[Try[PostData]] {
-        case throwable =>
-          Failure(throwable)
+        case throwable => Failure(throwable)
       }.map(f)
     }
+
+  def post2[I, O](url: String, path: String,
+                  dataStr: String,
+                  reader: String => O,
+                  errHnd: Throwable => Callback
+                 )(s: O => Callback): Callback =
+    Callback.future {
+      Ajax.post(url = url, data = write((path, dataStr)))
+        .map(resp => s(reader(resp.responseText)))
+        .recover {
+          case throwable => errHnd(throwable)
+        }
+    }
+
+  def createWsClient[A](url: String): WsClient[A, Callback] = new WsClient[A, Callback] {
+    override def doCall[O](path: String,
+                           dataStr: String,
+                           reader: String => O,
+                           errHnd: Throwable => Callback): (O => Callback) => Callback = post2(
+      url,
+      path,
+      dataStr,
+      reader,
+      errHnd
+    )
+  }
 
   def bootstrapButton(onClick: Callback, btnType: String, tagMod: TagMod, disabled: Boolean = false) = <.button(
     ^.`type`:="button",

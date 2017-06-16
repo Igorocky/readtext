@@ -28,5 +28,4 @@ POST     /downParagraph                         controllers.TopicController.down
 POST     /downTopic                         controllers.TopicController.downTopic
 POST     /addTagForTopic                         controllers.TopicController.addTagForTopic
 POST     /removeTagFromTopic                         controllers.TopicController.removeTagFromTopic
-POST     /loadParagraphsByParentId                         controllers.TopicController.loadParagraphsByParentId
-POST     /loadTopicsByParentId                         controllers.TopicController.loadTopicsByParentId
+POST     /wsEntry                         controllers.TopicController.wsEntry

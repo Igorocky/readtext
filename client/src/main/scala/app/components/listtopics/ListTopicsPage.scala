@@ -8,6 +8,7 @@ import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.ClipboardEvent
+import shared.api.TopicApi
 import shared.dto.{Paragraph, Topic}
 import shared.forms.{DataResponse, ErrorResponse}
 import shared.pageparams.ListTopicsPageParams
@@ -39,6 +40,7 @@ object ListTopicsPage {
         closeWaitPane = $.backend.closeWaitPane,
         registerPasteListener = (id, listener) => $.modState(_.registerListener(id,listener)),
         unregisterPasteListener = id => $.modState(s => s.copy(pasteListeners = s.pasteListeners.filterNot(_._1._2 == id))),
+        wsClient = Utils.createWsClient($.props.wsEntryUrl),
         expandParagraphsAction = ids => $.backend.doAction(
           $.props.expandUrl,
           write(ids),
@@ -85,6 +87,8 @@ object ListTopicsPage {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
+    private lazy val wsClient = $.state.runNow().globalScope.wsClient
+
     def render(implicit props: Props, state: State) = UnivPage(
       language = state.globalScope.pageParams.headerParams.language,
       changeLangUrl = props.headerParams.changeLanguageUrl,
@@ -117,11 +121,7 @@ object ListTopicsPage {
           nodeValue = None,
           mayHaveChildren = true,
           getChildren = node.children.map(_.map(mapLazyTreeNode)),
-          loadChildren = doAction(
-            props.loadParagraphsByParentIdUrl,
-            write[Option[Long]](None),
-            str => $.modState(_.setChildren(None, read[List[Paragraph]](str).map(par => LazyTreeNode(Some(par), None))))
-          ),
+          loadChildren = loadChildren(None),
           expanded = Some(true),
           onExpand = Callback.empty,
           onCollapse = Callback.empty
@@ -131,24 +131,7 @@ object ListTopicsPage {
           nodeValue = Some(ParagraphCmp(p, state.globalScope, state.tagFilter)),
           mayHaveChildren = true,
           getChildren = node.children.map(_.map(mapLazyTreeNode)),
-          loadChildren = doAction(
-            props.loadParagraphsByParentIdUrl,
-            write(p.id),
-            str => {
-              println(s"[${Thread.currentThread().getName}] ${p.id} paragraphs loaded")
-              val paragraphs = read[List[Paragraph]](str).map(par => LazyTreeNode(Some(par), None))
-              doAction(
-                props.loadTopicsByParentIdUrl,
-                write(p.id.get),
-                topicsStr => {
-                  println(s"[${Thread.currentThread().getName}] ${p.id} topics loaded")
-                  val topics = read[List[Topic]](topicsStr).map(top => LazyTreeNode(Some(top), None))
-                  println(s"[${Thread.currentThread().getName}] ${p.id} children loaded")
-                  $.modState(_.setChildren(p.id, paragraphs ::: topics))
-                }
-              )
-            }
-          ),
+          loadChildren = loadChildren(p.id),
           expanded = Some(p.expanded),
           onExpand = $.modState(_.expandParagraph(p.id.get, true)),
           onCollapse = $.modState(_.expandParagraph(p.id.get, false))
@@ -233,5 +216,20 @@ object ListTopicsPage {
           openOkDialog(throwable.getMessage)
         case _ => ???
       }.void
+
+    def loadChildren(paragraphId: Option[Long])(implicit props: Props) = {
+      def setChildren(children: List[Any]) =
+        $.modState(_.setChildren(paragraphId, children.map(c => LazyTreeNode(Some(c), None))))
+
+      openWaitPane >> wsClient.post(_.loadParagraphsByParentId(paragraphId), _ => openOkDialog("Error loading paragraphs"))(
+        paragraphs => if (paragraphId.isDefined) {
+          wsClient.post(_.loadTopicsByParentId(paragraphId.get), _ => openOkDialog("Error loading topics"))(
+            topics => setChildren(paragraphs ::: topics) >> closeWaitPane
+          )
+        } else {
+          setChildren(paragraphs) >> closeWaitPane
+        }
+      )
+    }
   }
 }

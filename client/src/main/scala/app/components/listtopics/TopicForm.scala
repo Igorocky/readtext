@@ -46,7 +46,6 @@ object TopicForm {
         formData = state.formData,
         transformations = Forms.topicForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
-        submitUrl = state.formData.submitUrl,
         beforeSubmit = props.globalScope.openWaitPane,
         onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(str),
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,

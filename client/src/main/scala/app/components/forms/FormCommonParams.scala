@@ -11,7 +11,6 @@ case class FormCommonParams(
                              formData: FormData,
                              transformations: Map[String, InputTransformation[String, _]],
                              onChange: FormData => CallbackTo[FormData],
-                             submitUrl: String,
                              beforeSubmit: Callback,
                              onSubmitSuccess: String => Callback,
                              onSubmitFormCheckFailure: Callback,
@@ -25,7 +24,7 @@ case class FormCommonParams(
     if (fd.hasErrors) {
       Callback.empty
     } else {
-      beforeSubmit >> Utils.post(url = submitUrl, data = PostData.formSubmit(fd)){
+      beforeSubmit >> Utils.post(url = formData.submitUrl, data = PostData.formSubmit(fd)){
         case Success(DataResponse(str)) => onSubmitSuccess(str)
         case Success(FormWithErrors(formData)) => onChange(formData) >> onSubmitFormCheckFailure
         case Failure(throwable) => onAjaxError(throwable)

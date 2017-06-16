@@ -46,7 +46,6 @@ object TagsCmp {
             formData = state.formData.get,
             transformations = Forms.tagForm.transformations,
             onChange = fd => $.modState(_.copy(formData = Some(fd))).map(_ => fd),
-            submitUrl = state.formData.get.submitUrl,
             beforeSubmit = props.globalScope.openWaitPane,
             onSubmitSuccess =
               str => props.globalScope.closeWaitPane >>

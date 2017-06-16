@@ -16,5 +16,5 @@ case class ListTopicsPageParams(headerParams: HeaderParams,
                                 moveDownTopicUrl: String,
                                 addTagForTopicUrl: String,
                                 removeTagFromTopicUrl: String,
-                                loadParagraphsByParentIdUrl: String,
-                                loadTopicsByParentIdUrl: String)
+                                wsEntryUrl: String
+                               )

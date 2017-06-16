@@ -4,20 +4,19 @@ import java.io.File
 import javax.inject._
 
 import db.Tables.{paragraphTable, topicTable}
-import db.{DaoCommon, HasIdAndOrder, PrintSchema}
 import db.TypeConversions._
-import play.api.Environment
+import db.{DaoCommon, HasIdAndOrder, PrintSchema}
+import play.api.{Environment, Logger}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
+import shared.SharedConstants
 import shared.SharedConstants._
 import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
 import shared.forms.PostData.{dataResponse, errorResponse, formWithErrors}
 import shared.forms._
 import shared.pageparams.ListTopicsPageParams
-import shared.SharedConstants
 import slick.dbio.DBIOAction
-import slick.dbio.Effect.Read
 import slick.driver.H2Driver.api._
 import slick.driver.JdbcProfile
 import upickle.default._
@@ -32,7 +31,8 @@ class TopicController @Inject()(
                                 val messagesApi: MessagesApi,
                                 protected val dbConfigProvider: DatabaseConfigProvider,
                                 val configuration: play.api.Configuration,
-                                val dao: DaoCommon
+                                val dao: DaoCommon,
+                                val wsRouter: Router
                               )(implicit private val environment: Environment,
                                 implicit private val ec: ExecutionContext)
   extends Controller with HasDatabaseConfigProvider[JdbcProfile] with I18nSupport {
@@ -61,8 +61,7 @@ class TopicController @Inject()(
           moveDownTopicUrl = routes.TopicController.downTopic.url,
           addTagForTopicUrl = routes.TopicController.addTagForTopic.url,
           removeTagFromTopicUrl = routes.TopicController.removeTagFromTopic.url,
-          loadParagraphsByParentIdUrl = routes.TopicController.loadParagraphsByParentId.url,
-          loadTopicsByParentIdUrl = routes.TopicController.loadTopicsByParentId.url
+          wsEntryUrl = routes.TopicController.wsEntry.url
         )),
         pageTitle = "Topics"
       )
@@ -212,16 +211,13 @@ class TopicController @Inject()(
       )
   }
 
-  def loadParagraphsByParentId = postRequest(read[Option[Long]]) {
-    case (parentParagraphIdOpt) => runDbActionAndCreateHttpResponse(
-      dao.loadOrderedChildren(paragraphTable, parentParagraphIdOpt).map(write(_))
-    )
-  }
-
-  def loadTopicsByParentId = postRequest(read[Long]) {
-    case (parentParagraphId) => runDbActionAndCreateHttpResponse(
-      dao.loadOrderedChildren(topicTable, parentParagraphId).map(write(_))
-    )
+  def wsEntry = postRequest(read[(String, String)]) {
+    case (path, input) =>
+      wsRouter.handle(path, input).map(_.map(Ok(_))).getOrElse {
+        val msg = s"No handler found for path '$path'"
+        Logger.error(msg)
+        Future.successful(BadRequest(msg))
+      }
   }
 
   private def formPostRequest(formParts: FormParts[_], onValidForm: FormValues => Future[Result]) = Action.async { request =>

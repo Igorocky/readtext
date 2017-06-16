@@ -4,8 +4,9 @@ import sbt.Project.projectToRef
 
 val projVersion = "1.0-SNAPSHOT"
 
-lazy val scalaV = "2.11.8"
-val upickleVersion = "0.4.3"
+val scalaV = "2.11.8"
+lazy val scalaTestVersion = "3.0.1"
+lazy val upickleVersion = "0.4.3"
 
 lazy val server = (project in file("server")).settings(
   name := """readtext""",
@@ -23,7 +24,7 @@ lazy val server = (project in file("server")).settings(
     ,cache
     ,"com.typesafe.play" %% "play-slick" % "2.1.0"
     ,"com.typesafe.play" %% "play-slick-evolutions" % "2.1.0"
-    ,"com.lihaoyi" %% "upickle" % upickleVersion
+    ,"com.lihaoyi" %%% "upickle" % upickleVersion
     ,"com.github.japgolly.scalacss" %% "core" % "0.4.1"
     ,"com.h2database" % "h2" % "1.4.192"
 
@@ -43,15 +44,16 @@ lazy val client = (project in file("client"))
   .settings(
   scalaVersion := scalaV,
   libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "core" % "1.0.1",
-    "com.lihaoyi" %%% "upickle" % upickleVersion,
-    "org.scalatest" %%% "scalatest" % "3.0.1" % "test"
+    "com.github.japgolly.scalajs-react" %%% "core" % "1.0.1"
+    ,"com.lihaoyi" %%% "upickle" % upickleVersion
+
+    ,"org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
   ,npmDependencies in Compile ++= Seq(
     "react" -> "15.5.4",
     "react-dom" -> "15.5.4"
   )
-).dependsOn(sharedJs)
+).dependsOn(sharedJs, macrosesJs)
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
   settings(
@@ -63,3 +65,17 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
 
 lazy val sharedJvm = shared.jvm
 lazy val sharedJs = shared.js
+
+lazy val macroses = (crossProject.crossType(CrossType.Pure) in file("macroses")).settings(
+  version := projVersion,
+  scalaVersion := scalaV,
+  libraryDependencies ++= Seq(
+    "org.scala-lang" % "scala-reflect" % scalaV
+
+    ,"org.scalatest" %%% "scalatest" % scalaTestVersion % Test
+    ,"com.lihaoyi" %%% "upickle" % upickleVersion % Test
+  )
+).jsConfigure(_ enablePlugins ScalaJSWeb)
+
+lazy val macrosesJvm = macroses.jvm
+lazy val macrosesJs = macroses.js
