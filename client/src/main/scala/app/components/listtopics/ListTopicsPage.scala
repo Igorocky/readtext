@@ -8,7 +8,6 @@ import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.ClipboardEvent
-import shared.api.TopicApi
 import shared.dto.{Paragraph, Topic}
 import shared.forms.{DataResponse, ErrorResponse}
 import shared.pageparams.ListTopicsPageParams

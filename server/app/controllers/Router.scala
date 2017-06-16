@@ -40,4 +40,10 @@ case class RouterBuilder(handlers: List[RequestHandler] = Nil) extends Router {
       }
     )
   }
+
+  def addHandler[I,O](signature: (String, String => I, O => String))
+                     (f: I => Future[O])
+                     (implicit ec: ExecutionContext): RouterBuilder = {
+    addHandler(signature._1, signature._2, signature._3)(f)
+  }
 }

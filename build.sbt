@@ -37,7 +37,7 @@ lazy val server = (project in file("server")).settings(
     "ch.qos.logback" % "logback-core" % "1.2.3"
   )
 ).enablePlugins(PlayScala, WebScalaJSBundlerPlugin)
-  .dependsOn(sharedJvm)
+  .dependsOn(sharedJvm, macrosesJvm)
 
 lazy val client = (project in file("client"))
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin, ScalaJSWeb)
