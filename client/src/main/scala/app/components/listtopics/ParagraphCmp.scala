@@ -1,26 +1,20 @@
 package app.components.listtopics
 
 import app.Utils._
-import app.components.Checkbox
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
-import shared.dto.{Paragraph, ParagraphUpdate, Topic}
-import shared.forms.Forms
-import upickle.default.read
-
-import scala.util.{Failure, Success}
+import shared.dto.{Paragraph, Topic}
 
 object ParagraphCmp {
-  protected case class Props(paragraph: Paragraph,
+  case class Props(paragraph: Paragraph,
                              globalScope: ListTopicsPageGlobalScope,
-                             tagFilter: String)
+                             tagFilter: String) {
+    @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
+  }
 
   protected case class State(editMode: Boolean = false,
                              createTopicDiagOpened: Boolean = false)
-
-  def apply(paragraph: Paragraph, globalScope: ListTopicsPageGlobalScope, tagFilter: String): VdomElement =
-    comp.withKey("par-" + paragraph.id.get.toString)(Props(paragraph, globalScope, tagFilter))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -51,20 +45,18 @@ object ParagraphCmp {
             } else EmptyVdom
           )
         } else {
-          ParagraphForm(
+          ParagraphForm.Props(
             globalScope = props.globalScope,
-            formData = Forms.paragraphForm.formData(
-              props.globalScope.pageParams.headerParams.language,
-              props.paragraph,
-              props.globalScope.pageParams.updateParagraphUrl
+            paragraph = props.paragraph,
+            submitFunction = par => props.globalScope.wsClient.post(
+              _.updateParagraph(par),
+              th => props.globalScope.openOkDialog("Error updating paragraph: " + th.getMessage)
             ),
             cancelled = $.modState(_.copy(editMode = false)),
-            submitComplete = str =>
-              $.modState(_.copy(editMode = false)) >>
-                props.globalScope.paragraphUpdated(read[ParagraphUpdate](str)),
+            submitComplete = par => $.modState(_.copy(editMode = false)) >> props.globalScope.paragraphUpdated(par),
             textFieldLabel = "",
             submitButtonName = "Save"
-          )
+          ).render
         }
       )
 
@@ -97,10 +89,10 @@ object ParagraphCmp {
     def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) = buttonWithIcon(
       onClick = props.globalScope.openOkDialog1(
         s"Delete paragraph '${paragraph.name}'?",
-        post(props.globalScope.pageParams.deleteParagraphUrl, paragraph.id.get.toString){
-          case Success(_) => onDeleted
-          case Failure(th) => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
-        }.void
+        props.globalScope.wsClient.post(
+          _.deleteParagraph(paragraph.id.get),
+          th => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
+        ) { case () => onDeleted }
       ),
       btnType = BTN_DANGER,
       iconType = "fa-trash-o"
@@ -126,18 +118,18 @@ object ParagraphCmp {
     )
 
     def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
-      TopicForm(
-        formData = Forms.topicForm.formData(
-          props.globalScope.pageParams.headerParams.language,
-          Topic(paragraphId = p.id),
-          props.globalScope.pageParams.createTopicUrl
+      TopicForm.Props(
+        topic = Topic(paragraphId = p.id),
+        submitFunction = topic => props.globalScope.wsClient.post(
+          _.createTopic(topic),
+          th => props.globalScope.openOkDialog("Error creating topic: " + th.getMessage)
         ),
         cancelled = closeDiag,
-        submitComplete = str => closeDiag >> props.globalScope.topicCreated(read[Topic](str)),
+        submitComplete = topic => closeDiag >> props.globalScope.topicCreated(topic),
         textFieldLabel = "New topic:",
         globalScope = props.globalScope,
         submitButtonName = "Create"
-      )
+      ).render
   }
 
 }

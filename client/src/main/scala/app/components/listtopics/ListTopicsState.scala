@@ -3,7 +3,7 @@ package app.components.listtopics
 import app.LazyTreeNode
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.raw.File
-import shared.dto.{Paragraph, ParagraphUpdate, Topic, TopicUpdate}
+import shared.dto.{Paragraph, Topic}
 import shared.messages.Language
 
 case class ListTopicsState(globalScope: ListTopicsPageGlobalScope = null,
@@ -41,9 +41,9 @@ case class ListTopicsState(globalScope: ListTopicsPageGlobalScope = null,
     LazyTreeNode(Some(paragraph), None)
   ))
 
-  def updateParagraph(parUpd: ParagraphUpdate): ListTopicsState = changeData(_.updateValue(
-    paragraphSelector(parUpd.id),
-    _.map(_.asInstanceOf[Paragraph].update(parUpd))
+  def updateParagraph(par: Paragraph): ListTopicsState = changeData(_.updateValue(
+    paragraphSelector(par.id),
+    _.map(_.asInstanceOf[Paragraph].copy(name = par.name))
   ))
 
   def deleteParagraph(id: Long): ListTopicsState = changeData(_.removeNode(paragraphSelector(id)))
@@ -53,9 +53,9 @@ case class ListTopicsState(globalScope: ListTopicsPageGlobalScope = null,
     LazyTreeNode(Some(topic), None)
   ))
 
-  def updateTopic(topicUpd: TopicUpdate): ListTopicsState = changeData(_.updateValue(
-    topicSelector(topicUpd.id),
-    _.map(_.asInstanceOf[Topic].update(topicUpd))
+  def updateTopic(topic: Topic): ListTopicsState = changeData(_.updateValue(
+    topicSelector(topic.id),
+    _.map(_.asInstanceOf[Topic].copy(title = topic.title, images = topic.images))
   ))
 
   def deleteTopic(topId: Long) = changeData(_.removeNode(topicSelector(topId)))

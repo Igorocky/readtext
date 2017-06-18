@@ -28,7 +28,7 @@ class DaoCommon @Inject()(implicit private val ec: ExecutionContext) {
 
   def insertOrdered[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C])(parentId: Long, updateOrder: Int=>U, updateId: (U,Long)=>U) = {
     val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
-    val groupIdCriteria =createGroupIdCriteria(hasParent)
+    val groupIdCriteria = createGroupIdCriteria(hasParent)
     (for {
       maxOrder <- table.filter(groupIdCriteria(parentId)).map(_.order).max.result.map(_.getOrElse(0))
       elemWithOrder = updateOrder(maxOrder + 1)
@@ -70,6 +70,7 @@ class DaoCommon @Inject()(implicit private val ec: ExecutionContext) {
   private def createGroupIdExtractor[M <: HasIdAndOrder](hasParent: Boolean): M => Rep[Long] =
     if (hasParent) _.asInstanceOf[HasParent].parentId
     else _ => (1L : Rep[Long])
+
   private def createGroupIdCriteria[M <: HasIdAndOrder](hasParent: Boolean): Rep[Long] => M => Rep[Boolean] =
     if (hasParent) groupId => row => row.asInstanceOf[HasParent].parentId === groupId
     else groupId => row => true: Rep[Boolean]

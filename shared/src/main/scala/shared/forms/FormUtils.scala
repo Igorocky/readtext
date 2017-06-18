@@ -1,6 +1,7 @@
 package shared.forms
 
-import shared.forms.FormUtils.Message
+import app.InputFormUtils
+import shared.forms.InputTransformation.Message
 import shared.messages.Language
 
 trait InputTransformation[I,R] extends (I => Either[List[Message], R]) {self=>
@@ -10,6 +11,8 @@ trait InputTransformation[I,R] extends (I => Either[List[Message], R]) {self=>
 }
 
 object InputTransformation {
+  type Message = Language => String
+
   def apply[I,R](f: I => R): InputTransformation[I,R] = new InputTransformation[I,R] {
     def apply(i: I) = Right(f(i))
   }
@@ -37,28 +40,43 @@ object InputValidation {
   }
 }
 
-trait FormParts[T] {
-  def formData(language: Language, submitUrl: String): FormData
-  val transformations: Map[String, InputTransformation[String, _]]
-  def formData(language: Language, obj: T, submitUrl: String): FormData
-}
-
-object FormUtils {
-  type Message = Language => String
-
-  implicit def tuple2ToTuple3[A, B, C](t: ((A, B), C)): (A, B, C) = (t._1._1, t._1._2, t._2)
-
-  def form[T](elems: (FormKey, InputTransformation[String, _], T => String)*): FormParts[T] = {
-    implicit def forUnzip(elem: (InputElem, (FormKey, InputTransformation[String, _], T => String))) = elem
-    val (inputElems, transforms) = elems.toList.map {
-      case (key, transformation, fromObj) => (
-        InputElem(name = key.name), (key, transformation, fromObj)
-      )
-    }.unzip
-    new FormParts[T] {
-      def formData(language: Language, submitUrl: String) = FormData(language = language, inputElems, submitUrl = submitUrl)
-      val transformations: Map[String, InputTransformation[String, _]] = transforms.map(t => (t._1.name, t._2)).toMap
-      def formData(language: Language, obj: T, submitUrl: String): FormData = (formData(language, submitUrl) /: transforms){(fd, tpl) => fd.set(tpl._1, tpl._3(obj))}
+case class FormField[T,F](name: String, getter: FormMethods[T]#Extractor[F], setter: FormMethods[T]#Setter[F], validation: InputValidation[F]) {
+  def validate(formData: FormData[T]): FormData[T] = {
+    val errorMsgs = validate(formData.data, formData.language)
+    if (errorMsgs.isEmpty) {
+      formData.copy(errors = formData.errors - name)
+    } else {
+      formData.copy(errors = formData.errors + (name -> errorMsgs))
     }
   }
+
+  def validate(obj: T, lang: Language): List[String] = validation(getter(obj)).left.getOrElse(Nil).map(_(lang))
+
+  def set(value: F, formData: FormData[T]): FormData[T] = formData.copy(data = setter(formData.data, value))
+
+  def setAndValidate(value: F, formData: FormData[T]): FormData[T] = validate(set(value, formData))
+
+  def get(formData: FormData[T]): F = getter(formData.data)
+
+  def errors(formData: FormData[T]): List[String] = formData.errors.get(name).getOrElse(Nil)
+}
+
+trait FormMethods[T] extends shared.utils.Enum[FormField[T, _]] with InputFormUtils[T, InputValidation, FormField] {
+  type Message = Language => String
+  type Extractor[F] = T => F
+  type Setter[F] = (T, F) => T
+
+  def validate(formData: FormData[T]): FormData[T] =
+    allElems.foldLeft(formData){case (fd, field) => field.validate(fd)}
+
+  def validate(lang: Language, obj: T): FormData[T] =
+    validate(FormData(lang, obj))
+
+  def changeLang(newLanguage: Language, formData: FormData[T]): FormData[T] =
+    if (newLanguage == formData.language) formData
+    else validate(formData.copy(language = newLanguage))
+
+  override protected def fieldFromGetterAndSetter[F](name: String, get: Extractor[F], set: Setter[F])
+                                                    (validation: InputValidation[F]): FormField[T, F] =
+    addElem(FormField(name, get, set, validation))
 }

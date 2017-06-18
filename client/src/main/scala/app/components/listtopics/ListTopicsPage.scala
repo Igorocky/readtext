@@ -9,11 +9,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.ClipboardEvent
 import shared.dto.{Paragraph, Topic}
-import shared.forms.{DataResponse, ErrorResponse}
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
-
-import scala.util.{Failure, Success}
 
 object ListTopicsPage {
   protected type Props = ListTopicsPageParams
@@ -40,42 +37,30 @@ object ListTopicsPage {
         registerPasteListener = (id, listener) => $.modState(_.registerListener(id,listener)),
         unregisterPasteListener = id => $.modState(s => s.copy(pasteListeners = s.pasteListeners.filterNot(_._1._2 == id))),
         wsClient = Utils.createWsClient($.props.wsEntryUrl),
-        expandParagraphsAction = ids => $.backend.doAction(
-          $.props.expandUrl,
-          write(ids),
-          _ => $.modState(_.expandParagraphs(ids))
-        ),
-        moveUpParagraphAction = id => $.backend.doAction(
-          $.props.moveUpParagraphUrl,
-          id.toString,
-          _ => $.modState(_.moveUpParagraph(id))
-        ),
-        moveUpTopicAction = id => $.backend.doAction(
-          $.props.moveUpTopicUrl,
-          id.toString,
-          _ => $.modState(_.moveUpTopic(id))
-        ),
-        moveDownParagraphAction = id => $.backend.doAction(
-          $.props.moveDownParagraphUrl,
-          id.toString,
-          _ => $.modState(_.moveDownParagraph(id))
-        ),
-        moveDownTopicAction = id => $.backend.doAction(
-          $.props.moveDownTopicUrl,
-          id.toString,
-          _ => $.modState(_.moveDownTopic(id))
-        ),
+        expandParagraphsAction = ids => $.backend.wsClient.post(_.expand(ids), $.backend.showError) {
+          case () => $.modState(_.expandParagraphs(ids))
+        },
+        moveUpParagraphAction = id => $.backend.wsClient.post(_.moveUpParagraph(id), $.backend.showError) {
+          case () => $.modState(_.moveUpParagraph(id))
+        },
+        moveUpTopicAction = id => $.backend.wsClient.post(_.moveUpTopic(id), $.backend.showError) {
+          case () => $.modState(_.moveUpTopic(id))
+        },
+        moveDownParagraphAction = id => $.backend.wsClient.post(_.moveDownParagraph(id), $.backend.showError) {
+          case () => $.modState(_.moveDownParagraph(id))
+        },
+        moveDownTopicAction = id => $.backend.wsClient.post(_.moveDownTopic(id), $.backend.showError) {
+          case () => $.modState(_.moveDownTopic(id))
+        },
         tagAdded = (topicId, newTags) => $.modState(_.setTags(topicId, newTags)),
-        removeTagAction = (topicId, tag) => $.backend.doAction(
-          $.props.removeTagFromTopicUrl,
-          write((topicId, tag)),
-          ans => $.modState(_.setTags(topicId, read[List[String]](ans)))
-        ),
+        removeTagAction = (topicId, tag) => $.backend.wsClient.post(_.removeTagFromTopic(topicId, tag), $.backend.showError) {
+          case tags => $.modState(_.setTags(topicId, tags))
+        },
         paragraphCreated = p => $.modState(_.addParagraph(p)),
-        paragraphUpdated = parUpd => $.modState(_.updateParagraph(parUpd)),
+        paragraphUpdated = par => $.modState(_.updateParagraph(par)),
         paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> $.backend.closeWaitPane,
         topicCreated = topic => $.modState(_.addTopic(topic)),
-        topicUpdated = topUpd => $.modState(_.updateTopic(topUpd)),
+        topicUpdated = top => $.modState(_.updateTopic(top)),
         topicDeleted = topId => $.modState(_.deleteTopic(topId)),
         filterTopic = (str, topic) => {
           val strUpper = str.trim.toUpperCase
@@ -86,7 +71,7 @@ object ListTopicsPage {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    private lazy val wsClient = $.state.runNow().globalScope.wsClient
+    lazy val wsClient = $.state.runNow().globalScope.wsClient
 
     def render(implicit props: Props, state: State) = UnivPage(
       language = state.globalScope.pageParams.headerParams.language,
@@ -127,7 +112,7 @@ object ListTopicsPage {
         )
         case Some(p: Paragraph) => TreeNodeModel(
           key = "par-" + p.id.get,
-          nodeValue = Some(ParagraphCmp(p, state.globalScope, state.tagFilter)),
+          nodeValue = Some(ParagraphCmp.Props(p, state.globalScope, state.tagFilter).render),
           mayHaveChildren = true,
           getChildren = node.children.map(_.map(mapLazyTreeNode)),
           loadChildren = loadChildren(p.id),
@@ -137,7 +122,7 @@ object ListTopicsPage {
         )
         case Some(t: Topic) => TreeNodeModel(
           key = "top-" + t.id.get,
-          nodeValue = Some(TopicCmp(state.globalScope, t)),
+          nodeValue = Some(TopicCmp.Props(state.globalScope, t).render),
           mayHaveChildren = false,
           getChildren = None,
           loadChildren = Callback.empty
@@ -203,18 +188,8 @@ object ListTopicsPage {
       openWaitPane >> $.modState(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = Callback.empty))
     def closeOkCancelDialog: Callback =
       $.modState(_.copy(okCancelDiagText = None, onOk = Callback.empty, onCancel = Callback.empty)) >> closeWaitPane
-
-    def doAction(doActionUrl: String, data: String, onSuccess: String => Callback): Callback =
-      openWaitPane >> Utils.post(url = doActionUrl, data = data){
-        case Success(DataResponse(str)) => onSuccess(str) >> closeWaitPane
-        case Success(ErrorResponse(str)) =>
-          println("ERROR - " + str)
-          openOkDialog(str)
-        case Failure(throwable) =>
-          println("ERROR - " + throwable.getMessage)
-          openOkDialog(throwable.getMessage)
-        case _ => ???
-      }.void
+    def showError(throwable: Throwable): Callback =
+      openOkDialog("Error: " + throwable.getMessage)
 
     def loadChildren(paragraphId: Option[Long])(implicit props: Props) = {
       def setChildren(children: List[Any]) =

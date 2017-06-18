@@ -2,10 +2,8 @@ package app.components.listtopics
 
 import app.Utils._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, CallbackTo, ReactEventFromInput, ReactKeyboardEvent, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, CallbackTo, ScalaComponent}
 import shared.dto.Paragraph
-import shared.forms.Forms
-import upickle.default.read
 
 object HeaderCmp {
 
@@ -39,19 +37,19 @@ object HeaderCmp {
         ),
         if (s.newParagraphFormOpened)
           <.div(
-            ParagraphForm(
-              formData = Forms.paragraphForm.formData(
-                language = p.globalScope.pageParams.headerParams.language,
-                submitUrl = p.globalScope.pageParams.createParagraphUrl
+            ParagraphForm.Props(
+              paragraph = Paragraph(name = ""),
+              submitFunction = paragraph => p.globalScope.wsClient.post(
+                _.createParagraph(paragraph),
+                th => p.globalScope.openOkDialog("Error creating paragraph: " + th.getMessage)
               ),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
-              submitComplete = str =>
-                $.modState(_.copy(newParagraphFormOpened = false)) >>
-                  p.globalScope.paragraphCreated(read[Paragraph](str)),
+              submitComplete = par =>
+                $.modState(_.copy(newParagraphFormOpened = false)) >> p.globalScope.paragraphCreated(par),
               textFieldLabel = "New paragraph:",
               submitButtonName = "Create",
               globalScope = p.globalScope
-            )
+            ).render
           )
         else
           EmptyVdom

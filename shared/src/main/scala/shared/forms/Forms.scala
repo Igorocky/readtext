@@ -1,33 +1,26 @@
 package shared.forms
 
-import shared.StrUtils
-import shared.Transformations._
 import shared.Validations._
-import shared.dto.{Paragraph, Topic}
-import shared.forms.FormUtils._
+import shared.dto.{Paragraph, Topic, TopicTag}
 
 
 object Forms {
-  lazy val paragraphForm = form[Paragraph](
-    FormKeys.ID -> opt(onlyDigits >> long) ->
-      ((_: Paragraph).id.map(_.toString).getOrElse("")),
-    FormKeys.TITLE -> nonEmpty ->
-      ((_: Paragraph).name)
-  )
+  type SubmitResponse[F,S] = Either[FormData[F],S]
 
-  lazy val topicForm = form[Topic](
-    FormKeys.ID -> opt(onlyDigits >> long) ->
-      ((_: Topic).id.map(_.toString).getOrElse("")),
-    FormKeys.PARAGRAPH_ID -> opt(onlyDigits >> long) ->
-      ((_: Topic).paragraphId.map(_.toString).getOrElse("")),
-    FormKeys.TITLE -> nonEmpty ->
-      ((_: Topic).title),
-    FormKeys.IMAGES -> separatedValues(";") ->
-      ((t: Topic) => StrUtils.listToStr(t.images))
-  )
+  lazy val paragraphForm = new FormMethods[Paragraph] {
+    val title = field(_.name)(nonEmpty)
+    end
+  }
 
-  lazy val tagForm = form[(Long, String)](
-    FormKeys.PARENT_ID -> long -> ((t: (Long, String)) => t._1.toString),
-    FormKeys.TAG -> nonEmpty -> ((t: (Long, String)) => t._2)
-  )
+  lazy val topicForm = new FormMethods[Topic] {
+    val paragraphId = field(_.paragraphId)(nonEmpty)
+    val title = field(_.title)(nonEmpty)
+    val images = field(_.images)(none)
+    end
+  }
+
+  lazy val tagForm = new FormMethods[TopicTag] {
+    val value = field(_.value)(nonEmpty)
+    end
+  }
 }

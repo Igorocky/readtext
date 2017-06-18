@@ -19,4 +19,5 @@ object CardTypes extends Enum[CardType] {
   private def cardType(id: Int) = addElem(CardType(id))
 
   val text2text = cardType(1)
+  end
 }

@@ -1,7 +1,7 @@
 package shared
 
-import shared.forms.FormUtils.Message
 import shared.forms.InputTransformation
+import shared.forms.InputTransformation.Message
 
 object Transformations {
   def int: InputTransformation[String, Int] = InputTransformation(_.toInt)

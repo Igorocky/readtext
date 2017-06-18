@@ -2,16 +2,11 @@ package utils
 
 import controllers.routes
 import play.api.i18n.Lang
-import play.api.mvc.BodyParsers.parse
 import play.api.mvc._
-import shared.forms.PostData.readPostData
-import shared.forms.{FormData, FormSubmit, InputTransformation}
 import shared.messages.Language
 import shared.messages.Languages.{EN, RU}
 import shared.pageparams.HeaderParams
 import upickle.default._
-
-import scala.concurrent.ExecutionContext
 
 object ServerUtils {
   def getDefaultLanguage(acceptLanguages: Seq[Lang]) = acceptLanguages.toList match {
@@ -38,9 +33,6 @@ object ServerUtils {
     language = language,
     changeLanguageUrl = routes.LanguageController.changeLanguage.url
   )
-
-  def readFormDataFromPostRequest(request: Request[AnyContent]): FormData =
-    readPostData(request.body.asText.get).asInstanceOf[FormSubmit].formData
 
   def bundleUrl(projectName: String): String = {
     val name = projectName.toLowerCase

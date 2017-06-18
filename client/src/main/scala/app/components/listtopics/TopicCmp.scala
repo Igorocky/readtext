@@ -1,26 +1,19 @@
 package app.components.listtopics
 
 import app.Utils._
-import app.components.Checkbox
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
-import shared.dto.{Topic, TopicUpdate}
-import shared.forms.Forms
-import upickle.default._
-
-import scala.util.{Failure, Success}
+import shared.dto.Topic
 
 object TopicCmp {
 
-  protected case class Props(globalScope: ListTopicsPageGlobalScope,
-                             topic: Topic)
+  case class Props(globalScope: ListTopicsPageGlobalScope,
+                             topic: Topic) {
+    @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
+  }
 
   protected case class State(editMode: Boolean = false, showImg: Boolean = false)
-
-
-  def apply(globalScope: ListTopicsPageGlobalScope, topic: Topic) =
-    comp.withKey("top-" + topic.id.get.toString)(Props(globalScope, topic))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
       .initialState(State())
@@ -38,14 +31,17 @@ object TopicCmp {
             moveUpButton(props.topic, props),
             moveDownButton(props.topic, props),
             deleteTopicButton(props.topic, props),
-            TagsCmp(
+            TagsCmp.Props(
               globalScope = props.globalScope,
-              addTagUrl = props.globalScope.pageParams.addTagForTopicUrl,
+              submitFunction = tag => props.globalScope.wsClient.post(
+                _.addTagForTopic(tag),
+                th => props.globalScope.openOkDialog("Error adding tag: " + th.getMessage)
+              ),
               entityId = props.topic.id.get,
               tags = props.topic.tags,
               tagAdded = props.globalScope.tagAdded(props.topic.id.get, _),
               removeTag = props.globalScope.removeTagAction(props.topic.id.get, _)
-            )
+            ).render
           ),
           if (state.showImg) {
             <.div(props.topic.images.toVdomArray { img =>
@@ -56,22 +52,19 @@ object TopicCmp {
           } else EmptyVdom
         )
       } else {
-        TopicForm(
-          formData = Forms.topicForm.formData(
-            props.globalScope.language,
-            props.topic,
-            props.globalScope.pageParams.updateTopicUrl
+        TopicForm.Props(
+          submitFunction = topic => props.globalScope.wsClient.post(
+            _.updateTopic(topic),
+            th => props.globalScope.openOkDialog("Error updating topic: " + th.getMessage)
           ),
-          topic = Some(props.topic),
+          topic = props.topic,
           cancelled = $.modState(_.copy(editMode = false)),
-          submitComplete = str =>
-            $.modState(_.copy(editMode = false)) >>
-              props.globalScope.topicUpdated(read[TopicUpdate](str)),
+          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.globalScope.topicUpdated(topic),
           textFieldLabel = "",
           submitButtonName = "Save",
           editMode = true,
           globalScope = props.globalScope
-        )
+        ).render
       }
 
     }.build
@@ -104,10 +97,12 @@ object TopicCmp {
   def deleteTopicButton(topic: Topic, props: Props) = buttonWithIcon(
     onClick = props.globalScope.openOkDialog1(
       s"Delete topic '${topic.title}'?",
-      post(url = props.globalScope.pageParams.deleteTopicUrl, data = topic.id.get.toString) {
-        case Success(_) => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
-        case Failure(th) => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
-      }.void
+      props.globalScope.wsClient.post(
+        _.deleteTopic(topic.id.get),
+        th => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
+      ) {
+        case () => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
+      }
     ),
     btnType = BTN_DANGER,
     iconType = "fa-trash-o"

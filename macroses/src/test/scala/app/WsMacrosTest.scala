@@ -83,5 +83,4 @@ class WsMacrosTest extends FlatSpec with Matchers {
     reader(""""48"""") should be(48L)
     writer(Right(49)) should be("[1,49]")
   }
-
 }

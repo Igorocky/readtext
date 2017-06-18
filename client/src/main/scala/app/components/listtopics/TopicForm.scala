@@ -1,65 +1,50 @@
 package app.components.listtopics
 
 import app.Utils.{BTN_DEFAULT, buttonWithText}
+import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.dto.Topic
-import shared.forms.{FormData, FormKeys, Forms}
+import shared.forms.{FormData, Forms}
 
 object TopicForm {
-  protected case class Props(globalScope: ListTopicsPageGlobalScope,
-                             formData: FormData,
-                             topic: Option[Topic] = None,
-                             cancelled: Callback,
-                             submitComplete: String => Callback,
-                             textFieldLabel: String,
-                             submitButtonName: String,
-                             editMode: Boolean = false)
 
-  protected case class State(formData: FormData)
+  case class Props(globalScope: ListTopicsPageGlobalScope,
+                   topic: Topic,
+                   cancelled: Callback,
+                   submitFunction: SubmitFunction[Topic, Topic],
+                   submitComplete: Topic => Callback,
+                   textFieldLabel: String,
+                   submitButtonName: String,
+                   editMode: Boolean = false) {
+    @inline def render = comp(this)
+  }
 
-  def apply(globalScope: ListTopicsPageGlobalScope,
-            formData: FormData,
-            topic: Option[Topic] = None,
-            cancelled: Callback,
-            submitComplete: String => Callback,
-            textFieldLabel: String,
-            submitButtonName: String,
-            editMode: Boolean = false) =
-    comp(Props(
-      globalScope,
-      formData,
-      topic,
-      cancelled,
-      submitComplete,
-      textFieldLabel,
-      submitButtonName,
-      editMode
-    ))
+  protected case class State(formData: FormData[Topic])
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(p => State(formData = p.formData))
-    .renderPS{($,props,state)=>
-      implicit val fParams = FormCommonParams(
-        id = "topic-form",
+    .initialStateFromProps(p => State(formData = FormData(p.globalScope.language, p.topic)))
+    .renderPS { ($, props, state) =>
+      val formMethods = Forms.topicForm
+      implicit val fParams = FormCommonParams[Topic, Topic](
+        formMethods = formMethods,
         formData = state.formData,
-        transformations = Forms.topicForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         beforeSubmit = props.globalScope.openWaitPane,
-        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(str),
+        submitFunction = props.submitFunction,
+        onSubmitSuccess = topic => props.globalScope.closeWaitPane >> props.submitComplete(topic),
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
-        onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
         editMode = false
       )
       <.div(
-        ^.`class`:=this.getClass.getSimpleName + " form",
+        ^.`class` := this.getClass.getSimpleName + " form",
         props.textFieldLabel,
-        FormTextField(key = FormKeys.TITLE, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
+        FormTextField(field = formMethods.title, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
         if (props.editMode) ImgUploader(
           props.globalScope,
-          props.topic.get,
-          key = FormKeys.IMAGES
+          props.topic,
+          field = formMethods.images
         ) else EmptyVdom,
         SubmitButton(props.submitButtonName),
         buttonWithText(
@@ -68,15 +53,13 @@ object TopicForm {
           text = "Cancel"
         )
       )
-    }.componentWillReceiveProps{$=>
-      if ($.nextProps.globalScope.language != $.state.formData.language) {
-        $.modState(_.copy(
-          formData = $.state.formData
-            .copy(language = $.nextProps.globalScope.language)
-            .validate(Forms.topicForm.transformations)
-        ))
-      } else {
-        Callback.empty
-      }
-    }.build
+    }.componentWillReceiveProps { $ =>
+    if ($.nextProps.globalScope.language != $.state.formData.language) {
+      $.modState(_.copy(
+        formData = Forms.topicForm.changeLang($.nextProps.globalScope.language, $.state.formData)
+      ))
+    } else {
+      Callback.empty
+    }
+  }.build
 }

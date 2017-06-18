@@ -26,19 +26,19 @@ class WsMacroImpl(val c: Context) {
        ($path, _root_.upickle.default.read[(..$argTypes)], _root_.upickle.default.write(_:$outputType))
      """
   }
-
 }
 
-trait WsClient[A,C] {
-  def post[O](method: A => O, errHnd: Throwable => C): (O => C) => C = macro WsMacroImpl.post[A,O]
+trait WsClient[A, C] {
+  def post[O](method: A => O, errHnd: Throwable => C): (O => C) => C = macro WsMacroImpl.post[A, O]
 
   def doCall[O](path: String,
-                dataStr: String,
-                reader: String => O,
-                errHnd: Throwable => C): (O => C) => C
+                          dataStr: String,
+                          reader: String => O,
+                          errHnd: Throwable => C): (O => C) => C
 }
 
 trait RouterBuilderUtils[A] {
-  protected def forMethod[I,O](method: A => I => O): (String, String => I, O => String) = macro WsMacroImpl.forMethod[A,I,O]
-  protected def forMethod2[I1,I2,O](method: A => (I1, I2) => O): (String, String => (I1,I2), O => String) = macro WsMacroImpl.forMethod[A,(I1,I2),O]
+  protected def forMethod[I, O](method: A => I => O): (String, String => I, O => String) = macro WsMacroImpl.forMethod[A, I, O]
+
+  protected def forMethod2[I1, I2, O](method: A => (I1, I2) => O): (String, String => (I1, I2), O => String) = macro WsMacroImpl.forMethod[A, (I1, I2), O]
 }

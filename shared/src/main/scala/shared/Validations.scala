@@ -4,7 +4,7 @@ import shared.forms.InputValidation
 import shared.messages.Messages
 
 object Validations {
-  def none: InputValidation[String] = InputValidation(
+  def none[I]: InputValidation[I] = InputValidation(
     _ => true,
     _ => "This should never happen"
   )
@@ -14,7 +14,7 @@ object Validations {
     Messages.maxLength(max)(_)
   )
 
-  def nonEmpty: InputValidation[String] = InputValidation(
+  def nonEmpty[T <% {def nonEmpty: Boolean}]: InputValidation[T] = InputValidation(
     _.nonEmpty,
     Messages.fieldShouldNotBeEmpty(_)
   )

@@ -63,8 +63,8 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
     )
   ).jsConfigure(_ enablePlugins ScalaJSWeb)
 
-lazy val sharedJvm = shared.jvm
-lazy val sharedJs = shared.js
+lazy val sharedJvm = shared.jvm.dependsOn(macrosesJvm)
+lazy val sharedJs = shared.js.dependsOn(macrosesJs)
 
 lazy val macroses = (crossProject.crossType(CrossType.Pure) in file("macroses")).settings(
   version := projVersion,

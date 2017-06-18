@@ -2,12 +2,12 @@ package app.components.listtopics
 
 import app.Utils
 import app.components.forms.FormCommonParams
-import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.raw.{File, FormData}
 import shared.SharedConstants._
 import shared.dto.Topic
-import shared.forms.{DataResponse, ErrorResponse, FormKey}
+import shared.forms.FormField
 
 import scala.util.{Failure, Success}
 
@@ -19,16 +19,14 @@ object ImgUploader {
 
   protected case class State(images: List[String])
 
-  def apply(globalScope: ListTopicsPageGlobalScope,
+  def apply[T, S](globalScope: ListTopicsPageGlobalScope,
             topic: Topic,
-            key: FormKey)
-           (implicit formParams: FormCommonParams) =
+            field: FormField[T, List[String]])
+           (implicit formParams: FormCommonParams[T,S]) =
     comp(Props(
       globalScope = globalScope,
       topic = topic,
-      onChange = imgs => formParams.onChange(
-        formParams.formData.set(key, imgs.mkString(";"), formParams.transformations)
-      ).void
+      onChange = formParams.valueWasChanged(field)
     ))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
@@ -53,15 +51,16 @@ object ImgUploader {
             id = img,
             url = props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img,
             onDelete = imgId => updateImages(props, state.images.filterNot(_ == imgId)),
+            // TODO: use function from LazyTreeNode
             onUp = imgId =>
               if (state.images.head == imgId) {
                 Callback.empty
               } else {
-                // TODO: try to use recursion here
                 val imgVec = state.images.toVector
                 val idx = imgVec.indexOf(imgId)
                 updateImages(props, imgVec.updated(idx, imgVec(idx - 1)).updated(idx - 1, imgId).toList)
               },
+            // TODO: use function from LazyTreeNode
             onDown = imgId =>
               if (state.images.last == imgId) {
                 Callback.empty
@@ -88,9 +87,9 @@ object ImgUploader {
         fd.append(FILE, file)
         fd.append(TOPIC_ID, props.topic.id.get)
         props.globalScope.openWaitPane >> Utils.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd) {
-          case Success(DataResponse(fileName)) =>
+          case Success(Right(fileName)) =>
             updateImages(props, state.images ::: fileName :: Nil) >> props.globalScope.closeWaitPane
-          case Success(ErrorResponse(str)) => props.globalScope.openOkDialog(s"Error uploading file: $str")
+          case Success(Left(str)) => props.globalScope.openOkDialog(s"Error uploading file: $str")
           case Failure(throwable) => props.globalScope.openOkDialog("Error: " + throwable.getMessage)
           case _ => ???
         }.void

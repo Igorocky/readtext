@@ -1,20 +1,27 @@
 package controllers
 
+import shared.forms.FormMethods
+import shared.forms.Forms.SubmitResponse
+import utils.Session
+
 import scala.concurrent.{ExecutionContext, Future}
 
 
 trait RequestHandler {
   def matchPath(path: String): Boolean
-  def handle(input: String): Future[String]
+
+  def handle(session: Session, input: String): Future[String]
 
 }
 
-trait Router {self =>
+trait Router {
+  self =>
   type Path = String
 
   protected def findHandler(path: Path): Option[RequestHandler]
 
-  def handle(path: Path, data: String): Option[Future[String]] = findHandler(path).map(_.handle(data))
+  def handle(path: Path, session: Session, data: String): Option[Future[String]] =
+    findHandler(path).map(_.handle(session, data))
 
   def append(other: Router): Router = new Router {
     override def findHandler(path: Path): Option[RequestHandler] =
@@ -28,22 +35,45 @@ trait Router {self =>
 case class RouterBuilder(handlers: List[RequestHandler] = Nil) extends Router {
   override protected def findHandler(path: Path): Option[RequestHandler] = handlers.find(_.matchPath(path))
 
-  private def addHandler(requestHandler: RequestHandler) = copy(handlers = requestHandler::handlers)
+  private def addHandler(requestHandler: RequestHandler) = copy(handlers = requestHandler :: handlers)
 
-  def addHandler[I,O](path: String, reader: String => I, writer: O => String)
-                     (f: I => Future[O])
-                     (implicit ec: ExecutionContext): RouterBuilder = {
+  def addHandler[I, O](path: String, reader: String => I, writer: O => String)
+                      (f: (Session, I) => Future[O])
+                      (implicit ec: ExecutionContext): RouterBuilder = {
     addHandler(
       new RequestHandler {
         override def matchPath(p: String): Boolean = p == path
-        override def handle(input: String): Future[String] = f(reader(input)).map(writer)
+
+        override def handle(session: Session, input: String): Future[String] = f(session, reader(input)).map(writer)
       }
     )
   }
 
-  def addHandler[I,O](signature: (String, String => I, O => String))
-                     (f: I => Future[O])
-                     (implicit ec: ExecutionContext): RouterBuilder = {
+  def addHandler[I, O](signature: (String, String => I, O => String))
+                      (f: I => Future[O])
+                      (implicit ec: ExecutionContext): RouterBuilder = {
+    addHandler(signature._1, signature._2, signature._3)((_, i) => f(i))
+  }
+
+  def addHandlerWithSession[I, O](signature: (String, String => I, O => String))
+                                 (f: (Session, I) => Future[O])
+                                 (implicit ec: ExecutionContext): RouterBuilder = {
     addHandler(signature._1, signature._2, signature._3)(f)
+  }
+
+  def addHandlerOfFormSubmit[I, S](signature: (String, String => I, SubmitResponse[I,S] => String))
+                                  (formMethods: FormMethods[I])
+                                  (onFormIsValid: I => Future[S])
+                                  (implicit ec: ExecutionContext): RouterBuilder = {
+    addHandlerWithSession(signature._1, signature._2, signature._3){
+      case (session, data) =>
+        val fd = formMethods.validate(session.language, data)
+        if (fd.hasErrors) {
+          Future.successful(Left(fd))
+        } else {
+          onFormIsValid(data).map(Right(_))
+        }
+    }
+
   }
 }

@@ -13,19 +13,6 @@ GET    /r                           controllers.HomeController.pageWithReact
 POST    /changeLanguage                           controllers.LanguageController.changeLanguage
 
 GET    /topics                           controllers.TopicController.topics
-POST    /createParagraph                           controllers.TopicController.createParagraph
-POST    /updateParagraph                           controllers.TopicController.updateParagraph
-POST    /deleteParagraph                           controllers.TopicController.deleteParagraph
-POST    /createTopic                           controllers.TopicController.createTopic
-POST    /updateTopic                           controllers.TopicController.updateTopic
-POST    /deleteTopic                           controllers.TopicController.deleteTopic
 POST    /uploadTopicImage                           controllers.TopicController.uploadTopicImage
 GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)
-POST     /expand                         controllers.TopicController.expand
-POST     /upParagraph                         controllers.TopicController.upParagraph
-POST     /upTopic                         controllers.TopicController.upTopic
-POST     /downParagraph                         controllers.TopicController.downParagraph
-POST     /downTopic                         controllers.TopicController.downTopic
-POST     /addTagForTopic                         controllers.TopicController.addTagForTopic
-POST     /removeTagFromTopic                         controllers.TopicController.removeTagFromTopic
 POST     /wsEntry                         controllers.TopicController.wsEntry

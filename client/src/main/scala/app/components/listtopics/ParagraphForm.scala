@@ -1,59 +1,47 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shared.forms.{FormData, FormKeys, Forms}
+import shared.dto.Paragraph
+import shared.forms.{FormData, Forms}
 
 object ParagraphForm {
 
-  protected case class Props(globalScope: ListTopicsPageGlobalScope,
-                             formData: FormData,
-                             cancelled: Callback,
-                             submitComplete: String => Callback,
-                             textFieldLabel: String,
-                             submitButtonName: String,
-                             editMode: Boolean = false)
+  case class Props(globalScope: ListTopicsPageGlobalScope,
+                   paragraph: Paragraph,
+                   submitFunction: SubmitFunction[Paragraph, Paragraph],
+                   cancelled: Callback,
+                   submitComplete: Paragraph => Callback,
+                   textFieldLabel: String,
+                   submitButtonName: String,
+                   editMode: Boolean = false) {
+    @inline def render = comp(this)
+  }
 
-  protected case class State(formData: FormData)
-
-  def apply(globalScope: ListTopicsPageGlobalScope,
-            formData: FormData,
-            cancelled: Callback,
-            submitComplete: String => Callback,
-            textFieldLabel: String,
-            submitButtonName: String,
-            editMode: Boolean = false) =
-    comp(Props(
-      globalScope,
-      formData,
-      cancelled,
-      submitComplete,
-      textFieldLabel,
-      submitButtonName,
-      editMode
-    ))
+  protected case class State(formData: FormData[Paragraph])
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(props => State(formData = props.formData))
+    .initialStateFromProps(props => State(formData = FormData(props.globalScope.language, props.paragraph)))
     .renderPS{($,props,state)=>
       implicit val lang = props.globalScope.language
-      implicit val fParams = FormCommonParams(
-        id = "paragraph-form",
+      val formMethods = Forms.paragraphForm
+      implicit val fParams = FormCommonParams[Paragraph, Paragraph](
+        formMethods = formMethods,
         formData = state.formData,
-        transformations = Forms.paragraphForm.transformations,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         beforeSubmit = props.globalScope.openWaitPane,
-        onSubmitSuccess = str => props.globalScope.closeWaitPane >> props.submitComplete(str),
+        submitFunction = props.submitFunction,
+        onSubmitSuccess = props.submitComplete,
         onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
-        onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
         editMode = props.editMode
       )
       <.div(
         ^.`class`:=this.getClass.getSimpleName + " form",
         props.textFieldLabel,
-        FormTextField(key = FormKeys.TITLE, focusOnMount = true, width = 700, placeholder = "Paragraph Title"),
+        FormTextField(field = formMethods.title, focusOnMount = true, width = 700, placeholder = "Paragraph Title"),
         SubmitButton(props.submitButtonName),
         buttonWithText(
           onClick = props.cancelled,
@@ -64,9 +52,7 @@ object ParagraphForm {
     }.componentWillReceiveProps{$=>
       if ($.nextProps.globalScope.language != $.state.formData.language) {
         $.modState(_.copy(
-          formData = $.state.formData
-            .copy(language = $.nextProps.globalScope.language)
-            .validate(Forms.paragraphForm.transformations)
+          formData = Forms.paragraphForm.changeLang($.nextProps.globalScope.language, $.state.formData)
         ))
       } else {
         Callback.empty

@@ -4,13 +4,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import org.scalajs.dom
 import org.scalajs.dom.ext.Ajax
-import shared.forms.PostData
-import shared.forms.PostData.readPostData
 import upickle.default._
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.{Failure, Success, Try}
 
 object Utils {
   val BTN_DEFAULT = "btn-default"
@@ -25,16 +23,16 @@ object Utils {
     dom.window.location.href = url
   }
 
-  def post[T](url: String, data: Ajax.InputData)(f: Try[PostData] => CallbackTo[T]): CallbackTo[Future[T]] =
+  def post[T](url: String, data: Ajax.InputData)(f: Try[Either[String,String]] => CallbackTo[T]): CallbackTo[Future[T]] =
     CallbackTo.future {
       Ajax.post(url = url, data = data).map {
-        r => Success(readPostData(r.responseText))
-      }.recover[Try[PostData]] {
+        r => Success(read[Either[String,String]](r.responseText))
+      }.recover[Try[Either[String,String]]] {
         case throwable => Failure(throwable)
       }.map(f)
     }
 
-  def post2[I, O](url: String, path: String,
+  def post[I, O](url: String, path: String,
                   dataStr: String,
                   reader: String => O,
                   errHnd: Throwable => Callback
@@ -51,7 +49,7 @@ object Utils {
     override def doCall[O](path: String,
                            dataStr: String,
                            reader: String => O,
-                           errHnd: Throwable => Callback): (O => Callback) => Callback = post2(
+                           errHnd: Throwable => Callback): (O => Callback) => Callback = Utils.post(
       url,
       path,
       dataStr,

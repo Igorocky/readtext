@@ -5,11 +5,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, _}
 import org.scalajs.dom.html
 import shared.SharedConstants._
-import shared.forms.FormKey
+import shared.forms.FormField
 
 object FormTextField {
-  protected case class Props(name: String,
-                             focusOnMount: Boolean,
+  protected case class Props(focusOnMount: Boolean,
                              value: String,
                              errors: List[String],
                              onChange: String => CallbackTo[_],
@@ -19,16 +18,15 @@ object FormTextField {
                              placeholder: String,
                              onEscape: Callback)
 
-  protected case class State(initialValue: String, value: String, focused: Boolean)
+  protected case class State(initialValue: String, focused: Boolean)
 
-  def apply(key: FormKey, width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false, onEscape: Callback = Callback.empty)
-           (implicit formParams: FormCommonParams) =
+  def apply[T, S](field: FormField[T, String], width: Int = 150, placeholder: String = "", focusOnMount: Boolean = false, onEscape: Callback = Callback.empty)
+                 (implicit formParams: FormCommonParams[T, S]) =
     comp(Props(
-      name = key.name
-      ,focusOnMount = focusOnMount
-      ,value = formParams.formData.get(key).value
-      ,errors = formParams.formData.get(key).errors
-      ,onChange = formParams.onChange compose formParams.formData.createSetter(key, formParams.transformations)
+      focusOnMount = focusOnMount
+      ,value = field.get(formParams.formData)
+      ,errors = field.errors(formParams.formData)
+      ,onChange = formParams.valueWasChanged(field)
       ,width = width
       ,editMode = formParams.editMode
       ,onEnter = formParams.submit
@@ -45,12 +43,11 @@ object FormTextField {
         if (state.focused) {
           <.input.text.ref(theInput = _)(
             ^.`class`:="form-control",
-            ^.name := props.name,
             ^.placeholder:=props.placeholder,
             ^.value := props.value,
             ^.onChange ==> { (e: ReactEventFromInput) =>
               val newValue = e.target.value
-              props.onChange(newValue)>>$.modState(_.copy(value = newValue))
+              props.onChange(newValue).void
             },
             ^.onBlur --> (if (props.editMode) $.modState(_.copy(focused = false)) else Callback.empty),
             ^.maxWidth:=s"${props.width}px",
@@ -65,13 +62,13 @@ object FormTextField {
             }
           )
         } else {
-          val valueIsEmpty = state.value.trim == ""
+          val valueIsEmpty = props.value.trim == ""
           <.div(
             ^.`class`:=EDITABLE_DIV +
-              " " + (if (state.value != state.initialValue) EDITABLE_DIV_CHANGED else ""),
+              " " + (if (props.value != state.initialValue) EDITABLE_DIV_CHANGED else ""),
             ^.onClick --> $.modState(_.copy(focused = true), Callback(theInput.focus())),
             ^.minWidth:=s"${props.width}px",
-            if (valueIsEmpty) <.div(^.`class`:=EDITABLE_DIV_EMPTY, ".") else state.value
+            if (valueIsEmpty) <.div(^.`class`:=EDITABLE_DIV_EMPTY, ".") else props.value
           )
         },
         props.errors.toTagMod(<.div(^.color:="#a94442", _))
@@ -80,7 +77,7 @@ object FormTextField {
   }
 
   private lazy val comp = react.ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(p => State(initialValue = p.value, value = p.value, focused = !p.editMode))
+    .initialStateFromProps(p => State(initialValue = p.value, focused = !p.editMode))
     .renderBackend[Backend]
     .componentDidMount{$ => if ($.props.focusOnMount) Callback($.backend.theInput.focus()) else Callback.empty}
     .build

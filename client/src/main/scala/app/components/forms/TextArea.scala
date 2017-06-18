@@ -1,15 +1,14 @@
 package app.components.forms
 
-import japgolly.scalajs.react.{ScalaComponent, _}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{ScalaComponent, _}
 import org.scalajs.dom.html
 import shared.SharedConstants._
-import shared.forms.FormKey
+import shared.forms.FormField
 import shared.messages.Language
 
 object TextArea {
-  protected case class Props(name: String,
-                             value: String,
+  protected case class Props(value: String,
                              errors: List[String],
                              onChange: String => CallbackTo[_],
                              width: Int,
@@ -18,13 +17,12 @@ object TextArea {
 
   protected case class State(initialValue: String, value: String, focused: Boolean)
 
-  def apply(key: FormKey, width: Int = 150, rows: Int = 10)
-           (implicit formParams: FormCommonParams, language: Language): VdomElement =
+  def apply[T,S](field: FormField[T,String], width: Int = 150, rows: Int = 10)
+           (implicit formParams: FormCommonParams[T,S], language: Language): VdomElement =
     comp(Props(
-      name = key.name
-      ,value = formParams.formData.get(key).value
-      ,errors = formParams.formData.get(key).errors
-      ,onChange = formParams.onChange compose formParams.formData.createSetter(key, formParams.transformations)
+      value = field.get(formParams.formData)
+      ,errors = field.errors(formParams.formData)
+      ,onChange = formParams.valueWasChanged(field)
       ,width = width
       ,rows = rows
       ,editMode = formParams.editMode
@@ -37,7 +35,6 @@ object TextArea {
       <.div(
         if (state.focused) {
           <.textarea.ref(theInput = _)(
-            ^.name := props.name,
             ^.value := props.value,
             ^.onChange ==> { (e: ReactEventFromInput) =>
               val newValue = e.target.value

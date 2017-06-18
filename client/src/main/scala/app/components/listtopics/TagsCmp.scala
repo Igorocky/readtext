@@ -1,28 +1,26 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import shared.forms.{FormData, FormKeys, Forms}
-import upickle.default._
+import shared.dto.TopicTag
+import shared.forms.{FormData, Forms}
 
 object TagsCmp {
 
-  protected case class Props(globalScope: ListTopicsPageGlobalScope,
-                             addTagUrl: String,
+  case class Props(globalScope: ListTopicsPageGlobalScope,
+                             submitFunction: SubmitFunction[TopicTag, List[String]],
                              entityId: Long,
                              tags: List[String],
                              removeTag: String => Callback,
-                             tagAdded: List[String] => Callback)
+                             tagAdded: List[String] => Callback) {
+    @inline def render = comp(this)
+  }
 
-  protected case class State(formData: Option[FormData] = None)
+  protected case class State(formData: Option[FormData[TopicTag]] = None)
 
-
-  def apply(globalScope: ListTopicsPageGlobalScope,
-            addTagUrl: String, entityId: Long,
-            tags: List[String], removeTag: String => Callback, tagAdded: List[String] => Callback) =
-    comp(Props(globalScope, addTagUrl, entityId, tags, removeTag, tagAdded))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -31,32 +29,31 @@ object TagsCmp {
         if (state.formData.isEmpty) {
           buttonWithIcon(
             onClick = $.modState(_.copy(
-              formData = Some(Forms.tagForm.formData(
-                language = props.globalScope.pageParams.headerParams.language,
-                obj = (props.entityId, ""),
-                submitUrl = props.addTagUrl
-              ))
+              formData = Some(FormData(props.globalScope.language, TopicTag(props.entityId)))
             )),
             btnType = BTN_INFO,
             iconType = "fa-hashtag"
           )
         } else {
-          implicit val fParams = FormCommonParams(
-            id = "tag-form",
+          val formMethods = Forms.tagForm
+          implicit val fParams = FormCommonParams[TopicTag, List[String]](
             formData = state.formData.get,
-            transformations = Forms.tagForm.transformations,
+            formMethods = formMethods,
             onChange = fd => $.modState(_.copy(formData = Some(fd))).map(_ => fd),
             beforeSubmit = props.globalScope.openWaitPane,
+            submitFunction = tag => props.globalScope.wsClient.post(
+              _.addTagForTopic(tag),
+              th => props.globalScope.openOkDialog("Error adding tag: " + th.getMessage)
+            ),
             onSubmitSuccess =
-              str => props.globalScope.closeWaitPane >>
-                props.tagAdded(read[List[String]](str)) >>
+              tags => props.globalScope.closeWaitPane >>
+                props.tagAdded(tags) >>
                 $.modState(_.copy(formData = None)),
             onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
-            onAjaxError = th => props.globalScope.openOkDialog(s"""Error: ${th.getMessage}"""),
             editMode = false
           )
           FormTextField(
-            key = FormKeys.TAG,
+            field = formMethods.value,
             focusOnMount = true,
             onEscape = $.modState(_.copy(formData = None))
           )
