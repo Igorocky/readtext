@@ -10,8 +10,8 @@ import db.{DaoCommon, HasIdAndOrder}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import shared.api.TopicApi
 import shared.forms.Forms
-import slick.driver.H2Driver.api._
-import slick.driver.JdbcProfile
+import slick.jdbc.H2Profile.api._
+import slick.jdbc.JdbcProfile
 
 import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
@@ -38,8 +38,7 @@ class TopicApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
 
     .addHandlerOfFormSubmit(forMethod(_.createParagraph))(Forms.paragraphForm){
       case paragraph => db.run(
-        dao.insertOrdered(paragraphTable)(
-          parentId = 0,
+        dao.insertOrdered(paragraphTable, paragraph.paragraphId)(
           updateOrder = ord => paragraph.copy(order = ord),
           updateId = (par, newId) => par.copy(id = Some(newId))
         )
@@ -54,8 +53,7 @@ class TopicApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
 
     .addHandlerOfFormSubmit(forMethod(_.createTopic))(Forms.topicForm){
       case topic => db.run(
-        dao.insertOrdered(topicTable)(
-          parentId = topic.paragraphId.get,
+        dao.insertOrdered(topicTable, topic.paragraphId)(
           updateOrder = ord => topic.copy(order = ord),
           updateId = (top, newId) => top.copy(id = Some(newId))
         )

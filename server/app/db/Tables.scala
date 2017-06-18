@@ -5,7 +5,7 @@ import java.time.{ZoneOffset, ZonedDateTime}
 
 import shared.StrUtils
 import shared.dto._
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 import TypeConversions._
 
 trait HasId {

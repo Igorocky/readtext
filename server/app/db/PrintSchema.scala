@@ -1,6 +1,6 @@
 package db
 
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.ExecutionContext
 

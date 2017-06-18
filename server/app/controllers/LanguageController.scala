@@ -2,14 +2,13 @@ package controllers
 
 import javax.inject._
 
-import db.Tables
 import play.api.Environment
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import shared.SharedConstants
 import shared.messages.Languages
-import slick.driver.JdbcProfile
+import slick.jdbc.JdbcProfile
 import utils.ServerUtils._
 
 import scala.concurrent.ExecutionContext

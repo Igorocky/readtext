@@ -10,7 +10,7 @@ import play.api.mvc._
 import play.api.{Environment, Logger}
 import shared.SharedConstants._
 import shared.pageparams.ListTopicsPageParams
-import slick.driver.JdbcProfile
+import slick.jdbc.JdbcProfile
 import upickle.default._
 import utils.ServerUtils._
 

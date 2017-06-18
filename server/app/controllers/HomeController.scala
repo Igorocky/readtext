@@ -8,7 +8,7 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import shared.pageparams.SimplePageParams
-import slick.driver.JdbcProfile
+import slick.jdbc.JdbcProfile
 import upickle.default._
 
 import scala.concurrent.ExecutionContext

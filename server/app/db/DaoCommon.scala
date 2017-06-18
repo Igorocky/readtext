@@ -2,51 +2,55 @@ package db
 
 import javax.inject.{Inject, Singleton}
 
-import slick.driver.H2Driver.api._
-import slick.profile.RelationalProfile
+import slick.jdbc.H2Profile.api._
+import slick.relational.RelationalProfile
 
 import scala.concurrent.ExecutionContext
 import scala.reflect.{ClassTag, classTag}
 
 @Singleton
 class DaoCommon @Inject()(implicit private val ec: ExecutionContext) {
-  def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], id: Long, down: Boolean) = {
-    val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
-    val groupIdExtractor = createGroupIdExtractor(hasParent)
-    val groupIdCriteria =createGroupIdCriteria(hasParent)
+  def changeOrder[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], id: Long, orderShouldBeIncreased: Boolean) = {
+    val parentIdExtractor = createParentIdExtractor[M]
     (for {
-      (groupId, currOrder) <- table.filter(_.id === id).map(r => (groupIdExtractor(r), r.order)).result.head
-      ordersInsideGroup = table.filter(groupIdCriteria(groupId)).map(_.order)
-      maxOrder <- maxFn(down, ordersInsideGroup).result.map(_.get)
-      newOrder = calcNewOrder(down, currOrder)
-      wasMoved <- if (currOrder == maxOrder) DBIO.successful(false) else for {
-        _ <- table.filter(groupIdCriteria(groupId)).filter(_.order === newOrder).map(_.order).update(currOrder)
+      (parentId, currOrder) <- table.filter(_.id === id).map(r => (parentIdExtractor(r), r.order)).result.head
+      haveSameParent = createHaveSameParentCriteria(parentId)
+      ordersInsideGroup = table.filter(haveSameParent).map(_.order)
+      edgeOrder <- findEdge(ordersInsideGroup, orderShouldBeIncreased).result.map(_.get)
+      newOrder = calcNewOrder(currOrder, orderShouldBeIncreased)
+      wasMoved <- if (currOrder == edgeOrder) DBIO.successful(false) else for {
+        _ <- table.filter(haveSameParent).filter(_.order === newOrder).map(_.order).update(currOrder)
         _ <- table.filter(_.id === id).map(_.order).update(newOrder)
       } yield (true)
     } yield (wasMoved)).transactionally
   }
 
-  def insertOrdered[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C])(parentId: Long, updateOrder: Int=>U, updateId: (U,Long)=>U) = {
-    val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
-    val groupIdCriteria = createGroupIdCriteria(hasParent)
+  def insertOrdered[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], parentId: Long)
+                                                        (updateOrder: Int=>U, updateId: (U,Long)=>U): DBIOAction[U, NoStream, Effect.Read with Effect.Write with Effect.Transactional] =
+    insertOrdered(table, Some(parentId))(updateOrder, updateId)
+
+  def insertOrdered[M <: HasIdAndOrder :ClassTag,U,C[_]](table: Query[M,U,C], parentId: Option[Long])
+                                                        (updateOrder: Int=>U, updateId: (U,Long)=>U): DBIOAction[U, NoStream, Effect.Read with Effect.Write with Effect.Transactional] = {
+    val haveSameParent = createHaveSameParentCriteria(parentId)
     (for {
-      maxOrder <- table.filter(groupIdCriteria(parentId)).map(_.order).max.result.map(_.getOrElse(0))
+      maxOrder <- table.filter(haveSameParent).map(_.order).max.result.map(_.getOrElse(-1))
       elemWithOrder = updateOrder(maxOrder + 1)
       newId <- table returning table.map(_.id) += elemWithOrder
     } yield (updateId(elemWithOrder, newId))).transactionally
   }
 
   def deleteOrdered[M <: HasIdAndOrder :ClassTag,U](table: Query[M,U,Seq], id: Long) = {
-    val hasParent = classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass)
-    val groupIdExtractor = createGroupIdExtractor(hasParent)
-    val groupIdCriteria =createGroupIdCriteria(hasParent)
+    val parentIdExtractor = createParentIdExtractor[M]
     (for {
-      (groupId, deletedOrder) <- table.filter(_.id === id).map(r => (groupIdExtractor(r), r.order)).result.head
+      (parentId, deletedOrder) <- table.filter(_.id === id).map(r => (parentIdExtractor(r), r.order)).result.head
       _ <- table.filter(_.id === id).asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
-      seq <- table.filter(groupIdCriteria(groupId)).filter(_.order > deletedOrder).map(t => (t.id,t.order)).result
-      _ <- DBIO.sequence(for {
-        (lowerElemId, lowerElemOrder) <- seq
-      } yield table.filter(_.id === lowerElemId).map(_.order).update(lowerElemOrder - 1))
+      haveSameParent = createHaveSameParentCriteria(parentId)
+      seq <- table.filter(haveSameParent).filter(_.order > deletedOrder).map(t => (t.id,t.order)).result
+      _ <- DBIO.sequence(
+        for {
+          (lowerElemId, lowerElemOrder) <- seq
+        } yield table.filter(_.id === lowerElemId).map(_.order).update(lowerElemOrder - 1)
+      )
     } yield ()).transactionally
   }
 
@@ -65,13 +69,28 @@ class DaoCommon @Inject()(implicit private val ec: ExecutionContext) {
   def loadOrderedChildren[M <: HasParent with HasOrder, U, C[_]](table: Query[M, U, C], parentId: Long) =
     table.filter(_.parentId === parentId).sortBy(_.order).result
 
-  private def maxFn[C[_]](down: Boolean, q: Query[Rep[Int], Int, C]) = if (down) q.max else q.min
-  private def calcNewOrder(down: Boolean, oldOrder: Int) = if (down) oldOrder + 1 else oldOrder - 1
-  private def createGroupIdExtractor[M <: HasIdAndOrder](hasParent: Boolean): M => Rep[Long] =
-    if (hasParent) _.asInstanceOf[HasParent].parentId
-    else _ => (1L : Rep[Long])
+  private def findEdge[C[_]](q: Query[Rep[Int], Int, C], edgeIsMax: Boolean) = if (edgeIsMax) q.max else q.min
+  private def calcNewOrder(oldOrder: Int, edgeIsMax: Boolean) = if (edgeIsMax) oldOrder + 1 else oldOrder - 1
 
-  private def createGroupIdCriteria[M <: HasIdAndOrder](hasParent: Boolean): Rep[Long] => M => Rep[Boolean] =
-    if (hasParent) groupId => row => row.asInstanceOf[HasParent].parentId === groupId
-    else groupId => row => true: Rep[Boolean]
+  private def createParentIdExtractor[M :ClassTag]: M => Rep[Option[Long]] =
+    if (classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass))
+      _.asInstanceOf[HasParent].parentId.?
+    else if (classOf[HasOptionalParent].isAssignableFrom(classTag[M].runtimeClass))
+      _.asInstanceOf[HasOptionalParent].parentId
+    else
+      _ => (None : Rep[Option[Long]])
+
+  private def createHaveSameParentCriteria[M :ClassTag](parentId: Long): M => Rep[Boolean] =
+    createHaveSameParentCriteria(Some(parentId))
+
+  private def createHaveSameParentCriteria[M :ClassTag](parentId: Option[Long]): M => Rep[Boolean] =
+    if (classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass))
+      row => row.asInstanceOf[HasParent].parentId === parentId.get
+    else if (classOf[HasOptionalParent].isAssignableFrom(classTag[M].runtimeClass))
+      if (parentId.isEmpty)
+        row => row.asInstanceOf[HasOptionalParent].parentId.isEmpty && parentId.isEmpty
+      else
+        row => row.asInstanceOf[HasOptionalParent].parentId.get === parentId.get
+    else
+      row => true: Rep[Boolean]
 }
