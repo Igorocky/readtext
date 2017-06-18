@@ -45,7 +45,9 @@ object HeaderCmp {
               ),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
               submitComplete = par =>
-                $.modState(_.copy(newParagraphFormOpened = false)) >> p.globalScope.paragraphCreated(par),
+                $.modState(_.copy(newParagraphFormOpened = false)) >>
+                  p.globalScope.paragraphCreated(par) >>
+                  p.globalScope.closeWaitPane,
               textFieldLabel = "New paragraph:",
               submitButtonName = "Create",
               globalScope = p.globalScope

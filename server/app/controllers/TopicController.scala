@@ -47,7 +47,12 @@ class TopicController @Inject()(
 
   def wsEntry = postRequest(read[(String, String)]) {
     case (session, (path, input)) =>
-      wsRouter.handle(path, session, input).map(_.map(Ok(_))).getOrElse {
+      Logger.debug(s"wsEntry.input: path: '$path', input: '$input'")
+      wsRouter.handle(path, session, input)
+        .map(_.map{res =>
+          Logger.debug(s"wsEntry.output: path: '$path', input: '$input', result: '$res'")
+          Ok(res)
+        }).getOrElse {
         val msg = s"No handler found for path '$path'"
         Logger.error(msg)
         Future.successful(BadRequest(msg))

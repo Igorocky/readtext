@@ -117,8 +117,8 @@ object ListTopicsPage {
           getChildren = node.children.map(_.map(mapLazyTreeNode)),
           loadChildren = loadChildren(p.id),
           expanded = Some(p.expanded),
-          onExpand = $.modState(_.expandParagraph(p.id.get, true)),
-          onCollapse = $.modState(_.expandParagraph(p.id.get, false))
+          onExpand = state.globalScope.expandParagraphsAction(List((p.id.get, true))),
+          onCollapse = state.globalScope.expandParagraphsAction(List((p.id.get, false)))
         )
         case Some(t: Topic) => TreeNodeModel(
           key = "top-" + t.id.get,

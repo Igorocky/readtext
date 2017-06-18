@@ -99,7 +99,7 @@ class TopicApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
           DBIO.seq(
             paragraphTable.filter(_.id inSet trueIds).map(_.expanded).update(true),
             paragraphTable.filter(_.id inSet falseIds).map(_.expanded).update(false)
-          )
+          ).transactionally
         )
     }
     .addHandler(forMethod(_.moveUpParagraph)) {
