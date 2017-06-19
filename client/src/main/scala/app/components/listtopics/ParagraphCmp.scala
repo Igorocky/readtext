@@ -119,7 +119,7 @@ object ParagraphCmp {
 
     def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
       TopicForm.Props(
-        topic = Topic(paragraphId = p.id),
+        topic = Topic(paragraphId = p.id.get),
         submitFunction = topic => props.globalScope.wsClient.post(
           _.createTopic(topic),
           th => props.globalScope.openOkDialog("Error creating topic: " + th.getMessage)

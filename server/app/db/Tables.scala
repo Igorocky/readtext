@@ -73,7 +73,7 @@ class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrde
 
   override def parentId = paragraphId
 
-  def * = (id.?, paragraphId.?, title,  order, images, tags) <> (Topic.tupled, Topic.unapply)
+  def * = (id.?, paragraphId, title,  order, images, tags) <> (Topic.tupled, Topic.unapply)
 }
 
 class FolderTable(tag: Tag) extends Table[Folder](tag, "FOLDERS") with HasIdAndOrder with HasParent {

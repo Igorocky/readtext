@@ -13,7 +13,6 @@ object Forms {
   }
 
   lazy val topicForm = new FormMethods[Topic] {
-    val paragraphId = field(_.paragraphId)(nonEmpty)
     val title = field(_.title)(nonEmpty)
     val images = field(_.images)(none)
     end
