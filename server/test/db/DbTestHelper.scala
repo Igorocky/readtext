@@ -3,12 +3,12 @@ package db
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 import slick.jdbc.H2Profile.api._
 
 import scala.collection.JavaConversions._
 
-trait DbTestHelper extends FlatSpec with Matchers with BeforeAndAfterAll with ScalaFutures  {
+trait DbTestHelper extends FreeSpec with Matchers with BeforeAndAfterAll with ScalaFutures  {
 
   implicit override val patienceConfig = PatienceConfig(timeout = Span(1, Seconds))
 
