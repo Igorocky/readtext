@@ -80,17 +80,17 @@ class DaoCommon @Inject()(implicit private val ec: ExecutionContext) {
     else
       _ => (None : Rep[Option[Long]])
 
-  private def createHaveSameParentCriteria[M :ClassTag](parentId: Long): M => Rep[Boolean] =
+  private def createHaveSameParentCriteria[M :ClassTag](parentId: Long): M => Rep[Option[Boolean]] =
     createHaveSameParentCriteria(Some(parentId))
 
-  private def createHaveSameParentCriteria[M :ClassTag](parentId: Option[Long]): M => Rep[Boolean] =
+  private def createHaveSameParentCriteria[M :ClassTag](parentId: Option[Long]): M => Rep[Option[Boolean]] =
     if (classOf[HasParent].isAssignableFrom(classTag[M].runtimeClass))
-      row => row.asInstanceOf[HasParent].parentId === parentId.get
+      row => row.asInstanceOf[HasParent].parentId.? === parentId.get
     else if (classOf[HasOptionalParent].isAssignableFrom(classTag[M].runtimeClass))
       if (parentId.isEmpty)
-        row => row.asInstanceOf[HasOptionalParent].parentId.isEmpty && parentId.isEmpty
+        row => row.asInstanceOf[HasOptionalParent].parentId.isEmpty.?
       else
-        row => row.asInstanceOf[HasOptionalParent].parentId.get === parentId.get
+        row => row.asInstanceOf[HasOptionalParent].parentId === parentId
     else
-      row => true: Rep[Boolean]
+      _ => (true: Rep[Boolean]).?
 }
