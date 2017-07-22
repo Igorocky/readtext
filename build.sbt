@@ -44,14 +44,14 @@ lazy val client = (project in file("client"))
   .settings(
   scalaVersion := scalaV,
   libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "core" % "1.0.1"
+    "com.github.japgolly.scalajs-react" %%% "core" % "1.1.0"
     ,"com.lihaoyi" %%% "upickle" % upickleVersion
 
     ,"org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
   ,npmDependencies in Compile ++= Seq(
-    "react" -> "15.5.4",
-    "react-dom" -> "15.5.4"
+    "react" -> "15.6.1",
+    "react-dom" -> "15.6.1"
   )
 ).dependsOn(sharedJs, macrosesJs)
 

@@ -182,5 +182,8 @@ object Css extends StyleSheet.Standalone {
     )
   )
 
+  ".Tree > div > .nodeValue" - (
+    display.inlineBlock
+    )
 
 }

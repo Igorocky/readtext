@@ -27,12 +27,9 @@ object Tree {
     .initialStateFromProps(p => State(expanded = p.model.expanded.getOrElse(false)))
     .renderBackend[Backend]
     .componentDidMount($ => {
-      println(s"[${Thread.currentThread().getName}] ${$.props.model.key} did mount.")
       if ($.props.model.expanded.getOrElse(false) && $.props.model.getChildren.isEmpty) {
-        println(s"[${Thread.currentThread().getName}] ${$.props.model.key} loading children.")
         $.props.model.loadChildren
       } else {
-        println(s"[${Thread.currentThread().getName}] ${$.props.model.key} doing nothing.")
         Callback.empty
       }
     })
@@ -44,7 +41,7 @@ object Tree {
       props.model.nodeValue.whenDefined(branch =>
         <.div(^.key:= "branch",
           if (props.model.mayHaveChildren) expandCollapseButton else EmptyVdom,
-          <.div(branch)
+          <.div(^.`class`:="nodeValue", branch)
         )
       ),
       if (props.model.mayHaveChildren && isExpanded) <.div(^.key:= "children", renderChildren) else EmptyVdom
@@ -67,7 +64,7 @@ object Tree {
         props.model.getChildren.map(_ => Callback.empty).getOrElse(props.model.loadChildren)
 
     private def renderChildren(implicit props: Props, state: State): VdomNode =
-      props.model.getChildren.map(_.map(Tree(_)).toVdomArray).getOrElse(loadingIcon)
+      props.model.getChildren.map(_.toVdomArray(Tree(_))).getOrElse(loadingIcon)
 
     private def loadingIcon: VdomNode = "Loading..."
   }
