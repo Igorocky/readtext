@@ -25,13 +25,12 @@ object ServerUtils {
       .map(read[Session])
       .getOrElse(Session(language = getDefaultLanguage(requestHeader.acceptLanguages)))
 
-  def modSession(request: Request[AnyContent], f: Session => Session): (String, String) = {
-    (Session.SESSION -> write(f(getSession(request))))
+  def modSession(s: Session): (String, String) = {
+    (Session.SESSION -> write(s))
   }
 
   def headerParams(language: Language) = HeaderParams (
-    language = language,
-    changeLanguageUrl = routes.LanguageController.changeLanguage.url
+    language = language
   )
 
   def bundleUrl(projectName: String): String = {

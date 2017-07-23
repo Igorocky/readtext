@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait RequestHandler {
   def matchPath(path: String): Boolean
 
-  def handle(session: Session, input: String): Future[String]
+  def handle(session: Session, input: String): Future[(Session, String)]
 
 }
 
@@ -20,7 +20,7 @@ trait Router {
 
   protected def findHandler(path: Path): Option[RequestHandler]
 
-  def handle(path: Path, session: Session, data: String): Option[Future[String]] =
+  def handle(path: Path, session: Session, data: String): Option[Future[(Session, String)]] =
     findHandler(path).map(_.handle(session, data))
 
   def append(other: Router): Router = new Router {
@@ -38,13 +38,15 @@ case class RouterBuilder(handlers: List[RequestHandler] = Nil) extends Router {
   private def addHandler(requestHandler: RequestHandler) = copy(handlers = requestHandler :: handlers)
 
   def addHandler[I, O](path: String, reader: String => I, writer: O => String)
-                      (f: (Session, I) => Future[O])
+                      (f: (Session, I) => Future[(Session, O)])
                       (implicit ec: ExecutionContext): RouterBuilder = {
     addHandler(
       new RequestHandler {
         override def matchPath(p: String): Boolean = p == path
 
-        override def handle(session: Session, input: String): Future[String] = f(session, reader(input)).map(writer)
+        override def handle(session: Session, input: String): Future[(Session, String)] = f(session, reader(input)).map{
+          case (ses, out) => (ses, writer(out))
+        }
       }
     )
   }
@@ -52,11 +54,11 @@ case class RouterBuilder(handlers: List[RequestHandler] = Nil) extends Router {
   def addHandler[I, O](signature: (String, String => I, O => String))
                       (f: I => Future[O])
                       (implicit ec: ExecutionContext): RouterBuilder = {
-    addHandler(signature._1, signature._2, signature._3)((_, i) => f(i))
+    addHandler(signature._1, signature._2, signature._3)((s, i) => f(i).map(o => (s,o)))
   }
 
   def addHandlerWithSession[I, O](signature: (String, String => I, O => String))
-                                 (f: (Session, I) => Future[O])
+                                 (f: (Session, I) => Future[(Session, O)])
                                  (implicit ec: ExecutionContext): RouterBuilder = {
     addHandler(signature._1, signature._2, signature._3)(f)
   }
@@ -69,9 +71,11 @@ case class RouterBuilder(handlers: List[RequestHandler] = Nil) extends Router {
       case (session, data) =>
         val fd = formMethods.validate(session.language, data)
         if (fd.hasErrors) {
-          Future.successful(Left(fd))
+          Future.successful((session, Left(fd)))
         } else {
-          onFormIsValid(data).map(Right(_))
+          onFormIsValid(data).map{
+            case o => (session, Right(o))
+          }
         }
     }
 

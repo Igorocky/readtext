@@ -1,17 +1,22 @@
 package app.components
 
+import app.WsClient
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
+import shared.api.SessionApi
 import shared.messages.Language
 
 object UnivPage {
-  protected case class Props(language: Language, changeLangUrl: String, onLanguageChange: Language => Callback,
-                             content: TagMod)
+  protected case class Props(language: Language,
+                             sessionWsClient: WsClient[SessionApi, Callback],
+                             onLanguageChange: Language => Callback,
+                             content: TagMod
+                            )
 
-  def apply(language: Language, changeLangUrl: String,
+  def apply(language: Language, sessionWsClient: WsClient[SessionApi, Callback],
             onLanguageChange: Language => Callback,
             content: VdomElement) =
-    comp(Props(language, changeLangUrl, onLanguageChange, content))
+    comp(Props(language, sessionWsClient, onLanguageChange, content))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .render_P { props =>
@@ -19,7 +24,7 @@ object UnivPage {
         <.div(
           LanguageSelector(
             currLang = props.language
-            ,url = props.changeLangUrl
+            ,sessionWsClient = props.sessionWsClient
             ,onChange = props.onLanguageChange
           )
         ),

@@ -49,14 +49,14 @@ class TopicController @Inject()(
     case (session, (path, input)) =>
       Logger.debug(s"wsEntry.input: path: '$path', input: '$input'")
       wsRouter.handle(path, session, input)
-        .map(_.map{res =>
+        .map(_.map{case (ses, res) =>
           Logger.debug(s"wsEntry.output: path: '$path', input: '$input', result: '$res'")
-          Ok(res)
+          Ok(res).withSession(modSession(ses))
         }).getOrElse {
-        val msg = s"No handler found for path '$path'"
-        Logger.error(msg)
-        Future.successful(BadRequest(msg))
-      }
+          val msg = s"No handler found for path '$path'"
+          Logger.error(msg)
+          Future.successful(BadRequest(msg))
+        }
   }
 
   private val imgStorageDir = new File(configuration.getString("topicsImgStorageDir").get)
@@ -99,8 +99,6 @@ class TopicController @Inject()(
       case _ => NotFound(s"File $fileName was not found.")
     }
   }
-
-  private def idPostRequest = postRequest(_.toLong) _
 
   private def postRequest[T](parser: String => T)(action: (utils.Session, T) => Future[Result]) = Action.async {implicit request =>
     action(getSession, parser(request.body.asText.get))

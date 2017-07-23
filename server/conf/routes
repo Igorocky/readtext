@@ -10,7 +10,6 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 
 GET         /styles.css                                    @controllers.HomeController.css
 GET    /r                           controllers.HomeController.pageWithReact
-POST    /changeLanguage                           controllers.LanguageController.changeLanguage
 
 GET    /topics                           controllers.TopicController.topics
 POST    /uploadTopicImage                           controllers.TopicController.uploadTopicImage

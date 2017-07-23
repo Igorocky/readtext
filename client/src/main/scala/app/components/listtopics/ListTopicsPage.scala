@@ -37,6 +37,7 @@ object ListTopicsPage {
         registerPasteListener = (id, listener) => $.modState(_.registerListener(id,listener)),
         unregisterPasteListener = id => $.modState(s => s.copy(pasteListeners = s.pasteListeners.filterNot(_._1._2 == id))),
         wsClient = Utils.createWsClient($.props.wsEntryUrl),
+        sessionWsClient = Utils.createWsClient($.props.wsEntryUrl),
         expandParagraphsAction = ids => $.backend.wsClient.post(_.expand(ids), $.backend.showError) {
           case () => $.modState(_.expandParagraphs(ids))
         },
@@ -75,7 +76,7 @@ object ListTopicsPage {
 
     def render(implicit props: Props, state: State) = UnivPage(
       language = state.globalScope.pageParams.headerParams.language,
-      changeLangUrl = props.headerParams.changeLanguageUrl,
+      sessionWsClient = state.globalScope.sessionWsClient,
       onLanguageChange = newLang => $.modState(_.setLanguage(newLang)),
       content =
         <.div(

@@ -4,7 +4,7 @@ import app.WsClient
 import app.components.listtopics.ListTopicsPageGlobalScope.NewValueExpanded
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.raw.File
-import shared.api.TopicApi
+import shared.api.{SessionApi, TopicApi}
 import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
@@ -17,6 +17,7 @@ case class ListTopicsPageGlobalScope(pageParams: ListTopicsPageParams,
                                      registerPasteListener: (Long, File => Callback) => Callback,
                                      unregisterPasteListener: (Long) => Callback,
                                      wsClient: WsClient[TopicApi, Callback],
+                                     sessionWsClient: WsClient[SessionApi, Callback],
                                      paragraphCreated: Paragraph => Callback,
                                      paragraphUpdated: Paragraph => Callback,
                                      paragraphDeleted: Long => Callback,
