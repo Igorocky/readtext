@@ -10,7 +10,7 @@ class WsMacrosTest extends FlatSpec with Matchers {
 
   "WsClient.post" should "do correct post call" in {
     var called = false
-    val client = new WsClient[Api, String] {
+    val client = new WsClientMacro[Api, String] {
       override def doCall[O](path: String,
                              dataStr: String,
                              reader: (String) => O,
@@ -30,7 +30,7 @@ class WsMacrosTest extends FlatSpec with Matchers {
     var called = false
     val throwable = new Throwable
 
-    val client = new WsClient[Api, String] {
+    val client = new WsClientMacro[Api, String] {
       override def doCall[O](path: String,
                              dataStr: String,
                              reader: (String) => O,
@@ -49,7 +49,7 @@ class WsMacrosTest extends FlatSpec with Matchers {
   }
 
   "WsClient.post" should "return correct result" in {
-    val client = new WsClient[Api, String] {
+    val client = new WsClientMacro[Api, String] {
       override def doCall[O](path: String,
                              dataStr: String,
                              reader: (String) => O,

@@ -28,7 +28,7 @@ class WsMacroImpl(val c: Context) {
   }
 }
 
-trait WsClient[A, C] {
+trait WsClientMacro[A, C] {
   def post[O](method: A => O, errHnd: Throwable => C): (O => C) => C = macro WsMacroImpl.post[A, O]
 
   def doCall[O](path: String,

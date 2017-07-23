@@ -45,7 +45,7 @@ object Utils {
         }
     }
 
-  def createWsClient[A](url: String): WsClient[A, Callback] = new WsClient[A, Callback] {
+  def createWsClient[A](url: String): WsClient[A] = new WsClient[A] {
     override def doCall[O](path: String,
                            dataStr: String,
                            reader: String => O,

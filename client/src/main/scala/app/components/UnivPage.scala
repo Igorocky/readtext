@@ -8,12 +8,12 @@ import shared.messages.Language
 
 object UnivPage {
   protected case class Props(language: Language,
-                             sessionWsClient: WsClient[SessionApi, Callback],
+                             sessionWsClient: WsClient[SessionApi],
                              onLanguageChange: Language => Callback,
                              content: TagMod
                             )
 
-  def apply(language: Language, sessionWsClient: WsClient[SessionApi, Callback],
+  def apply(language: Language, sessionWsClient: WsClient[SessionApi],
             onLanguageChange: Language => Callback,
             content: VdomElement) =
     comp(Props(language, sessionWsClient, onLanguageChange, content))

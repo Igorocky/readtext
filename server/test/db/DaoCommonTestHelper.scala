@@ -13,13 +13,13 @@ trait DaoCommonTestHelper extends DbTestHelper with BeforeAndAfter {
   override protected def beforeAll(): Unit = {
     db.run(
       DBIO.seq(tables.map(_.schema.create):_*)
-    )
+    ).futureValue
   }
 
   before {
     db.run(
       DBIO.seq(tables.map(_.delete):_*)
-    )
+    ).futureValue
     for {t <- tables} {
       db.run(t.length.result).futureValue should be(0)
     }

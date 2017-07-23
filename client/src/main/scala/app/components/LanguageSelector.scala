@@ -11,12 +11,12 @@ object LanguageSelector {
 
   protected case class Props(currLang: Language,
                              supportedLanguages: List[Language],
-                             sessionWsClient: WsClient[SessionApi, Callback],
+                             sessionWsClient: WsClient[SessionApi],
                              onChange: Language => Callback
                             )
 
   def apply(currLang: Language, supportedLanguages: List[Language] = Languages.supportedLanguages,
-            sessionWsClient: WsClient[SessionApi, Callback],
+            sessionWsClient: WsClient[SessionApi],
             onChange: Language => Callback) =
     comp(Props(currLang, supportedLanguages, sessionWsClient, onChange))
 

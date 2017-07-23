@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 
 trait DbTestHelper extends FreeSpec with Matchers with BeforeAndAfterAll with ScalaFutures  {
 
-  implicit override val patienceConfig = PatienceConfig(timeout = Span(1, Seconds))
+  implicit override val patienceConfig = PatienceConfig(timeout = Span(3, Seconds))
 
   protected val db = Database.forConfig("", ConfigFactory.parseMap(Map(
     "url" -> "jdbc:h2:mem:test1",
