@@ -8,7 +8,7 @@ import shared.dto.Paragraph
 
 object HeaderCmp {
 
-  case class Props(windowFunc: WindowFunc,
+  case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    globalScope: ListTopicsPageGlobalScope /*, paragraphs: List[Paragraph]*/ ,
                    filterChanged: String => Callback) {
     @inline def render = comp(this)
@@ -40,17 +40,17 @@ object HeaderCmp {
         if (s.newParagraphFormOpened)
           <.div(
             ParagraphForm.Props(
-              windowFunc = p.windowFunc,
+              windowFunc = p.ctx,
               paragraph = Paragraph(name = ""),
               submitFunction = paragraph => p.globalScope.wsClient.post(
                 _.createParagraph(paragraph),
-                th => p.windowFunc.openOkDialog("Error creating paragraph: " + th.getMessage)
+                th => p.ctx.openOkDialog("Error creating paragraph: " + th.getMessage)
               ),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
               submitComplete = par =>
                 $.modState(_.copy(newParagraphFormOpened = false)) >>
-                  p.globalScope.paragraphCreated(par) >>
-                  p.windowFunc.closeWaitPane,
+                  p.ctx.paragraphCreated(par) >>
+                  p.ctx.closeWaitPane,
               textFieldLabel = "New paragraph:",
               submitButtonName = "Create",
               globalScope = p.globalScope

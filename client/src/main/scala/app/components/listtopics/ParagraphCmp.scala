@@ -10,7 +10,7 @@ import shared.dto.{Paragraph, Topic}
 object ParagraphCmp {
 
   case class Props(paragraph: Paragraph,
-                   windowFunc: WindowFunc,
+                   ctx: WindowFunc with ListTopicsPageContext,
                    globalScope: ListTopicsPageGlobalScope,
                    tagFilter: String) {
     @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
@@ -42,22 +42,22 @@ object ParagraphCmp {
             createTopicButton(props.paragraph),
             moveUpButton(props.paragraph, props),
             moveDownButton(props.paragraph, props),
-            deleteParagraphButton(props, props.paragraph, props.globalScope.paragraphDeleted(props.paragraph.id.get)),
+            deleteParagraphButton(props, props.paragraph, props.ctx.paragraphDeleted(props.paragraph.id.get) >> props.ctx.closeWaitPane),
             if (state.createTopicDiagOpened) {
               createNewTopicDiag(props.paragraph, props, $.modState(_.copy(createTopicDiagOpened = false)))
             } else EmptyVdom
           )
         } else {
           ParagraphForm.Props(
-            windowFunc = props.windowFunc,
+            windowFunc = props.ctx,
             globalScope = props.globalScope,
             paragraph = props.paragraph,
             submitFunction = par => props.globalScope.wsClient.post(
               _.updateParagraph(par),
-              th => props.windowFunc.openOkDialog("Error updating paragraph: " + th.getMessage)
+              th => props.ctx.openOkDialog("Error updating paragraph: " + th.getMessage)
             ),
             cancelled = $.modState(_.copy(editMode = false)),
-            submitComplete = par => $.modState(_.copy(editMode = false)) >> props.globalScope.paragraphUpdated(par),
+            submitComplete = par => $.modState(_.copy(editMode = false)) >> props.ctx.paragraphUpdated(par),
             textFieldLabel = "",
             submitButtonName = "Save"
           ).render
@@ -91,11 +91,11 @@ object ParagraphCmp {
     )
 
     def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) = buttonWithIcon(
-      onClick = props.windowFunc.openOkCancelDialog(
+      onClick = props.ctx.openOkCancelDialog(
         text = s"Delete paragraph '${paragraph.name}'?",
-        onOk = props.globalScope.wsClient.post(
+        onOk = props.ctx.openWaitPane >> props.globalScope.wsClient.post(
           _.deleteParagraph(paragraph.id.get),
-          th => props.windowFunc.openOkDialog("Could not delete paragraph: " + th.getMessage)
+          th => props.ctx.openOkDialog("Could not delete paragraph: " + th.getMessage)
         ) { case () => onDeleted }
       ),
       btnType = BTN_DANGER,
@@ -110,13 +110,13 @@ object ParagraphCmp {
 //    )
 
     def moveUpButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
-      onClick = props.globalScope.moveUpParagraphAction(paragraph.id.get),
+      onClick = props.ctx.moveUpParagraphAction(paragraph.id.get),
       btnType = BTN_INFO,
       iconType = "fa-long-arrow-up"
     )
 
     def moveDownButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
-      onClick = props.globalScope.moveDownParagraphAction(paragraph.id.get),
+      onClick = props.ctx.moveDownParagraphAction(paragraph.id.get),
       btnType = BTN_INFO,
       iconType = "fa-long-arrow-down"
     )
@@ -126,12 +126,12 @@ object ParagraphCmp {
         topic = Topic(paragraphId = p.id.get),
         submitFunction = topic => props.globalScope.wsClient.post(
           _.createTopic(topic),
-          th => props.windowFunc.openOkDialog("Error creating topic: " + th.getMessage)
+          th => props.ctx.openOkDialog("Error creating topic: " + th.getMessage)
         ),
         cancelled = closeDiag,
-        submitComplete = topic => closeDiag >> props.globalScope.topicCreated(topic),
+        submitComplete = topic => closeDiag >> props.ctx.topicCreated(topic),
         textFieldLabel = "New topic:",
-        windowFunc = props.windowFunc,
+        ctx = props.ctx,
         globalScope = props.globalScope,
         submitButtonName = "Create"
       ).render

@@ -9,7 +9,7 @@ import shared.dto.Topic
 
 object TopicCmp {
 
-  case class Props(windowFunc: WindowFunc,
+  case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    globalScope: ListTopicsPageGlobalScope,
                    topic: Topic) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
@@ -34,16 +34,16 @@ object TopicCmp {
             moveDownButton(props.topic, props),
             deleteTopicButton(props.topic, props),
             TagsCmp.Props(
-              windowFunc = props.windowFunc,
+              windowFunc = props.ctx,
               globalScope = props.globalScope,
               submitFunction = tag => props.globalScope.wsClient.post(
                 _.addTagForTopic(tag),
-                th => props.windowFunc.openOkDialog("Error adding tag: " + th.getMessage)
+                th => props.ctx.openOkDialog("Error adding tag: " + th.getMessage)
               ),
               entityId = props.topic.id.get,
               tags = props.topic.tags,
-              tagAdded = props.globalScope.tagAdded(props.topic.id.get, _),
-              removeTag = props.globalScope.removeTagAction(props.topic.id.get, _)
+              tagAdded = props.ctx.tagAdded(props.topic.id.get, _),
+              removeTag = props.ctx.removeTagAction(props.topic.id.get, _)
             ).render
           ),
           if (state.showImg) {
@@ -58,16 +58,16 @@ object TopicCmp {
         TopicForm.Props(
           submitFunction = topic => props.globalScope.wsClient.post(
             _.updateTopic(topic),
-            th => props.windowFunc.openOkDialog("Error updating topic: " + th.getMessage)
+            th => props.ctx.openOkDialog("Error updating topic: " + th.getMessage)
           ),
           topic = props.topic,
           cancelled = $.modState(_.copy(editMode = false)),
-          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.globalScope.topicUpdated(topic),
+          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.ctx.topicUpdated(topic),
           textFieldLabel = "",
           submitButtonName = "Save",
           editMode = true,
           globalScope = props.globalScope,
-          windowFunc = props.windowFunc
+          ctx = props.ctx
         ).render
       }
 
@@ -81,13 +81,13 @@ object TopicCmp {
 //    )
 
   def moveUpButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.globalScope.moveUpTopicAction(topic.id.get),
+    onClick = props.ctx.moveUpTopicAction(topic.id.get),
     btnType = BTN_INFO,
     iconType = "fa-long-arrow-up"
   )
 
   def moveDownButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.globalScope.moveDownTopicAction(topic.id.get),
+    onClick = props.ctx.moveDownTopicAction(topic.id.get),
     btnType = BTN_INFO,
     iconType = "fa-long-arrow-down"
   )
@@ -99,13 +99,13 @@ object TopicCmp {
   )
 
   def deleteTopicButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.windowFunc.openOkCancelDialog(
+    onClick = props.ctx.openOkCancelDialog(
       text = s"Delete topic '${topic.title}'?",
-      onOk = props.globalScope.wsClient.post(
+      onOk = props.ctx.openWaitPane >> props.globalScope.wsClient.post(
         _.deleteTopic(topic.id.get),
-        th => props.windowFunc.openOkDialog("Could not delete topic: " + th.getMessage)
+        th => props.ctx.openOkDialog("Could not delete topic: " + th.getMessage)
       ) {
-        case () => props.windowFunc.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
+        case () => props.ctx.closeWaitPane >> props.ctx.topicDeleted(topic.id.get)
       }
     ),
     btnType = BTN_DANGER,

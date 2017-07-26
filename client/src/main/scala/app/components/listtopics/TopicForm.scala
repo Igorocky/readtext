@@ -11,7 +11,7 @@ import shared.forms.{FormData, Forms}
 
 object TopicForm {
 
-  case class Props(windowFunc: WindowFunc,
+  case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    globalScope: ListTopicsPageGlobalScope,
                    topic: Topic,
                    cancelled: Callback,
@@ -33,10 +33,10 @@ object TopicForm {
         formMethods = formMethods,
         formData = state.formData,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
-        beforeSubmit = props.windowFunc.openWaitPane,
+        beforeSubmit = props.ctx.openWaitPane,
         submitFunction = props.submitFunction,
-        onSubmitSuccess = topic => props.windowFunc.closeWaitPane >> props.submitComplete(topic),
-        onSubmitFormCheckFailure = props.windowFunc.closeWaitPane,
+        onSubmitSuccess = topic => props.ctx.closeWaitPane >> props.submitComplete(topic),
+        onSubmitFormCheckFailure = props.ctx.closeWaitPane,
         editMode = false
       )
       <.div(
@@ -44,7 +44,7 @@ object TopicForm {
         props.textFieldLabel,
         FormTextField(field = formMethods.title, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
         if (props.editMode) ImgUploader(
-          props.windowFunc,
+          props.ctx,
           props.globalScope,
           props.topic,
           field = formMethods.images

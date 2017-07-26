@@ -26,49 +26,24 @@ object ListTopicsPage {
         "paste",
         (e: ClipboardEvent) => $.state.runPasteListener(JsGlobalScope.extractFileFromEvent(e))
       )
-      $.modState{s =>
-        val ss = s.copy(modState = $.modState(_))
-        ss.setGlobalScope(ListTopicsPageGlobalScope(
+      $.modState {
+        _.copy(
+          modState = $.modState(_),
+          wsClient = Utils.createWsClient($.props.wsEntryUrl)
+        ).setGlobalScope(ListTopicsPageGlobalScope(
           pageParams = $.props,
-          registerPasteListener = (id, listener) => $.modState(_.registerListener(id, listener)),
-          unregisterPasteListener = id => $.modState(s => s.copy(pasteListeners = s.pasteListeners.filterNot(_._1._2 == id))),
           wsClient = Utils.createWsClient($.props.wsEntryUrl),
           sessionWsClient = Utils.createWsClient($.props.wsEntryUrl),
-          expandParagraphsAction = ids => $.backend.wsClient.post(_.expand(ids), ss.showError) {
-            case () => $.modState(_.expandParagraphs(ids))
-          },
-          moveUpParagraphAction = id => $.backend.wsClient.post(_.moveUpParagraph(id), ss.showError) {
-            case () => $.modState(_.moveUpParagraph(id))
-          },
-          moveUpTopicAction = id => $.backend.wsClient.post(_.moveUpTopic(id), ss.showError) {
-            case () => $.modState(_.moveUpTopic(id))
-          },
-          moveDownParagraphAction = id => $.backend.wsClient.post(_.moveDownParagraph(id), ss.showError) {
-            case () => $.modState(_.moveDownParagraph(id))
-          },
-          moveDownTopicAction = id => $.backend.wsClient.post(_.moveDownTopic(id), ss.showError) {
-            case () => $.modState(_.moveDownTopic(id))
-          },
-          tagAdded = (topicId, newTags) => $.modState(_.setTags(topicId, newTags)),
-          removeTagAction = (topicId, tag) => $.backend.wsClient.post(_.removeTagFromTopic(topicId, tag), ss.showError) {
-            case tags => $.modState(_.setTags(topicId, tags))
-          },
-          paragraphCreated = p => $.modState(_.addParagraph(p)),
-          paragraphUpdated = par => $.modState(_.updateParagraph(par)),
-          paragraphDeleted = par => $.modState(_.deleteParagraph(par)) >> ss.closeWaitPane,
-          topicCreated = topic => $.modState(_.addTopic(topic)),
-          topicUpdated = top => $.modState(_.updateTopic(top)),
-          topicDeleted = topId => $.modState(_.deleteTopic(topId)),
           filterTopic = (str, topic) => {
             val strUpper = str.trim.toUpperCase
             topic.tags.exists(tag => tag.toUpperCase.contains(strUpper))
           }
-        ))}
+        ))
+      }
     }
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    lazy val wsClient = $.state.runNow().globalScope.wsClient
 
     def render(implicit props: Props, state: State) = UnivPage.Props(
       language = state.globalScope.pageParams.headerParams.language,
@@ -90,7 +65,7 @@ object ListTopicsPage {
           }).toVdomArray{paragraph =>
             ParagraphCmp(paragraph, state.globalScope, state.tagFilter)
           },*/
-          Tree(mapLazyTreeNode(state.data))
+          Tree(mapLazyTreeNode(state.listTopicsPageMem.data))
         )
     ).render
 
@@ -108,13 +83,13 @@ object ListTopicsPage {
         )
         case Some(p: Paragraph) => TreeNodeModel(
           key = "par-" + p.id.get,
-          nodeValue = Some(ParagraphCmp.Props(p, state, state.globalScope, state.tagFilter).render),
+          nodeValue = Some(ParagraphCmp.Props(p, state, state.globalScope, state.listTopicsPageMem.tagFilter).render),
           mayHaveChildren = true,
           getChildren = node.children.map(_.map(mapLazyTreeNode)),
           loadChildren = loadChildren(p.id),
           expanded = Some(p.expanded),
-          onExpand = state.globalScope.expandParagraphsAction(List((p.id.get, true))),
-          onCollapse = state.globalScope.expandParagraphsAction(List((p.id.get, false)))
+          onExpand = state.expandParagraphsAction(List((p.id.get, true))),
+          onCollapse = state.expandParagraphsAction(List((p.id.get, false)))
         )
         case Some(t: Topic) => TreeNodeModel(
           key = "top-" + t.id.get,
@@ -125,25 +100,25 @@ object ListTopicsPage {
         )
       }
 
-    def header(implicit props: Props, state: State) =
+    def header(implicit state: State) =
       HeaderCmp.Props(
-        windowFunc = state,
+        ctx = state,
         globalScope = state.globalScope,
         /*paragraphs = props.paragraphs,*/
-        filterChanged = str => $.modState(_.copy(tagFilter = str))
+        filterChanged = state.filterChanged(_)
       ).render
 
-    def loadChildren(paragraphId: Option[Long])(implicit props: Props, state: State) = {
+    def loadChildren(paragraphId: Option[Long])(implicit ctx: ListTopicsPageContext with WindowFunc) = {
       def setChildren(children: List[Any]) =
-        $.modState(_.setChildren(paragraphId, children.map(c => LazyTreeNode(Some(c), None))))
+        ctx.setChildren(paragraphId, children.map(c => LazyTreeNode(Some(c), None)))
 
-      state.openWaitPane >> wsClient.post(_.loadParagraphsByParentId(paragraphId), _ => state.openOkDialog("Error loading paragraphs"))(
+      ctx.openWaitPane >> ctx.wsClient.post(_.loadParagraphsByParentId(paragraphId), _ => ctx.openOkDialog("Error loading paragraphs"))(
         paragraphs => if (paragraphId.isDefined) {
-          wsClient.post(_.loadTopicsByParentId(paragraphId.get), _ => state.openOkDialog("Error loading topics"))(
-            topics => setChildren(paragraphs ::: topics) >> state.closeWaitPane
+          ctx.wsClient.post(_.loadTopicsByParentId(paragraphId.get), _ => ctx.openOkDialog("Error loading topics"))(
+            topics => setChildren(paragraphs ::: topics) >> ctx.closeWaitPane
           )
         } else {
-          setChildren(paragraphs) >> state.closeWaitPane
+          setChildren(paragraphs) >> ctx.closeWaitPane
         }
       )
     }

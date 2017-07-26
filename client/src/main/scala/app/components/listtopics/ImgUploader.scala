@@ -14,18 +14,19 @@ import scala.util.{Failure, Success}
 
 object ImgUploader {
 
-  protected case class Props(windowFunc: WindowFunc, globalScope: ListTopicsPageGlobalScope,
+  protected case class Props(ctx: WindowFunc with ListTopicsPageContext,
+                             globalScope: ListTopicsPageGlobalScope,
                              topic: Topic,
                              onChange: List[String] => Callback)
 
   protected case class State(images: List[String])
 
-  def apply[T, S](windowFunc: WindowFunc, globalScope: ListTopicsPageGlobalScope,
-            topic: Topic,
-            field: FormField[T, List[String]])
+  def apply[T, S](ctx: WindowFunc with ListTopicsPageContext, globalScope: ListTopicsPageGlobalScope,
+                  topic: Topic,
+                  field: FormField[T, List[String]])
            (implicit formParams: FormCommonParams[T,S]) =
     comp(Props(
-      windowFunc = windowFunc,
+      ctx = ctx,
       globalScope = globalScope,
       topic = topic,
       onChange = formParams.valueWasChanged(field)
@@ -35,9 +36,9 @@ object ImgUploader {
     .initialStateFromProps(p => State(p.topic.images))
     .renderBackend[Backend]
     .componentWillMount { $ =>
-      $.props.globalScope.registerPasteListener($.props.topic.id.get, $.backend.uploadImage)
+      $.props.ctx.registerPasteListener($.props.topic.id.get, $.backend.uploadImage)
     }.componentWillUnmount{ $ =>
-      $.props.globalScope.unregisterPasteListener($.props.topic.id.get)
+      $.props.ctx.unregisterPasteListener($.props.topic.id.get)
     }.build
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -88,11 +89,11 @@ object ImgUploader {
         val fd = new FormData()
         fd.append(FILE, file)
         fd.append(TOPIC_ID, props.topic.id.get)
-        props.windowFunc.openWaitPane >> Utils.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd) {
+        props.ctx.openWaitPane >> Utils.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd) {
           case Success(Right(fileName)) =>
-            updateImages(props, state.images ::: fileName :: Nil) >> props.windowFunc.closeWaitPane
-          case Success(Left(str)) => props.windowFunc.openOkDialog(s"Error uploading file: $str")
-          case Failure(throwable) => props.windowFunc.openOkDialog("Error: " + throwable.getMessage)
+            updateImages(props, state.images ::: fileName :: Nil) >> props.ctx.closeWaitPane
+          case Success(Left(str)) => props.ctx.openOkDialog(s"Error uploading file: $str")
+          case Failure(throwable) => props.ctx.openOkDialog("Error: " + throwable.getMessage)
           case _ => ???
         }.void
       }

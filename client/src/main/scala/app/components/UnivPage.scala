@@ -96,22 +96,24 @@ case class WindowFuncMem(waitPane: Boolean = false,
 trait WindowFunc {
   protected def modWindowFuncMem(f: WindowFuncMem => WindowFuncMem): Callback
 
-  def openOkDialog(text: String): Callback = openWaitPane >> modWindowFuncMem(_.copy(okDiagText = Some(text)))
+  private def mod(f: WindowFuncMem => WindowFuncMem): Callback = modWindowFuncMem(f)
 
-  def closeOkDialog: Callback = modWindowFuncMem(_.copy(okDiagText = None)) >> closeWaitPane
+  def openOkDialog(text: String): Callback = openWaitPane >> mod(_.copy(okDiagText = Some(text)))
 
-  def openWaitPane: Callback = modWindowFuncMem(_.copy(waitPane = true))
+  def closeOkDialog: Callback = mod(_.copy(okDiagText = None)) >> closeWaitPane
 
-  def closeWaitPane: Callback = modWindowFuncMem(_.copy(waitPane = false))
+  def openWaitPane: Callback = mod(_.copy(waitPane = true))
+
+  def closeWaitPane: Callback = mod(_.copy(waitPane = false))
 
   def openOkCancelDialog(text: String, onOk: Callback, onCancel: Callback): Callback =
-    openWaitPane >> modWindowFuncMem(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = onCancel))
+    openWaitPane >> mod(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = onCancel))
 
   def openOkCancelDialog(text: String, onOk: Callback): Callback =
-    openWaitPane >> modWindowFuncMem(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = Callback.empty))
+    openWaitPane >> mod(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = Callback.empty))
 
   def closeOkCancelDialog: Callback =
-    modWindowFuncMem(_.copy(okCancelDiagText = None, onOk = Callback.empty, onCancel = Callback.empty)) >> closeWaitPane
+    mod(_.copy(okCancelDiagText = None, onOk = Callback.empty, onCancel = Callback.empty)) >> closeWaitPane
 
   def showError(throwable: Throwable): Callback = openOkDialog("Error: " + throwable.getMessage)
 
