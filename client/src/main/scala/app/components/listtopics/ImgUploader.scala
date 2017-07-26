@@ -1,6 +1,7 @@
 package app.components.listtopics
 
 import app.Utils
+import app.components.WindowFunc
 import app.components.forms.FormCommonParams
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -13,17 +14,18 @@ import scala.util.{Failure, Success}
 
 object ImgUploader {
 
-  protected case class Props(globalScope: ListTopicsPageGlobalScope,
+  protected case class Props(windowFunc: WindowFunc, globalScope: ListTopicsPageGlobalScope,
                              topic: Topic,
                              onChange: List[String] => Callback)
 
   protected case class State(images: List[String])
 
-  def apply[T, S](globalScope: ListTopicsPageGlobalScope,
+  def apply[T, S](windowFunc: WindowFunc, globalScope: ListTopicsPageGlobalScope,
             topic: Topic,
             field: FormField[T, List[String]])
            (implicit formParams: FormCommonParams[T,S]) =
     comp(Props(
+      windowFunc = windowFunc,
       globalScope = globalScope,
       topic = topic,
       onChange = formParams.valueWasChanged(field)
@@ -86,11 +88,11 @@ object ImgUploader {
         val fd = new FormData()
         fd.append(FILE, file)
         fd.append(TOPIC_ID, props.topic.id.get)
-        props.globalScope.openWaitPane >> Utils.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd) {
+        props.windowFunc.openWaitPane >> Utils.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd) {
           case Success(Right(fileName)) =>
-            updateImages(props, state.images ::: fileName :: Nil) >> props.globalScope.closeWaitPane
-          case Success(Left(str)) => props.globalScope.openOkDialog(s"Error uploading file: $str")
-          case Failure(throwable) => props.globalScope.openOkDialog("Error: " + throwable.getMessage)
+            updateImages(props, state.images ::: fileName :: Nil) >> props.windowFunc.closeWaitPane
+          case Success(Left(str)) => props.windowFunc.openOkDialog(s"Error uploading file: $str")
+          case Failure(throwable) => props.windowFunc.openOkDialog("Error: " + throwable.getMessage)
           case _ => ???
         }.void
       }

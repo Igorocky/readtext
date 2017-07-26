@@ -1,6 +1,7 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
@@ -8,8 +9,9 @@ import shared.dto.Topic
 
 object TopicCmp {
 
-  case class Props(globalScope: ListTopicsPageGlobalScope,
-                             topic: Topic) {
+  case class Props(windowFunc: WindowFunc,
+                   globalScope: ListTopicsPageGlobalScope,
+                   topic: Topic) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
 
@@ -32,10 +34,11 @@ object TopicCmp {
             moveDownButton(props.topic, props),
             deleteTopicButton(props.topic, props),
             TagsCmp.Props(
+              windowFunc = props.windowFunc,
               globalScope = props.globalScope,
               submitFunction = tag => props.globalScope.wsClient.post(
                 _.addTagForTopic(tag),
-                th => props.globalScope.openOkDialog("Error adding tag: " + th.getMessage)
+                th => props.windowFunc.openOkDialog("Error adding tag: " + th.getMessage)
               ),
               entityId = props.topic.id.get,
               tags = props.topic.tags,
@@ -55,7 +58,7 @@ object TopicCmp {
         TopicForm.Props(
           submitFunction = topic => props.globalScope.wsClient.post(
             _.updateTopic(topic),
-            th => props.globalScope.openOkDialog("Error updating topic: " + th.getMessage)
+            th => props.windowFunc.openOkDialog("Error updating topic: " + th.getMessage)
           ),
           topic = props.topic,
           cancelled = $.modState(_.copy(editMode = false)),
@@ -63,7 +66,8 @@ object TopicCmp {
           textFieldLabel = "",
           submitButtonName = "Save",
           editMode = true,
-          globalScope = props.globalScope
+          globalScope = props.globalScope,
+          windowFunc = props.windowFunc
         ).render
       }
 
@@ -95,13 +99,13 @@ object TopicCmp {
   )
 
   def deleteTopicButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.globalScope.openOkDialog1(
-      s"Delete topic '${topic.title}'?",
-      props.globalScope.wsClient.post(
+    onClick = props.windowFunc.openOkCancelDialog(
+      text = s"Delete topic '${topic.title}'?",
+      onOk = props.globalScope.wsClient.post(
         _.deleteTopic(topic.id.get),
-        th => props.globalScope.openOkDialog("Could not delete topic: " + th.getMessage)
+        th => props.windowFunc.openOkDialog("Could not delete topic: " + th.getMessage)
       ) {
-        case () => props.globalScope.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
+        case () => props.windowFunc.closeWaitPane >> props.globalScope.topicDeleted(topic.id.get)
       }
     ),
     btnType = BTN_DANGER,

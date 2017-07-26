@@ -9,11 +9,6 @@ import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
 case class ListTopicsPageGlobalScope(pageParams: ListTopicsPageParams,
-                                     openOkDialog: String => Callback,
-                                     openOkCancelDialog: (String, Callback/*onOk*/, Callback/*onCancel*/) => Callback,
-                                     openOkDialog1: (String, Callback/*onOk*/) => Callback,
-                                     openWaitPane: Callback,
-                                     closeWaitPane: Callback,
                                      registerPasteListener: (Long, File => Callback) => Callback,
                                      unregisterPasteListener: (Long) => Callback,
                                      wsClient: WsClient[TopicApi],

@@ -1,6 +1,7 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.WindowFunc
 import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react._
@@ -10,7 +11,7 @@ import shared.forms.{FormData, Forms}
 
 object ParagraphForm {
 
-  case class Props(globalScope: ListTopicsPageGlobalScope,
+  case class Props(windowFunc: WindowFunc, globalScope: ListTopicsPageGlobalScope,
                    paragraph: Paragraph,
                    submitFunction: SubmitFunction[Paragraph, Paragraph],
                    cancelled: Callback,
@@ -32,10 +33,10 @@ object ParagraphForm {
         formMethods = formMethods,
         formData = state.formData,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
-        beforeSubmit = props.globalScope.openWaitPane,
+        beforeSubmit = props.windowFunc.openWaitPane,
         submitFunction = props.submitFunction,
         onSubmitSuccess = props.submitComplete,
-        onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
+        onSubmitFormCheckFailure = props.windowFunc.closeWaitPane,
         editMode = props.editMode
       )
       <.div(

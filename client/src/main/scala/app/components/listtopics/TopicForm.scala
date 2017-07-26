@@ -1,6 +1,7 @@
 package app.components.listtopics
 
 import app.Utils.{BTN_DEFAULT, buttonWithText}
+import app.components.WindowFunc
 import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -10,7 +11,8 @@ import shared.forms.{FormData, Forms}
 
 object TopicForm {
 
-  case class Props(globalScope: ListTopicsPageGlobalScope,
+  case class Props(windowFunc: WindowFunc,
+                   globalScope: ListTopicsPageGlobalScope,
                    topic: Topic,
                    cancelled: Callback,
                    submitFunction: SubmitFunction[Topic, Topic],
@@ -31,10 +33,10 @@ object TopicForm {
         formMethods = formMethods,
         formData = state.formData,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
-        beforeSubmit = props.globalScope.openWaitPane,
+        beforeSubmit = props.windowFunc.openWaitPane,
         submitFunction = props.submitFunction,
-        onSubmitSuccess = topic => props.globalScope.closeWaitPane >> props.submitComplete(topic),
-        onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
+        onSubmitSuccess = topic => props.windowFunc.closeWaitPane >> props.submitComplete(topic),
+        onSubmitFormCheckFailure = props.windowFunc.closeWaitPane,
         editMode = false
       )
       <.div(
@@ -42,6 +44,7 @@ object TopicForm {
         props.textFieldLabel,
         FormTextField(field = formMethods.title, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
         if (props.editMode) ImgUploader(
+          props.windowFunc,
           props.globalScope,
           props.topic,
           field = formMethods.images

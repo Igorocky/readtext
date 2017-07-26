@@ -1,18 +1,20 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, CallbackTo, ScalaComponent}
 import shared.dto.Paragraph
 
 object HeaderCmp {
 
-  protected case class Props(globalScope: ListTopicsPageGlobalScope/*, paragraphs: List[Paragraph]*/, filterChanged: String => Callback)
+  case class Props(windowFunc: WindowFunc,
+                   globalScope: ListTopicsPageGlobalScope /*, paragraphs: List[Paragraph]*/ ,
+                   filterChanged: String => Callback) {
+    @inline def render = comp(this)
+  }
 
   protected case class State(newParagraphFormOpened: Boolean = false, filter: String = "")
-
-  def apply(globalScope: ListTopicsPageGlobalScope/*, paragraphs: List[Paragraph]*/, filterChanged: String => Callback) =
-    comp(Props(globalScope/*, paragraphs*/, filterChanged))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -20,7 +22,7 @@ object HeaderCmp {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    def render(p: Props, s: State) = {
+    def render(implicit p: Props, s: State) = {
       <.div(^.`class`:=HeaderCmp.getClass.getSimpleName,
         <.div(
           buttonWithText(
@@ -38,16 +40,17 @@ object HeaderCmp {
         if (s.newParagraphFormOpened)
           <.div(
             ParagraphForm.Props(
+              windowFunc = p.windowFunc,
               paragraph = Paragraph(name = ""),
               submitFunction = paragraph => p.globalScope.wsClient.post(
                 _.createParagraph(paragraph),
-                th => p.globalScope.openOkDialog("Error creating paragraph: " + th.getMessage)
+                th => p.windowFunc.openOkDialog("Error creating paragraph: " + th.getMessage)
               ),
               cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
               submitComplete = par =>
                 $.modState(_.copy(newParagraphFormOpened = false)) >>
                   p.globalScope.paragraphCreated(par) >>
-                  p.globalScope.closeWaitPane,
+                  p.windowFunc.closeWaitPane,
               textFieldLabel = "New paragraph:",
               submitButtonName = "Create",
               globalScope = p.globalScope

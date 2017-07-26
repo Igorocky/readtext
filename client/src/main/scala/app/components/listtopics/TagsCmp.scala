@@ -1,6 +1,7 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.WindowFunc
 import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -10,12 +11,13 @@ import shared.forms.{FormData, Forms}
 
 object TagsCmp {
 
-  case class Props(globalScope: ListTopicsPageGlobalScope,
-                             submitFunction: SubmitFunction[TopicTag, List[String]],
-                             entityId: Long,
-                             tags: List[String],
-                             removeTag: String => Callback,
-                             tagAdded: List[String] => Callback) {
+  case class Props(windowFunc: WindowFunc,
+                   globalScope: ListTopicsPageGlobalScope,
+                   submitFunction: SubmitFunction[TopicTag, List[String]],
+                   entityId: Long,
+                   tags: List[String],
+                   removeTag: String => Callback,
+                   tagAdded: List[String] => Callback) {
     @inline def render = comp(this)
   }
 
@@ -40,16 +42,16 @@ object TagsCmp {
             formData = state.formData.get,
             formMethods = formMethods,
             onChange = fd => $.modState(_.copy(formData = Some(fd))).map(_ => fd),
-            beforeSubmit = props.globalScope.openWaitPane,
+            beforeSubmit = props.windowFunc.openWaitPane,
             submitFunction = tag => props.globalScope.wsClient.post(
               _.addTagForTopic(tag),
-              th => props.globalScope.openOkDialog("Error adding tag: " + th.getMessage)
+              th => props.windowFunc.openOkDialog("Error adding tag: " + th.getMessage)
             ),
             onSubmitSuccess =
-              tags => props.globalScope.closeWaitPane >>
+              tags => props.windowFunc.closeWaitPane >>
                 props.tagAdded(tags) >>
                 $.modState(_.copy(formData = None)),
-            onSubmitFormCheckFailure = props.globalScope.closeWaitPane,
+            onSubmitFormCheckFailure = props.windowFunc.closeWaitPane,
             editMode = false
           )
           FormTextField(

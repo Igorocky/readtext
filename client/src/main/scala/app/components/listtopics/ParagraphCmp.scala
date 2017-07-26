@@ -1,15 +1,18 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.components.WindowFunc
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, Topic}
 
 object ParagraphCmp {
+
   case class Props(paragraph: Paragraph,
-                             globalScope: ListTopicsPageGlobalScope,
-                             tagFilter: String) {
+                   windowFunc: WindowFunc,
+                   globalScope: ListTopicsPageGlobalScope,
+                   tagFilter: String) {
     @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
   }
 
@@ -46,11 +49,12 @@ object ParagraphCmp {
           )
         } else {
           ParagraphForm.Props(
+            windowFunc = props.windowFunc,
             globalScope = props.globalScope,
             paragraph = props.paragraph,
             submitFunction = par => props.globalScope.wsClient.post(
               _.updateParagraph(par),
-              th => props.globalScope.openOkDialog("Error updating paragraph: " + th.getMessage)
+              th => props.windowFunc.openOkDialog("Error updating paragraph: " + th.getMessage)
             ),
             cancelled = $.modState(_.copy(editMode = false)),
             submitComplete = par => $.modState(_.copy(editMode = false)) >> props.globalScope.paragraphUpdated(par),
@@ -87,11 +91,11 @@ object ParagraphCmp {
     )
 
     def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) = buttonWithIcon(
-      onClick = props.globalScope.openOkDialog1(
-        s"Delete paragraph '${paragraph.name}'?",
-        props.globalScope.wsClient.post(
+      onClick = props.windowFunc.openOkCancelDialog(
+        text = s"Delete paragraph '${paragraph.name}'?",
+        onOk = props.globalScope.wsClient.post(
           _.deleteParagraph(paragraph.id.get),
-          th => props.globalScope.openOkDialog("Could not delete paragraph: " + th.getMessage)
+          th => props.windowFunc.openOkDialog("Could not delete paragraph: " + th.getMessage)
         ) { case () => onDeleted }
       ),
       btnType = BTN_DANGER,
@@ -122,11 +126,12 @@ object ParagraphCmp {
         topic = Topic(paragraphId = p.id.get),
         submitFunction = topic => props.globalScope.wsClient.post(
           _.createTopic(topic),
-          th => props.globalScope.openOkDialog("Error creating topic: " + th.getMessage)
+          th => props.windowFunc.openOkDialog("Error creating topic: " + th.getMessage)
         ),
         cancelled = closeDiag,
         submitComplete = topic => closeDiag >> props.globalScope.topicCreated(topic),
         textFieldLabel = "New topic:",
+        windowFunc = props.windowFunc,
         globalScope = props.globalScope,
         submitButtonName = "Create"
       ).render
