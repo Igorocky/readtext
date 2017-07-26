@@ -115,7 +115,7 @@ trait WindowFunc {
   def closeOkCancelDialog: Callback =
     mod(_.copy(okCancelDiagText = None, onOk = Callback.empty, onCancel = Callback.empty)) >> closeWaitPane
 
-  def showError(throwable: Throwable): Callback = openOkDialog("Error: " + throwable.getMessage)
+  def showError(throwable: Throwable): Callback = openOkDialog("Error: " + throwable)
 
 
 }

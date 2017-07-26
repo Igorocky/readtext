@@ -11,7 +11,7 @@ import shared.forms.{FormData, Forms}
 
 object ParagraphForm {
 
-  case class Props(windowFunc: WindowFunc, globalScope: ListTopicsPageGlobalScope,
+  case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    paragraph: Paragraph,
                    submitFunction: SubmitFunction[Paragraph, Paragraph],
                    cancelled: Callback,
@@ -25,18 +25,18 @@ object ParagraphForm {
   protected case class State(formData: FormData[Paragraph])
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(props => State(formData = FormData(props.globalScope.language, props.paragraph)))
+    .initialStateFromProps(props => State(formData = FormData(props.ctx.language, props.paragraph)))
     .renderPS{($,props,state)=>
-      implicit val lang = props.globalScope.language
+      implicit val lang = props.ctx.language
       val formMethods = Forms.paragraphForm
       implicit val fParams = FormCommonParams[Paragraph, Paragraph](
         formMethods = formMethods,
         formData = state.formData,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
-        beforeSubmit = props.windowFunc.openWaitPane,
+        beforeSubmit = props.ctx.openWaitPane,
         submitFunction = props.submitFunction,
         onSubmitSuccess = props.submitComplete,
-        onSubmitFormCheckFailure = props.windowFunc.closeWaitPane,
+        onSubmitFormCheckFailure = props.ctx.closeWaitPane,
         editMode = props.editMode
       )
       <.div(
@@ -51,9 +51,9 @@ object ParagraphForm {
         )
       )
     }.componentWillReceiveProps{$=>
-      if ($.nextProps.globalScope.language != $.state.formData.language) {
+      if ($.nextProps.ctx.language != $.state.formData.language) {
         $.modState(_.copy(
-          formData = Forms.paragraphForm.changeLang($.nextProps.globalScope.language, $.state.formData)
+          formData = Forms.paragraphForm.changeLang($.nextProps.ctx.language, $.state.formData)
         ))
       } else {
         Callback.empty

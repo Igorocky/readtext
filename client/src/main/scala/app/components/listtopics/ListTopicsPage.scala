@@ -19,35 +19,26 @@ object ListTopicsPage {
   def apply(str: String): Unmounted[Props, State, Backend] = comp(read[Props](str))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(_ => ListTopicsPageState())
+    .initialStateFromProps(p => ListTopicsPageState(pageParams = p))
     .renderBackend[Backend]
     .componentWillMount { $ =>
       dom.window.addEventListener[ClipboardEvent](
         "paste",
         (e: ClipboardEvent) => $.state.runPasteListener(JsGlobalScope.extractFileFromEvent(e))
       )
-      $.modState {
-        _.copy(
+      $.modState {_.copy(
           modState = $.modState(_),
-          wsClient = Utils.createWsClient($.props.wsEntryUrl)
-        ).setGlobalScope(ListTopicsPageGlobalScope(
-          pageParams = $.props,
           wsClient = Utils.createWsClient($.props.wsEntryUrl),
-          sessionWsClient = Utils.createWsClient($.props.wsEntryUrl),
-          filterTopic = (str, topic) => {
-            val strUpper = str.trim.toUpperCase
-            topic.tags.exists(tag => tag.toUpperCase.contains(strUpper))
-          }
-        ))
-      }
+          sessionWsClient = Utils.createWsClient($.props.wsEntryUrl)
+      )}
     }
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
 
-    def render(implicit props: Props, state: State) = UnivPage.Props(
-      language = state.globalScope.pageParams.headerParams.language,
-      sessionWsClient = state.globalScope.sessionWsClient,
+    def render(implicit state: State) = UnivPage.Props(
+      language = state.pageParams.headerParams.language,
+      sessionWsClient = state.sessionWsClient,
       onLanguageChange = newLang => $.modState(_.setLanguage(newLang)),
       windowFuncMem = state.windowFuncMem,
       windowFunc = state,
@@ -69,7 +60,7 @@ object ListTopicsPage {
         )
     ).render
 
-    def mapLazyTreeNode(node: LazyTreeNode)(implicit props: Props, state: State): TreeNodeModel =
+    def mapLazyTreeNode(node: LazyTreeNode)(implicit ctx: WindowFunc with ListTopicsPageContext): TreeNodeModel =
       (node.value: @unchecked) match {
         case None => TreeNodeModel(
           key = "rootNode",
@@ -83,17 +74,17 @@ object ListTopicsPage {
         )
         case Some(p: Paragraph) => TreeNodeModel(
           key = "par-" + p.id.get,
-          nodeValue = Some(ParagraphCmp.Props(p, state, state.globalScope, state.listTopicsPageMem.tagFilter).render),
+          nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter).render),
           mayHaveChildren = true,
           getChildren = node.children.map(_.map(mapLazyTreeNode)),
           loadChildren = loadChildren(p.id),
           expanded = Some(p.expanded),
-          onExpand = state.expandParagraphsAction(List((p.id.get, true))),
-          onCollapse = state.expandParagraphsAction(List((p.id.get, false)))
+          onExpand = ctx.expandParagraphsAction(List((p.id.get, true))),
+          onCollapse = ctx.expandParagraphsAction(List((p.id.get, false)))
         )
         case Some(t: Topic) => TreeNodeModel(
           key = "top-" + t.id.get,
-          nodeValue = Some(TopicCmp.Props(state, state.globalScope, t).render),
+          nodeValue = Some(TopicCmp.Props(ctx, t).render),
           mayHaveChildren = false,
           getChildren = None,
           loadChildren = Callback.empty
@@ -103,7 +94,6 @@ object ListTopicsPage {
     def header(implicit state: State) =
       HeaderCmp.Props(
         ctx = state,
-        globalScope = state.globalScope,
         /*paragraphs = props.paragraphs,*/
         filterChanged = state.filterChanged(_)
       ).render

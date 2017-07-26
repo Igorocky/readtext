@@ -12,7 +12,6 @@ import shared.forms.{FormData, Forms}
 object TopicForm {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
-                   globalScope: ListTopicsPageGlobalScope,
                    topic: Topic,
                    cancelled: Callback,
                    submitFunction: SubmitFunction[Topic, Topic],
@@ -26,7 +25,7 @@ object TopicForm {
   protected case class State(formData: FormData[Topic])
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(p => State(formData = FormData(p.globalScope.language, p.topic)))
+    .initialStateFromProps(p => State(formData = FormData(p.ctx.language, p.topic)))
     .renderPS { ($, props, state) =>
       val formMethods = Forms.topicForm
       implicit val fParams = FormCommonParams[Topic, Topic](
@@ -45,7 +44,6 @@ object TopicForm {
         FormTextField(field = formMethods.title, focusOnMount = !props.editMode, width = 700, placeholder = "Topic Title"),
         if (props.editMode) ImgUploader(
           props.ctx,
-          props.globalScope,
           props.topic,
           field = formMethods.images
         ) else EmptyVdom,
@@ -57,9 +55,9 @@ object TopicForm {
         )
       )
     }.componentWillReceiveProps { $ =>
-    if ($.nextProps.globalScope.language != $.state.formData.language) {
+    if ($.nextProps.ctx.language != $.state.formData.language) {
       $.modState(_.copy(
-        formData = Forms.topicForm.changeLang($.nextProps.globalScope.language, $.state.formData)
+        formData = Forms.topicForm.changeLang($.nextProps.ctx.language, $.state.formData)
       ))
     } else {
       Callback.empty

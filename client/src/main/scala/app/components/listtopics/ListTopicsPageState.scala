@@ -4,15 +4,17 @@ import app.components.{WindowFunc, WindowFuncMem}
 import app.{LazyTreeNode, WsClient}
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.raw.File
-import shared.api.TopicApi
+import shared.api.{SessionApi, TopicApi}
 import shared.dto.{Paragraph, Topic}
 import shared.messages.Language
+import shared.pageparams.ListTopicsPageParams
 
 case class ListTopicsPageState(modState: (ListTopicsPageState => ListTopicsPageState) => Callback = null,
                                windowFuncMem: WindowFuncMem = WindowFuncMem(),
                                listTopicsPageMem: ListTopicsPageMem = ListTopicsPageMem(),
                                wsClient: WsClient[TopicApi] = null,
-                               globalScope: ListTopicsPageGlobalScope = null) extends WindowFunc with ListTopicsPageContext {
+                               sessionWsClient: WsClient[SessionApi] = null,
+                               pageParams: ListTopicsPageParams) extends WindowFunc with ListTopicsPageContext {
 
   override protected def modWindowFuncMem(f: WindowFuncMem => WindowFuncMem): Callback =
     modState(s => s.copy(windowFuncMem = f(s.windowFuncMem)))
@@ -26,17 +28,14 @@ case class ListTopicsPageState(modState: (ListTopicsPageState => ListTopicsPageS
     if (listTopicsPageMem.pasteListeners.isEmpty) ()
     else listTopicsPageMem.pasteListeners.maxBy{case ((_, order), _) => order}._2(file).runNow()
 
-  def setLanguage(language: Language): ListTopicsPageState = copy(
-    globalScope = globalScope.copy(
-      pageParams = globalScope.pageParams.copy(
-        headerParams = globalScope.pageParams.headerParams.copy(
+  def setLanguage(language: Language): ListTopicsPageState =
+    copy(
+      pageParams = pageParams.copy(
+        headerParams = pageParams.headerParams.copy(
           language = language
         )
       )
     )
-  )
-
-  def setGlobalScope(globalScope: ListTopicsPageGlobalScope): ListTopicsPageState = copy(globalScope = globalScope)
 }
 
 case class ListTopicsPageMem(data: LazyTreeNode = LazyTreeNode(),
@@ -138,7 +137,14 @@ trait ListTopicsPageContext {
   //abstract members
   protected def modListTopicsPageMem(f: ListTopicsPageMem => ListTopicsPageMem): Callback
   val wsClient: WsClient[TopicApi]
+  val sessionWsClient: WsClient[SessionApi]
+  val pageParams: ListTopicsPageParams
+  val listTopicsPageMem: ListTopicsPageMem
   protected def windowFunc: WindowFunc
+
+  //-----------------
+  def language = pageParams.headerParams.language
+
 
   //actions
   def registerPasteListener(id: Long, listener: File => Callback): Callback = mod(_.registerListener(id, listener))

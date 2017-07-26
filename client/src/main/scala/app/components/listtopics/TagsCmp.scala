@@ -11,8 +11,7 @@ import shared.forms.{FormData, Forms}
 
 object TagsCmp {
 
-  case class Props(windowFunc: WindowFunc,
-                   globalScope: ListTopicsPageGlobalScope,
+  case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    submitFunction: SubmitFunction[TopicTag, List[String]],
                    entityId: Long,
                    tags: List[String],
@@ -31,7 +30,7 @@ object TagsCmp {
         if (state.formData.isEmpty) {
           buttonWithIcon(
             onClick = $.modState(_.copy(
-              formData = Some(FormData(props.globalScope.language, TopicTag(props.entityId)))
+              formData = Some(FormData(props.ctx.language, TopicTag(props.entityId)))
             )),
             btnType = BTN_INFO,
             iconType = "fa-hashtag"
@@ -42,16 +41,16 @@ object TagsCmp {
             formData = state.formData.get,
             formMethods = formMethods,
             onChange = fd => $.modState(_.copy(formData = Some(fd))).map(_ => fd),
-            beforeSubmit = props.windowFunc.openWaitPane,
-            submitFunction = tag => props.globalScope.wsClient.post(
+            beforeSubmit = props.ctx.openWaitPane,
+            submitFunction = tag => props.ctx.wsClient.post(
               _.addTagForTopic(tag),
-              th => props.windowFunc.openOkDialog("Error adding tag: " + th.getMessage)
+              th => props.ctx.openOkDialog("Error adding tag: " + th.getMessage)
             ),
             onSubmitSuccess =
-              tags => props.windowFunc.closeWaitPane >>
+              tags => props.ctx.closeWaitPane >>
                 props.tagAdded(tags) >>
                 $.modState(_.copy(formData = None)),
-            onSubmitFormCheckFailure = props.windowFunc.closeWaitPane,
+            onSubmitFormCheckFailure = props.ctx.closeWaitPane,
             editMode = false
           )
           FormTextField(

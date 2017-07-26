@@ -11,7 +11,6 @@ object ParagraphCmp {
 
   case class Props(paragraph: Paragraph,
                    ctx: WindowFunc with ListTopicsPageContext,
-                   globalScope: ListTopicsPageGlobalScope,
                    tagFilter: String) {
     @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
   }
@@ -49,10 +48,9 @@ object ParagraphCmp {
           )
         } else {
           ParagraphForm.Props(
-            windowFunc = props.ctx,
-            globalScope = props.globalScope,
+            ctx = props.ctx,
             paragraph = props.paragraph,
-            submitFunction = par => props.globalScope.wsClient.post(
+            submitFunction = par => props.ctx.wsClient.post(
               _.updateParagraph(par),
               th => props.ctx.openOkDialog("Error updating paragraph: " + th.getMessage)
             ),
@@ -93,7 +91,7 @@ object ParagraphCmp {
     def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) = buttonWithIcon(
       onClick = props.ctx.openOkCancelDialog(
         text = s"Delete paragraph '${paragraph.name}'?",
-        onOk = props.ctx.openWaitPane >> props.globalScope.wsClient.post(
+        onOk = props.ctx.openWaitPane >> props.ctx.wsClient.post(
           _.deleteParagraph(paragraph.id.get),
           th => props.ctx.openOkDialog("Could not delete paragraph: " + th.getMessage)
         ) { case () => onDeleted }
@@ -124,7 +122,7 @@ object ParagraphCmp {
     def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
       TopicForm.Props(
         topic = Topic(paragraphId = p.id.get),
-        submitFunction = topic => props.globalScope.wsClient.post(
+        submitFunction = topic => props.ctx.wsClient.post(
           _.createTopic(topic),
           th => props.ctx.openOkDialog("Error creating topic: " + th.getMessage)
         ),
@@ -132,7 +130,6 @@ object ParagraphCmp {
         submitComplete = topic => closeDiag >> props.ctx.topicCreated(topic),
         textFieldLabel = "New topic:",
         ctx = props.ctx,
-        globalScope = props.globalScope,
         submitButtonName = "Create"
       ).render
   }

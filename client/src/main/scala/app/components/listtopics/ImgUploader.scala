@@ -15,19 +15,17 @@ import scala.util.{Failure, Success}
 object ImgUploader {
 
   protected case class Props(ctx: WindowFunc with ListTopicsPageContext,
-                             globalScope: ListTopicsPageGlobalScope,
                              topic: Topic,
                              onChange: List[String] => Callback)
 
   protected case class State(images: List[String])
 
-  def apply[T, S](ctx: WindowFunc with ListTopicsPageContext, globalScope: ListTopicsPageGlobalScope,
+  def apply[T, S](ctx: WindowFunc with ListTopicsPageContext,
                   topic: Topic,
                   field: FormField[T, List[String]])
            (implicit formParams: FormCommonParams[T,S]) =
     comp(Props(
       ctx = ctx,
-      globalScope = globalScope,
       topic = topic,
       onChange = formParams.valueWasChanged(field)
     ))
@@ -52,7 +50,7 @@ object ImgUploader {
         state.images.toVdomArray { img =>
           ImageCmp(
             id = img,
-            url = props.globalScope.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img,
+            url = props.ctx.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img,
             onDelete = imgId => updateImages(props, state.images.filterNot(_ == imgId)),
             // TODO: use function from LazyTreeNode
             onUp = imgId =>
@@ -89,11 +87,11 @@ object ImgUploader {
         val fd = new FormData()
         fd.append(FILE, file)
         fd.append(TOPIC_ID, props.topic.id.get)
-        props.ctx.openWaitPane >> Utils.post(url = props.globalScope.pageParams.uploadTopicFileUrl, data = fd) {
+        props.ctx.openWaitPane >> Utils.post(url = props.ctx.pageParams.uploadTopicFileUrl, data = fd) {
           case Success(Right(fileName)) =>
             updateImages(props, state.images ::: fileName :: Nil) >> props.ctx.closeWaitPane
           case Success(Left(str)) => props.ctx.openOkDialog(s"Error uploading file: $str")
-          case Failure(throwable) => props.ctx.openOkDialog("Error: " + throwable.getMessage)
+          case Failure(throwable) => props.ctx.openOkDialog("Error: " + throwable)
           case _ => ???
         }.void
       }

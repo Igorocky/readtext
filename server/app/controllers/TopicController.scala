@@ -66,9 +66,9 @@ class TopicController @Inject()(
       val topicFilesDir = getTopicImagesDir(topicId, imgStorageDir)
       val topicFileName = generateNameForNewFile(topicFilesDir) + getFileExtension(file.filename)
       file.ref.moveTo(new File(topicFilesDir, topicFileName))
-      Ok(write(Right(topicFileName)))
+      Ok(write[Either[String,String]](Right(topicFileName)))
     }.getOrElse {
-      Ok(write(Left("Could not upload file.")))
+      Ok(write[Either[String,String]](Left("Could not upload file.")))
     }
   }
 
