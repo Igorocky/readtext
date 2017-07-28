@@ -56,38 +56,41 @@ object ListTopicsPage {
           }).toVdomArray{paragraph =>
             ParagraphCmp(paragraph, state.globalScope, state.tagFilter)
           },*/
-          Tree(mapLazyTreeNode(state.listTopicsPageMem.data))
+          mapLazyTreeNode(state.listTopicsPageMem.data).render
         )
     ).render
 
-    def mapLazyTreeNode(node: LazyTreeNode)(implicit ctx: WindowFunc with ListTopicsPageContext): TreeNodeModel =
+    def mapLazyTreeNode(node: LazyTreeNode)(implicit ctx: WindowFunc with ListTopicsPageContext): Tree.Props =
       (node.value: @unchecked) match {
-        case None => TreeNodeModel(
+        case None => Tree.Props(
           key = "rootNode",
           nodeValue = None,
           mayHaveChildren = true,
-          getChildren = node.children.map(_.map(mapLazyTreeNode)),
+          children = node.children.map(_.map(mapLazyTreeNode)),
           loadChildren = loadChildren(None),
           expanded = Some(true),
           onExpand = Callback.empty,
           onCollapse = Callback.empty
         )
-        case Some(p: Paragraph) => TreeNodeModel(
+        case Some(p: Paragraph) => Tree.Props(
           key = "par-" + p.id.get,
           nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter).render),
           mayHaveChildren = true,
-          getChildren = node.children.map(_.map(mapLazyTreeNode)),
+          children = node.children.map(_.map(mapLazyTreeNode)),
           loadChildren = loadChildren(p.id),
           expanded = Some(p.expanded),
-          onExpand = ctx.expandParagraphsAction(List((p.id.get, true))),
-          onCollapse = ctx.expandParagraphsAction(List((p.id.get, false)))
+          onExpand = ctx.expandParagraphsAction(List(p.id.get -> true)),
+          onCollapse = ctx.expandParagraphsAction(List(p.id.get -> false))
         )
-        case Some(t: Topic) => TreeNodeModel(
+        case Some(t: Topic) => Tree.Props(
           key = "top-" + t.id.get,
           nodeValue = Some(TopicCmp.Props(ctx, t).render),
           mayHaveChildren = false,
-          getChildren = None,
-          loadChildren = Callback.empty
+          children = None,
+          loadChildren = Callback.empty,
+          expanded = None,
+          onExpand = Callback.empty,
+          onCollapse = Callback.empty
         )
       }
 
