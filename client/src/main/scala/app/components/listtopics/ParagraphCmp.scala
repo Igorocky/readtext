@@ -39,11 +39,12 @@ object ParagraphCmp {
             ),
 //            checkAllTopicsButton(props.paragraph, props),
 //            uncheckAllTopicsButton(props.paragraph, props),
-            editParagraphButton(props.paragraph),
-            createTopicButton(props.paragraph),
-            moveUpButton(props.paragraph, props),
-            moveDownButton(props.paragraph, props),
-            deleteParagraphButton(props, props.paragraph, props.ctx.paragraphDeleted(props.paragraph.id.get) >> props.ctx.closeWaitPane),
+            ParagraphActionsCmp.Props(
+              ctx = props.ctx,
+              paragraph = props.paragraph,
+              onEdit = $.modState(_.copy(editMode = true)),
+              onCreateTopic = $.modState(_.copy(createTopicDiagOpened = true))
+            ).render,
             if (state.createTopicDiagOpened) {
               createNewTopicDiag(props.paragraph, props, $.modState(_.copy(createTopicDiagOpened = false)))
             } else EmptyVdom
@@ -64,11 +65,6 @@ object ParagraphCmp {
         }
       )
 
-    def editParagraphButton(paragraph: Paragraph) = buttonWithIcon(
-      onClick = $.modState(_.copy(editMode = true)),
-      btnType = BTN_INFO,
-      iconType = "fa-pencil-square-o"
-    )
 
 //    def checkAllTopicsButton(paragraph: Paragraph, props: Props) = buttonWithImage(
 //      onClick = props.globalScope.checkTopicsAction(paragraph.topics.map(t => (t.id.get, true))),
@@ -84,40 +80,11 @@ object ParagraphCmp {
 //      imgSize = checkUncheckAllBtnSize
 //    )
 
-    def createTopicButton(paragraph: Paragraph) = buttonWithText(
-      onClick = $.modState(_.copy(createTopicDiagOpened = true)),
-      btnType = BTN_INFO,
-      text = "Create topic"
-    )
-
-    def deleteParagraphButton(props: Props, paragraph: Paragraph, onDeleted: Callback) = buttonWithIcon(
-      onClick = props.ctx.openOkCancelDialog(
-        text = s"Delete paragraph '${paragraph.name}'?",
-        onOk = props.ctx.openWaitPane >> props.ctx.wsClient.post(
-          _.deleteParagraph(paragraph.id.get),
-          th => props.ctx.openOkDialog("Could not delete paragraph: " + th.getMessage)
-        ) { case () => onDeleted }
-      ),
-      btnType = BTN_DANGER,
-      iconType = "fa-trash-o"
-    )
 
     def checkboxForParagraph(props: Props) = Checkbox.Props(
       onChange = newVal => props.ctx.selectParagraphAction(props.paragraph.id.get, newVal),
       checked = props.selected
     ).render
-
-    def moveUpButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
-      onClick = props.ctx.moveUpParagraphAction(paragraph.id.get),
-      btnType = BTN_INFO,
-      iconType = "fa-long-arrow-up"
-    )
-
-    def moveDownButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
-      onClick = props.ctx.moveDownParagraphAction(paragraph.id.get),
-      btnType = BTN_INFO,
-      iconType = "fa-long-arrow-down"
-    )
 
     def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
       TopicForm.Props(

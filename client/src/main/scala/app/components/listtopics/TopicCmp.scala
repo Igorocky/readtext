@@ -30,20 +30,10 @@ object TopicCmp {
               ^.`class`:=HIGHLIGHTED,
               props.topic.title
             ),
-            editTopicButton(props.topic, props, $.modState(_.copy(editMode = true))),
-            moveUpButton(props.topic, props),
-            moveDownButton(props.topic, props),
-            deleteTopicButton(props.topic, props),
-            TagsCmp.Props(
+            TopicActionsCmp.Props(
               ctx = props.ctx,
-              submitFunction = tag => props.ctx.wsClient.post(
-                _.addTagForTopic(tag),
-                th => props.ctx.openOkDialog("Error adding tag: " + th.getMessage)
-              ),
-              entityId = props.topic.id.get,
-              tags = props.topic.tags,
-              tagAdded = props.ctx.tagAdded(props.topic.id.get, _),
-              removeTag = props.ctx.removeTagAction(props.topic.id.get, _)
+              topic = props.topic,
+              onEdit = $.modState(_.copy(editMode = true))
             ).render
           ),
           if (state.showImg) {
@@ -76,38 +66,6 @@ object TopicCmp {
     checked = props.selected,
     onChange = newVal => props.ctx.selectTopicAction(props.topic.id.get, newVal)
   ).render
-
-  def moveUpButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.ctx.moveUpTopicAction(topic.id.get),
-    btnType = BTN_INFO,
-    iconType = "fa-long-arrow-up"
-  )
-
-  def moveDownButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.ctx.moveDownTopicAction(topic.id.get),
-    btnType = BTN_INFO,
-    iconType = "fa-long-arrow-down"
-  )
-
-  def editTopicButton(topic: Topic, props: Props, onClick: Callback) = buttonWithIcon(
-    onClick = onClick,
-    btnType = BTN_INFO,
-    iconType = "fa-pencil-square-o"
-  )
-
-  def deleteTopicButton(topic: Topic, props: Props) = buttonWithIcon(
-    onClick = props.ctx.openOkCancelDialog(
-      text = s"Delete topic '${topic.title}'?",
-      onOk = props.ctx.openWaitPane >> props.ctx.wsClient.post(
-        _.deleteTopic(topic.id.get),
-        th => props.ctx.openOkDialog("Could not delete topic: " + th.getMessage)
-      ) {
-        case () => props.ctx.closeWaitPane >> props.ctx.topicDeleted(topic.id.get)
-      }
-    ),
-    btnType = BTN_DANGER,
-    iconType = "fa-trash-o"
-  )
 
   def showImgButton(topic: Topic, state: State, onClick: Callback) = buttonWithIcon(
     onClick = onClick,

@@ -162,19 +162,20 @@ object Css extends StyleSheet.Standalone {
     display.none
   )
 
-  ".tag" - (
+  s".$TAG" - (
     backgroundColor(c"#2af32a"),
     borderRadius(10 px),
-    padding(1 px, 0 px, 1 px, 10 px),
+    padding(1 px, 10 px, 1 px, 10 px),
     margin(2 px)
   )
 
-  ".rem-tag-btn" - (
+  s".$REM_TAG_BTN" - (
     backgroundColor.grey,
     borderRadius(10 px),
     color.white,
     padding(0 px, 5 px),
     marginLeft(3 px),
+    marginRight(-10 px),
     cursor.pointer,
     &.hover - (
       backgroundColor.lightgrey

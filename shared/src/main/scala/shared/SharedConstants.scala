@@ -24,6 +24,10 @@ object SharedConstants {
   final val TREE_NODE_VALUE = "tree-node-value"
   final val TREE_NODE_CHILDREN = "tree-node-children"
 
+  final val REM_TAG_BTN = "rem-tag-btn"
+  final val TAG_TEXT = "tag-text"
+  final val TAG = "tag"
+
   final val TOPIC_ID = "TOPIC_ID"
 
   final val FILE = "FILE"
