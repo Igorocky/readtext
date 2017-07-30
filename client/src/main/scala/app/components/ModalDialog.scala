@@ -13,7 +13,7 @@ object ModalDialog {
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .render_P { props =>
       <.div(^.`class`:=MODAL_DIAG_BACK_PANE,
-        <.div(^.`class`:=MODAL_DIAG_CONTENT, ^.width:=props.width,
+        <.div(^.`class`:=MODAL_DIAG_CONTENT, ^.width:=props.width + "px",
           props.content
         )
       )

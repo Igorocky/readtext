@@ -19,4 +19,7 @@ trait TopicApi {
   def moveDownParagraph(id: Long): Unit
   def moveDownTopic(id: Long): Unit
   def removeTagFromTopic(topicId: Long, tag: String): List[String]
+
+  def changeParagraphsParent(paragraphIds: List[Long], newParentId: Option[Long]): Unit
+  def changeTopicsParent(topicIds: List[Long], newParentId: Long): Unit
 }

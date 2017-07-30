@@ -117,6 +117,19 @@ class TopicApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
         dao.updateField(topicTable)(topId, _.tags)(_.filterNot(_ == tagToRemove))
       )
     }
+    .addHandler(forMethod2(_.changeParagraphsParent)) {
+      case (paragraphIds, newParentId) => db.run(DBIO.sequence(for {
+        parId <- paragraphIds
+        stmt = dao.changeParentOrdered(paragraphTable, parId, newParentId)
+      } yield stmt)).map(_ => ())
+
+    }
+    .addHandler(forMethod2(_.changeTopicsParent)) {
+      case (topicIds, newParentId) => db.run(DBIO.sequence(for {
+        topId <- topicIds
+        stmt = dao.changeParentOrdered(topicTable, topId, newParentId)
+      } yield stmt)).map(_ => ())
+    }
 
 
   private def removeUnusedImages(topicId: Long, images: List[String]): Unit = {

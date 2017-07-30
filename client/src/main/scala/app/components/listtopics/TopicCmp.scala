@@ -1,7 +1,7 @@
 package app.components.listtopics
 
 import app.Utils._
-import app.components.WindowFunc
+import app.components.{Checkbox, WindowFunc}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
@@ -10,19 +10,21 @@ import shared.dto.Topic
 object TopicCmp {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
-                   topic: Topic) {
+                   topic: Topic,
+                   selected: Boolean) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
 
   protected case class State(editMode: Boolean = false, showImg: Boolean = false)
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-      .initialState(State())
+    .initialState(State())
     .renderPS{ ($,props,state) =>
       if (!state.editMode) {
         <.div(^.`class` := this.getClass.getSimpleName /*+ (if (props.topic.checked) " checked" else "")*/,
           <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
-//            checkboxForTopic(props.topic, props),
+            ^.onClick --> props.ctx.selectTopicAction(props.topic.id.get, !props.selected),
+            if (props.ctx.listTopicsPageMem.selectMode) checkboxForTopic(props) else EmptyVdom,
             showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
             <.span(
               ^.`class`:=HIGHLIGHTED,
@@ -70,12 +72,10 @@ object TopicCmp {
 
     }.build
 
-//  def checkboxForTopic(topic: Topic, props: Props) =
-//    Checkbox(
-//      id = "selectTopic-" + topic.id.get,
-//      onChange = newVal => props.globalScope.checkTopicsAction(List((topic.id.get, newVal))),
-//      checked = topic.checked
-//    )
+  def checkboxForTopic(props: Props) = Checkbox.Props(
+    checked = props.selected,
+    onChange = newVal => props.ctx.selectTopicAction(props.topic.id.get, newVal)
+  ).render
 
   def moveUpButton(topic: Topic, props: Props) = buttonWithIcon(
     onClick = props.ctx.moveUpTopicAction(topic.id.get),

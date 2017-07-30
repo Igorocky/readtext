@@ -1,7 +1,7 @@
 package app.components.listtopics
 
 import app.components._
-import app.{JsGlobalScope, LazyTreeNode, Utils}
+import app.{JsGlobalScope, Utils}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
@@ -28,6 +28,7 @@ object ListTopicsPage {
       )
       $.modState {_.copy(
           modState = $.modState(_),
+          getState = () => $.state,
           wsClient = Utils.createWsClient($.props.wsEntryUrl),
           sessionWsClient = Utils.createWsClient($.props.wsEntryUrl)
       )}
@@ -56,35 +57,40 @@ object ListTopicsPage {
           }).toVdomArray{paragraph =>
             ParagraphCmp(paragraph, state.globalScope, state.tagFilter)
           },*/
-          mapLazyTreeNode(state.listTopicsPageMem.data).render
+          mapMainTopicTree(state.listTopicsPageMem.topicTree).render,
+          if (state.listTopicsPageMem.selectParagraphTree.isDefined) {
+            SelectParagraphDiagCmp.Props(ctx = state).render
+          } else {
+            EmptyVdom
+          }
         )
     ).render
 
-    def mapLazyTreeNode(node: LazyTreeNode)(implicit ctx: WindowFunc with ListTopicsPageContext): Tree.Props =
+    def mapMainTopicTree(node: TopicTree)(implicit ctx: WindowFunc with ListTopicsPageContext): Tree.Props =
       (node.value: @unchecked) match {
         case None => Tree.Props(
           key = "rootNode",
           nodeValue = None,
           mayHaveChildren = true,
-          children = node.children.map(_.map(mapLazyTreeNode)),
-          loadChildren = loadChildren(None),
+          children = node.children.map(_.map(mapMainTopicTree)),
+          loadChildren = ctx.loadChildrenIntoMainTopicTree(None),
           expanded = Some(true),
           onExpand = Callback.empty,
           onCollapse = Callback.empty
         )
         case Some(p: Paragraph) => Tree.Props(
           key = "par-" + p.id.get,
-          nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter).render),
+          nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter, node.selected).render),
           mayHaveChildren = true,
-          children = node.children.map(_.map(mapLazyTreeNode)),
-          loadChildren = loadChildren(p.id),
+          children = node.children.map(_.map(mapMainTopicTree)),
+          loadChildren = ctx.loadChildrenIntoMainTopicTree(p.id),
           expanded = Some(p.expanded),
           onExpand = ctx.expandParagraphsAction(List(p.id.get -> true)),
           onCollapse = ctx.expandParagraphsAction(List(p.id.get -> false))
         )
         case Some(t: Topic) => Tree.Props(
           key = "top-" + t.id.get,
-          nodeValue = Some(TopicCmp.Props(ctx, t).render),
+          nodeValue = Some(TopicCmp.Props(ctx, t, node.selected).render),
           mayHaveChildren = false,
           children = None,
           loadChildren = Callback.empty,
@@ -101,19 +107,6 @@ object ListTopicsPage {
         filterChanged = state.filterChanged(_)
       ).render
 
-    def loadChildren(paragraphId: Option[Long])(implicit ctx: ListTopicsPageContext with WindowFunc) = {
-      def setChildren(children: List[Any]) =
-        ctx.setChildren(paragraphId, children.map(c => LazyTreeNode(Some(c), None)))
 
-      ctx.openWaitPane >> ctx.wsClient.post(_.loadParagraphsByParentId(paragraphId), _ => ctx.openOkDialog("Error loading paragraphs"))(
-        paragraphs => if (paragraphId.isDefined) {
-          ctx.wsClient.post(_.loadTopicsByParentId(paragraphId.get), _ => ctx.openOkDialog("Error loading topics"))(
-            topics => setChildren(paragraphs ::: topics) >> ctx.closeWaitPane
-          )
-        } else {
-          setChildren(paragraphs) >> ctx.closeWaitPane
-        }
-      )
-    }
   }
 }

@@ -1,7 +1,7 @@
 package app.components.listtopics
 
 import app.Utils._
-import app.components.WindowFunc
+import app.components.{Checkbox, WindowFunc}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
@@ -11,7 +11,8 @@ object ParagraphCmp {
 
   case class Props(paragraph: Paragraph,
                    ctx: WindowFunc with ListTopicsPageContext,
-                   tagFilter: String) {
+                   tagFilter: String,
+                   selected: Boolean) {
     @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
   }
 
@@ -30,7 +31,8 @@ object ParagraphCmp {
       <.div(^.`class` := ParagraphCmp.getClass.getSimpleName /*+ (if (props.paragraph.checked) " checked" else "")*/,
         if (!state.editMode) {
           <.div(^.`class` := PARAGRAPH_NAME + " " + HIGHLIGHT_CHILD_SPAN_ON_HOVER,
-//            checkboxForParagraph(props.paragraph, props),
+            ^.onClick --> props.ctx.selectParagraphAction(props.paragraph.id.get, !props.selected),
+            if (props.ctx.listTopicsPageMem.selectMode) checkboxForParagraph(props) else EmptyVdom,
             <.span(
               ^.`class`:=HIGHLIGHTED,
               props.paragraph.name
@@ -100,12 +102,10 @@ object ParagraphCmp {
       iconType = "fa-trash-o"
     )
 
-//  def checkboxForParagraph(paragraph: Paragraph, props: Props) =
-//    Checkbox(
-//      id = "selectPar-" + paragraph.id.get,
-//      onChange = props.globalScope.checkParagraphAction(paragraph.id.get, _),
-//      checked = paragraph.checked
-//    )
+    def checkboxForParagraph(props: Props) = Checkbox.Props(
+      onChange = newVal => props.ctx.selectParagraphAction(props.paragraph.id.get, newVal),
+      checked = props.selected
+    ).render
 
     def moveUpButton(paragraph: Paragraph, props: Props) = buttonWithIcon(
       onClick = props.ctx.moveUpParagraphAction(paragraph.id.get),

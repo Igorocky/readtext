@@ -3,6 +3,7 @@ package app.components
 import app.Utils.{BTN_LINK, buttonWithIcon}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import shared.SharedConstants._
 
 object Tree {
 
@@ -29,13 +30,15 @@ object Tree {
   protected class Backend($: BackendScope[Props, State]) {
     def render(implicit props: Props, state: State) = <.div(
       ^.`class` := Tree.getClass.getSimpleName,
-      props.nodeValue.whenDefined(branch =>
-        <.div(^.key := "branch",
+      props.nodeValue.whenDefined(nodeValue =>
+        <.div(^.`class` := TREE_NODE_VALUE_WRAPPER,
           if (props.mayHaveChildren) expandCollapseButton else EmptyVdom,
-          <.div(^.`class`:="nodeValue", branch)
+          <.div(^.`class`:=TREE_NODE_VALUE, nodeValue)
         )
       ),
-      <.div(^.key:= "children", renderChildren).when(props.mayHaveChildren && isExpanded)
+      if (props.mayHaveChildren && isExpanded) {
+        <.div(^.`class`:=TREE_NODE_CHILDREN, renderChildren)
+      } else EmptyVdom
     )
 
     def isExpanded(implicit props: Props, state: State): Boolean =

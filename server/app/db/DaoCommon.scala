@@ -39,6 +39,29 @@ class DaoCommon @Inject()(implicit private val ec: ExecutionContext) {
     } yield (updateId(elemWithOrder, newId))).transactionally
   }
 
+  def changeParentOrdered[M <: HasIdAndOrder :ClassTag,U](table: Query[M,U,Seq], id: Long, newParentId: Long): DBIOAction[Int, NoStream, Effect.Read with Effect.Read with Effect.Write with Effect.Read with Effect.Write with Effect.Transactional] =
+    changeParentOrdered(table, id, Some(newParentId))
+
+  def changeParentOrdered[M <: HasIdAndOrder :ClassTag,U](table: Query[M,U,Seq], id: Long, newParentId: Option[Long]): DBIOAction[Int, NoStream, Effect.Read with Effect.Read with Effect.Write with Effect.Read with Effect.Write with Effect.Transactional] = {
+    val parentIdExtractor = createParentIdExtractor[M]
+    val selectParentIdAndOrder = table.filter(_.id === id).map(r => (parentIdExtractor(r), r.order))
+    (for {
+      (parentId, deletedOrder) <- selectParentIdAndOrder.result.head
+      haveSameParent = createHaveSameParentCriteria(parentId)
+      seq <- table.filter(haveSameParent).filter(_.order > deletedOrder).map(t => (t.id,t.order)).result
+      _ <- DBIO.sequence(
+        for {
+          (lowerElemId, lowerElemOrder) <- seq
+        } yield table.filter(_.id === lowerElemId).map(_.order).update(lowerElemOrder - 1)
+      )
+      haveSameNewParent = createHaveSameParentCriteria(newParentId)
+      maxNewOrder <- table.filter(haveSameNewParent).map(_.order).max.result.map(_.getOrElse(-1))
+      newOrder = maxNewOrder + 1
+      _ <- selectParentIdAndOrder.update((newParentId, newOrder))
+    } yield newOrder).transactionally
+
+  }
+
   def deleteOrdered[M <: HasIdAndOrder :ClassTag,U](table: Query[M,U,Seq], id: Long) = {
     val parentIdExtractor = createParentIdExtractor[M]
     (for {

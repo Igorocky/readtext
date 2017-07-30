@@ -30,7 +30,8 @@ object Css extends StyleSheet.Standalone {
   ): _*)
 
   "." + MODAL_DIAG_BACK_PANE - (seq(shieldProps,
-    position.fixed
+    position.fixed,
+    backgroundColor(rgba(80,80,80,0.5))
   ): _*)
 
   "." + MODAL_DIAG_CONTENT - (
@@ -96,16 +97,20 @@ object Css extends StyleSheet.Standalone {
 
   ".ParagraphCmp" - (
     padding(5 px),
-    borderRadius(10 px),
-    margin(10 px)
+    borderRadius(10 px)
   )
 
   ".ParagraphCmp.checked" - (
     backgroundColor(rgb(200,200,200))
   )
 
+  s".$SELECTED_PARAGRAPH" - (
+    backgroundColor(rgb(102, 255, 255)),
+    borderRadius(5 px)
+  )
+
   ".TopicCmp" - (
-    margin(0 px, 5 px, 5 px, 45 px),
+    margin(0 px, 5 px, 5 px, 0 px),
     padding(5 px),
     borderRadius(10 px)
   )
@@ -149,12 +154,6 @@ object Css extends StyleSheet.Standalone {
     borderRadius(10 px)
   )
 
-  ".modal-diag-content button" - (
-    borderRadius(10 px),
-    marginTop(10 px),
-    width(60 px)
-  )
-
   ".TagsCmp > div" - (
     display.inlineBlock
   )
@@ -182,8 +181,12 @@ object Css extends StyleSheet.Standalone {
     )
   )
 
-  ".Tree > div > .nodeValue" - (
+  s".$TREE_NODE_VALUE" - (
     display.inlineBlock
-    )
+  )
+
+  s".$TREE_NODE_CHILDREN" - (
+    marginLeft(30 px)
+  )
 
 }

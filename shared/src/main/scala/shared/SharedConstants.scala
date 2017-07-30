@@ -18,6 +18,11 @@ object SharedConstants {
   final val HIGHLIGHT_CHILD_SPAN_ON_HOVER = "highlight-child-span-on-hover"
   final val HIGHLIGHTED = "highlighted"
   final val PARAGRAPH_NAME = "paragraph-name"
+  final val SELECTED_PARAGRAPH = "selected-paragraph"
+
+  final val TREE_NODE_VALUE_WRAPPER = "tree-node-value-wrapper"
+  final val TREE_NODE_VALUE = "tree-node-value"
+  final val TREE_NODE_CHILDREN = "tree-node-children"
 
   final val TOPIC_ID = "TOPIC_ID"
 

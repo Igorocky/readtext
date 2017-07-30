@@ -34,7 +34,28 @@ object HeaderCmp {
             onClick = $.modState(_.copy(newParagraphFormOpened = true)),
             btnType = BTN_WARNING,
             text = "Create paragraph"
-          )/*,
+          ),
+          if (!p.ctx.listTopicsPageMem.selectMode) {
+            buttonWithText(
+              onClick = p.ctx.gotoSelectMode,
+              btnType = BTN_INFO,
+              text = "Move mode"
+            )
+          } else {
+            TagMod(
+              buttonWithText(
+                onClick = p.ctx.openSelectParagraphWindow,
+                btnType = BTN_INFO,
+                text = "Select target"
+              ),
+              buttonWithText(
+                onClick = p.ctx.cancelSelectMode,
+                btnType = BTN_INFO,
+                text = "Cancel move"
+              )
+            )
+          }
+          /*,
           filter(p,s)*/
         ),
         if (s.newParagraphFormOpened)
