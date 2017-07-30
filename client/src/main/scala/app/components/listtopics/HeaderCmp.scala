@@ -26,7 +26,7 @@ object HeaderCmp {
       <.div(^.`class`:=HeaderCmp.getClass.getSimpleName,
         <.div(
           buttonWithText(
-            onClick = CallbackTo(???)/*p.globalScope.expandParagraphsAction(p.paragraphs.map(p => (p.id.get, false)))*/,
+            onClick = p.ctx.collapseAllAction,
             btnType = BTN_WARNING,
             text = "Collapse All"
           ),

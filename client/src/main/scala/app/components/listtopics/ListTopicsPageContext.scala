@@ -40,6 +40,14 @@ trait ListTopicsPageContext {
       case () => mod(_.changeTopicTree(_.expandParagraphs(ids)))
     }
 
+  def collapseAllAction = action{mem=>
+    val expandedParagraphs = mem.topicTree.findNodes{
+      case TopicTree(Some(p:Paragraph), _, _) if p.expanded => true
+      case _ => false
+    }.map(_.value.get.asInstanceOf[Paragraph])
+    expandParagraphsAction(expandedParagraphs.map(p => (p.id.get, false)))
+  }
+
   def moveUpParagraphAction(id: Long): Callback =
     wsClient.post(_.moveUpParagraph(id), windowFunc.showError) {
       case () => mod(_.changeTopicTree(_.moveUpParagraph(id)))
@@ -139,7 +147,6 @@ trait ListTopicsPageContext {
           }) >> cancelSelectMode >> windowFunc.closeWaitPane
       }
   }
-
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void
