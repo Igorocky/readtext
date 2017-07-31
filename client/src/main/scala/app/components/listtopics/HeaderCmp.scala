@@ -43,6 +43,7 @@ object HeaderCmp {
             )
           } else {
             TagMod(
+              // TODO: select target should be disabled when nothing is selected
               buttonWithText(
                 onClick = p.ctx.openSelectParagraphWindow,
                 btnType = BTN_INFO,

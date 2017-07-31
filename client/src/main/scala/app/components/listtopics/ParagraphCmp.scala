@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, Topic}
 
+// TODO: Create paragraph inside paragraph
 object ParagraphCmp {
 
   case class Props(paragraph: Paragraph,

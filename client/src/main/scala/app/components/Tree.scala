@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.SharedConstants._
 
+// TODO: align expand button and node value text
 object Tree {
 
   case class Props(key: String,

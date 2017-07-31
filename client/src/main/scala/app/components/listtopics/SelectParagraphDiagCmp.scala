@@ -7,6 +7,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.SharedConstants.SELECTED_PARAGRAPH
 import shared.dto.Paragraph
 
+// TODO: Add max height
 object SelectParagraphDiagCmp {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext) {
@@ -88,6 +89,7 @@ object SelectParagraphDiagCmp {
         )
       }
 
+    // TODO: change cursor to pointer
     def drawParagraph(name: String, id: Option[Long], selected: Boolean)(implicit ctx: WindowFunc with ListTopicsPageContext, props: Props) =
       <.div(
         (^.`class`:=SELECTED_PARAGRAPH).when(selected),

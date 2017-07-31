@@ -18,35 +18,17 @@ trait LazyTreeNodeLike[Repr <: LazyTreeNodeLike[Repr]] {
 
   def moveUp(nodeSelector: Repr => Boolean): Repr = modNode(
     parentSelector(nodeSelector),
-    node => {
-      if (node.children.map(_.exists(nodeSelector)).getOrElse(false)) {
-        node.setChildren(node.children.map(createUpMover(nodeSelector)))
-      } else {
-        node
-      }
-    }
+    node => node.setChildren(node.children.map(createUpMover(nodeSelector)))
   )
 
   def moveDown(nodeSelector: Repr => Boolean): Repr = modNode(
     parentSelector(nodeSelector),
-    node => {
-      if (node.children.map(_.exists(nodeSelector)).getOrElse(false)) {
-        node.setChildren(node.children.map(createDownMover(nodeSelector)))
-      } else {
-        node
-      }
-    }
+    node => node.setChildren(node.children.map(createDownMover(nodeSelector)))
   )
 
   def removeNode(nodeSelector: Repr => Boolean): Repr = modNode(
     parentSelector(nodeSelector),
-    parentNode => {
-      if (parentNode.children.map(_.exists(nodeSelector)).getOrElse(false)) {
-        parentNode.setChildren(parentNode.children.map(_.filterNot(nodeSelector)))
-      } else {
-        parentNode
-      }
-    }
+    parentNode => parentNode.setChildren(parentNode.children.map(_.filterNot(nodeSelector)))
   )
 
   def updateValue(nodeSelector: Repr => Boolean, f: Option[Any] => Option[Any]): Repr =
