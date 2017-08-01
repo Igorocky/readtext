@@ -9,7 +9,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.{Environment, Logger}
 import shared.SharedConstants._
-import shared.pageparams.ListTopicsPageParams
+import shared.pageparams.{LearnCardsPageParams, ListTopicsPageParams}
 import slick.jdbc.JdbcProfile
 import upickle.default._
 import utils.ServerUtils._
@@ -41,6 +41,20 @@ class TopicController @Inject()(
           wsEntryUrl = routes.TopicController.wsEntry.url
         )),
         pageTitle = "Topics"
+      )
+    )
+  }
+
+  def learnCards(poolId: Long) = Action { implicit request =>
+    Ok(
+      views.html.univpage(
+        pageType = LearnCardsPageParams.getClass.getName,
+        customData = write(LearnCardsPageParams(
+          headerParams = headerParams(getSession.language),
+          wsEntryUrl = routes.TopicController.wsEntry.url,
+          poolId = poolId
+        )),
+        pageTitle = "Learn Cards"
       )
     )
   }

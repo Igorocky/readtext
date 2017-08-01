@@ -41,4 +41,6 @@ trait RouterBuilderUtils[A] {
   protected def forMethod[I, O](method: A => I => O): (String, String => I, O => String) = macro WsMacroImpl.forMethod[A, I, O]
 
   protected def forMethod2[I1, I2, O](method: A => (I1, I2) => O): (String, String => (I1, I2), O => String) = macro WsMacroImpl.forMethod[A, (I1, I2), O]
+
+  protected def forMethod3[I1, I2, I3, O](method: A => (I1, I2, I3) => O): (String, String => (I1, I2, I3), O => String) = macro WsMacroImpl.forMethod[A, (I1, I2, I3), O]
 }
