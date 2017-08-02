@@ -31,9 +31,13 @@ object TypeConversions {
     StrUtils.listToStr,
     StrUtils.strToList
   )
-  implicit val cardTypeColumnType = MappedColumnType.base[CardType, Int](
+  implicit val questionTypeColumnType = MappedColumnType.base[QuestionType, Int](
     cardType => cardType.id,
-    id => CardTypes.allElems.find(_.id == id).get
+    id => QuestionTypes.allElems.find(_.id == id).get
+  )
+  implicit val answerTypeColumnType = MappedColumnType.base[AnswerType, Int](
+    answerType => answerType.id,
+    id => AnswerTypes.allElems.find(_.id == id).get
   )
   implicit val zdtColumnType = MappedColumnType.base[ZonedDateTime, Timestamp](
 //    zdt => Timestamp.from(zdt.toInstant()),
@@ -78,37 +82,68 @@ class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrde
 
 class FolderTable(tag: Tag) extends Table[Folder](tag, "FOLDERS") with HasIdAndOrder with HasParent {
   override def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def sourceId = column[String]("sourceId")
   def parentFolderId = column[Long]("parentFolderId")
   def name = column[String]("name")
   override def order = column[Int]("order")
   def created = column[ZonedDateTime]("created")
+  def modified = column[ZonedDateTime]("modified")
 
   def parentFolder = foreignKey("PARENT_FOLDER_FK", parentFolderId, Tables.folderTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (id.?, parentFolderId.?, name, order, created) <> (Folder.tupled, Folder.unapply)
+  def * = (id.?, sourceId, parentFolderId.?, name, order, created, modified) <> (Folder.tupled, Folder.unapply)
 
   override def parentId = parentFolderId
 }
 
 class CardTable(tag: Tag) extends Table[Card](tag, "CARDS") with HasIdAndOrder with HasParent {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def cardType = column[CardType]("cardType")
+  def sourceId = column[String]("sourceId")
   def folderId = column[Long]("folderId")
+  def questionType = column[QuestionType]("questionType")
+  def answerType = column[AnswerType]("answerType")
   def created = column[ZonedDateTime]("created")
-  def questionId = column[Long]("questionId")
-  def answerId = column[Long]("answerId")
+  def modified = column[ZonedDateTime]("modified")
   override def order = column[Int]("order")
 
   def folder = foreignKey("FOLDER_FK", folderId, Tables.folderTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (id.?, cardType, folderId, created, questionId, answerId, order) <> (Card.tupled, Card.unapply)
+  def * = (id.?, sourceId, folderId, questionType, answerType, created, modified, order) <> (Card.tupled, Card.unapply)
 
   override def parentId = folderId
 }
+
+class TextQATable(tag: Tag) extends Table[TextQA](tag, "TEXT_QUESTIONS") {
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def cardId = column[Long]("cardId")
+  def text = column[String]("text")
+  def created = column[ZonedDateTime]("created")
+  def modified = column[ZonedDateTime]("modified")
+
+  def card = foreignKey("TEXT_QA_CARD_FK", cardId, Tables.cardTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+  def * = (id.?, cardId, text, created, modified) <> (TextQA.tupled, TextQA.unapply)
+}
+
+class ImageQATable(tag: Tag) extends Table[ImageQA](tag, "TOPIC_ANSWERS") {
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def cardId = column[Long]("cardId")
+  def imagePaths = column[List[String]]("imagePaths")
+  def created = column[ZonedDateTime]("created")
+  def modified = column[ZonedDateTime]("modified")
+
+  def card = foreignKey("IMAGE_QA_CARD_FK", cardId, Tables.cardTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+  def * = (id.?, cardId, imagePaths, created, modified) <> (ImageQA.tupled, ImageQA.unapply)
+}
+
+
 
 object Tables {
   val paragraphTable = TableQuery[ParagraphTable]
   val topicTable = TableQuery[TopicTable]
   val folderTable = TableQuery[FolderTable]
   val cardTable = TableQuery[CardTable]
+  val textQATable = TableQuery[TextQATable]
+  val topicQATable = TableQuery[ImageQATable]
 }

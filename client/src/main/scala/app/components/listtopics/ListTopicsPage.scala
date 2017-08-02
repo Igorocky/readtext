@@ -18,6 +18,7 @@ object ListTopicsPage {
 
   def apply(str: String): Unmounted[Props, State, Backend] = comp(read[Props](str))
 
+  // TODO: create preloading of expanded topics
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialStateFromProps(p => ListTopicsPageState(pageParams = p))
     .renderBackend[Backend]

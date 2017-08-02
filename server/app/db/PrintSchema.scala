@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext
 class PrintSchema(implicit private val ec: ExecutionContext) {
   import Tables._
 
-  val tables = List(paragraphTable,topicTable,folderTable,cardTable)
+  val tables = List(paragraphTable,topicTable,folderTable,cardTable,textQATable,topicQATable)
 
   println("===========================")
   tables.foreach(_.schema.create.statements.map(">>>" + _).foreach(println))
