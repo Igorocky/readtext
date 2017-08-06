@@ -1,6 +1,6 @@
-package app
+package shared.utils.tree
 
-import app.LazyTreeNodeLikeUtils._
+import shared.utils.tree.LazyTreeNodeLikeUtils._
 
 trait LazyTreeNodeLike[Repr <: LazyTreeNodeLike[Repr]] {
   def value: Option[Any]

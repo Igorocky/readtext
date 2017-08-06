@@ -1,7 +1,8 @@
 package app.components.listtopics
 
-import app.{LazyTreeNodeLike, Utils}
 import shared.dto.{Paragraph, Topic}
+import shared.utils.Utils
+import shared.utils.tree.LazyTreeNodeLike
 
 case class TopicTree(value: Option[Any] = None,
                      children: Option[List[TopicTree]] = None,

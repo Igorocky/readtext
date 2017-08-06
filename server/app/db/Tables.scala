@@ -8,6 +8,8 @@ import shared.dto._
 import slick.jdbc.H2Profile.api._
 import TypeConversions._
 
+import upickle.default._
+
 trait HasId {
   def id: Rep[Long]
 }
@@ -30,6 +32,10 @@ object TypeConversions {
   implicit val listOfStringsColumnType = MappedColumnType.base[List[String], String](
     StrUtils.listToStr,
     StrUtils.strToList
+  )
+  implicit val mapOfStringsColumnType = MappedColumnType.base[Map[String, String], String](
+    write[Map[String, String]](_),
+    read[Map[String, String]]
   )
   implicit val questionTypeColumnType = MappedColumnType.base[QuestionType, Int](
     cardType => cardType.id,
@@ -80,10 +86,10 @@ class TopicTable(tag: Tag) extends Table[Topic](tag, "TOPICS") with HasIdAndOrde
   def * = (id.?, paragraphId, title,  order, images, tags) <> (Topic.tupled, Topic.unapply)
 }
 
-class FolderTable(tag: Tag) extends Table[Folder](tag, "FOLDERS") with HasIdAndOrder with HasParent {
+class FolderTable(tag: Tag) extends Table[Folder](tag, "FOLDERS") with HasIdAndOrder with HasOptionalParent {
   override def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def sourceId = column[String]("sourceId")
-  def parentFolderId = column[Long]("parentFolderId")
+  def parentFolderId = column[Option[Long]]("parentFolderId")
   def name = column[String]("name")
   override def order = column[Int]("order")
   def created = column[ZonedDateTime]("created")
@@ -91,7 +97,7 @@ class FolderTable(tag: Tag) extends Table[Folder](tag, "FOLDERS") with HasIdAndO
 
   def parentFolder = foreignKey("PARENT_FOLDER_FK", parentFolderId, Tables.folderTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (id.?, sourceId, parentFolderId.?, name, order, created, modified) <> (Folder.tupled, Folder.unapply)
+  def * = (id.?, sourceId, parentFolderId, name, order, created, modified) <> (Folder.tupled, Folder.unapply)
 
   override def parentId = parentFolderId
 }

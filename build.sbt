@@ -60,6 +60,8 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
     scalaVersion := scalaV,
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % upickleVersion
+
+      ,"org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   ).jsConfigure(_ enablePlugins ScalaJSWeb)
 

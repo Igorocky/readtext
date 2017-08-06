@@ -1,4 +1,4 @@
-package app
+package shared.utils.tree
 
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -143,5 +143,23 @@ class LazyTreeNodeLikeTest extends FlatSpec with Matchers {
     actualResult.exists(_.value == Some(7)) should be(true)
     actualResult.exists(_.value == Some(2)) should be(true)
     actualResult.exists(_.value == Some(13)) should be(true)
+  }
+
+  "LazyTreeNodeLike.findNodes" should "should place parents before their children" in {
+    //given
+    val initialNode: LazyTreeNodeImpl = LazyTreeNodeImpl(Some(7), Some(initialList))
+    def indexOf(i: Int)(implicit list: List[(Int, Int)]): Int = list.find(_._1 == i).get._2
+    def checkOrder(i1: Int, i2: Int)(implicit list: List[(Int, Int)]) = indexOf(i1) should be < indexOf(i2)
+    def checkOrderL(i: Int, is: List[Int])(implicit list: List[(Int, Int)]) = is.foreach(checkOrder(i, _))
+
+    //when
+    val indexedListOfNodes: List[(Int, Int)] =
+      initialNode.findNodes(_ => true).map(_.value.get.asInstanceOf[Int]).zipWithIndex
+
+    //then
+    checkOrderL(7, List(1, 2, 3, 11, 12, 13))(indexedListOfNodes)
+    checkOrder(1, 11)(indexedListOfNodes)
+    checkOrder(2, 12)(indexedListOfNodes)
+    checkOrder(3, 13)(indexedListOfNodes)
   }
 }
