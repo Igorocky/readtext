@@ -12,7 +12,7 @@ GET         /styles.css                                    @controllers.HomeCont
 GET    /r                           controllers.HomeController.pageWithReact
 
 GET    /topics                           controllers.TopicController.topics
-GET     /learnCards/:poolId               controllers.TopicController.learnCards(poolId: Long)
+GET     /learnTopics/:paragraphId               controllers.TopicController.learnTopics(paragraphId: Long)
 POST    /uploadTopicImage                           controllers.TopicController.uploadTopicImage
 GET     /topicImg/:topicId/:fileName               controllers.TopicController.topicImg(topicId: Long, fileName: String)
 POST     /wsEntry                         controllers.TopicController.wsEntry

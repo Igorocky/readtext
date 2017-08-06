@@ -45,14 +45,14 @@ class TopicController @Inject()(
     )
   }
 
-  def learnCards(poolId: Long) = Action { implicit request =>
+  def learnTopics(paragraphId: Long) = Action { implicit request =>
     Ok(
       views.html.univpage(
         pageType = LearnCardsPageParams.getClass.getName,
         customData = write(LearnCardsPageParams(
           headerParams = headerParams(getSession.language),
           wsEntryUrl = routes.TopicController.wsEntry.url,
-          poolId = poolId
+          poolId = paragraphId
         )),
         pageTitle = "Learn Cards"
       )

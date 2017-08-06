@@ -1,13 +1,11 @@
 package app.components.listtopics
 
-import app.Utils._
 import app.components.{Checkbox, WindowFunc}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, Topic}
 
-// TODO: Create paragraph inside paragraph
 object ParagraphCmp {
 
   case class Props(paragraph: Paragraph,
@@ -18,7 +16,8 @@ object ParagraphCmp {
   }
 
   protected case class State(editMode: Boolean = false,
-                             createTopicDiagOpened: Boolean = false)
+                             createTopicDiagOpened: Boolean = false,
+                             newParagraphFormOpened: Boolean = false)
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -28,7 +27,7 @@ object ParagraphCmp {
   protected class Backend($: BackendScope[Props, State]) {
     private val checkUncheckAllBtnSize = "16px"
 
-    def render(props: Props, state: State) =
+    def render(implicit props: Props, state: State) =
       <.div(^.`class` := ParagraphCmp.getClass.getSimpleName /*+ (if (props.paragraph.checked) " checked" else "")*/,
         if (!state.editMode) {
           <.div(^.`class` := PARAGRAPH_NAME + " " + HIGHLIGHT_CHILD_SPAN_ON_HOVER,
@@ -44,10 +43,13 @@ object ParagraphCmp {
               ctx = props.ctx,
               paragraph = props.paragraph,
               onEdit = $.modState(_.copy(editMode = true)),
+              onCreateParagraph = $.modState(_.copy(newParagraphFormOpened = true)),
               onCreateTopic = $.modState(_.copy(createTopicDiagOpened = true))
             ).render,
             if (state.createTopicDiagOpened) {
               createNewTopicDiag(props.paragraph, props, $.modState(_.copy(createTopicDiagOpened = false)))
+            } else if (state.newParagraphFormOpened) {
+              createNewParagraphDiag
             } else EmptyVdom
           )
         } else {
@@ -98,6 +100,23 @@ object ParagraphCmp {
         submitComplete = topic => closeDiag >> props.ctx.topicCreated(topic),
         textFieldLabel = "New topic:",
         ctx = props.ctx,
+        submitButtonName = "Create"
+      ).render
+
+    def createNewParagraphDiag(implicit p: Props) =
+      ParagraphForm.Props(
+        ctx = p.ctx,
+        paragraph = Paragraph(name = "", paragraphId = p.paragraph.id),
+        submitFunction = paragraph => p.ctx.wsClient.post(
+          _.createParagraph(paragraph),
+          th => p.ctx.openOkDialog("Error creating paragraph: " + th.getMessage)
+        ),
+        cancelled = $.modState(_.copy(newParagraphFormOpened = false)),
+        submitComplete = par =>
+          $.modState(_.copy(newParagraphFormOpened = false)) >>
+            p.ctx.paragraphCreated(par) >>
+            p.ctx.closeWaitPane,
+        textFieldLabel = "New paragraph:",
         submitButtonName = "Create"
       ).render
   }

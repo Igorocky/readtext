@@ -11,6 +11,7 @@ object ParagraphActionsCmp {
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    paragraph: Paragraph,
                    onEdit: Callback,
+                   onCreateParagraph: Callback,
                    onCreateTopic: Callback) {
     @inline def render = comp(this)
   }
@@ -30,6 +31,7 @@ object ParagraphActionsCmp {
         TagMod(
           hideAllActionsButton,
           editParagraphButton,
+          createParagraphButton,
           createTopicButton,
           moveUpButton,
           moveDownButton,
@@ -54,6 +56,12 @@ object ParagraphActionsCmp {
       onClick = p.onEdit,
       btnType = BTN_INFO,
       iconType = "fa-pencil-square-o"
+    )
+
+    def createParagraphButton(implicit p: Props) = buttonWithText(
+      onClick = p.onCreateParagraph,
+      btnType = BTN_INFO,
+      text = "Create paragraph"
     )
 
     def createTopicButton(implicit p: Props) = buttonWithText(
