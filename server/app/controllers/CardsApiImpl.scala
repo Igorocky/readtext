@@ -1,5 +1,6 @@
 package controllers
 
+import java.time.{Duration, ZonedDateTime}
 import javax.inject._
 
 import app.RouterBuilderUtils
@@ -26,8 +27,17 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       case poolId => for {
         topics <- loadTopicsRecursively(poolId)
       } yield topics.map{
-        case (topic, None) => TopicState(topic.id.get, EasinessLevels.EASY, ScoreLevels.EXCELLENT, None)
-        case (topic, Some(r)) => TopicState(topic.id.get, r.easiness, r.score, Some(r.time.toString))
+        case (topic, None) => TopicState(topic.id.get, EasinessLevels.EASY, ScoreLevels.EXCELLENT, None, "")
+        case (topic, Some(r)) => TopicState(
+          topic.id.get,
+          r.easiness,
+          r.score,
+          Some(r.time.toString),
+          calcDuration(
+            timeInPast = r.time,
+            currTime = ZonedDateTime.now()
+          )
+        )
       }
     }
 
@@ -64,4 +74,27 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       )
     } yield res.sortBy(_._2.map(_.time.toEpochSecond).getOrElse(0L))
   }.map(_.toList)
+
+  private val MINUTES_IN_HOUR = 60
+  private val HOURS_IN_DAY = 24
+  private val SECONDS_IN_MINUTE = 60
+  private val SECONDS_IN_HOUR = SECONDS_IN_MINUTE * MINUTES_IN_HOUR
+  private val SECONDS_IN_DAY = SECONDS_IN_HOUR * HOURS_IN_DAY
+  protected[controllers] def calcDuration(timeInPast: ZonedDateTime, currTime: ZonedDateTime): String = {
+    val dur = Duration.between(timeInPast, currTime)
+    val days = dur.getSeconds / SECONDS_IN_DAY
+    val hours = (dur.getSeconds - days * SECONDS_IN_DAY) / SECONDS_IN_HOUR
+    val minutes = (dur.getSeconds - days * SECONDS_IN_DAY - hours * SECONDS_IN_HOUR) / SECONDS_IN_MINUTE
+    val seconds = dur.getSeconds % SECONDS_IN_MINUTE
+
+    if (days > 0) {
+      s"${days}D ${hours}H"
+    } else if (hours > 0) {
+      s"${hours}H ${minutes}m"
+    } else if (minutes > 0) {
+      s"${minutes}m ${seconds}s"
+    } else {
+      s"${seconds}s"
+    }
+  }
 }

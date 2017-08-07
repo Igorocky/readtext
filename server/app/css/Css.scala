@@ -195,8 +195,45 @@ object Css extends StyleSheet.Standalone {
     borderCollapse.collapse
   )
 
-  ".topic-statuses-table tr:hover" - (
+  s".$EASINESS_SCORE" - (
+    color(white)
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$EASINESS_EASY" - (
+    backgroundColor(rgb(92, 184, 92))/*green*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$EASINESS_MEDIUM" - (
+    backgroundColor(rgb(240, 173, 78))/*orange*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$EASINESS_HARD" - (
+    backgroundColor(rgb(217, 83, 79))/*red*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$SCORE_EXCELLENT" - (
+    backgroundColor(rgb(92, 184, 92))/*green*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$SCORE_GOOD" - (
+    backgroundColor(rgb(91, 192, 222))/*blue*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$SCORE_POOR" - (
+    backgroundColor(rgb(240, 173, 78))/*orange*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE .$SCORE_BAD" - (
+    backgroundColor(rgb(217, 83, 79))/*red*/
+  )
+
+  s".$TOPIC_STATUSES_TABLE tr:hover" - (
     backgroundColor(yellow)
   )
+
+  s".$TOPIC_STATUSES_TABLE th, .$TOPIC_STATUSES_TABLE td" - (
+    padding(1 px, 10 px)
+  )
+
 
 }

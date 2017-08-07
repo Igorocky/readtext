@@ -219,4 +219,42 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     state2.size should be(1)
     state2.exists(r => r.easiness == MEDIUM && r.score == GOOD) should be(true)
   }
+
+  "calcDuration should produce correct output" in {
+    var timeInPast = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, ZoneOffset.UTC)
+    var currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("0s")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("1s")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 6, 21, 48, 5, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("1m 0s")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 6, 21, 11, 23, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5,  0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("37m 42s")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 6, 9, 48, 6, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("12H 0m")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 6, 9, 48, 5, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("12H 1m")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 2, 9, 48, 6, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 48, 5, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("4D 11H")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 2, 9, 48, 6, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 48, 6, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("4D 12H")
+
+    timeInPast = ZonedDateTime.of(2017, 8, 6, 9, 48, 6, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 12, 50, 6, 0, ZoneId.of("Europe/Paris"))
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("1H 2m")
+  }
 }

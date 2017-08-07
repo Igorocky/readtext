@@ -6,6 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.dto.EasinessLevels._
 import shared.dto.ScoreLevels._
+import shared.dto.TopicHistoryRecordUtils._
 import shared.dto.{Easiness, Score}
 
 object LearnCardCmp {
@@ -60,11 +61,7 @@ object LearnCardCmp {
         case MEDIUM => BTN_WARNING
         case HARD => BTN_DANGER
       },
-      text = easiness match {
-        case EASY => "Easy"
-        case MEDIUM => "Medium"
-        case HARD => "Hard"
-      }
+      text = easinessStr(easiness)
     )
 
     def scoreButton(score: Score)(implicit p: Props, s: State) = buttonWithText(
@@ -75,12 +72,7 @@ object LearnCardCmp {
         case GOOD => BTN_INFO
         case EXCELLENT => BTN_SUCCESS
       },
-      text = score match {
-        case BAD => "Bad"
-        case POOR => "Poor"
-        case GOOD => "Good"
-        case EXCELLENT => "Excellent"
-      }
+      text = scoreStr(score)
     )
 
 

@@ -31,4 +31,16 @@ object SharedConstants {
   final val TOPIC_ID = "TOPIC_ID"
 
   final val FILE = "FILE"
+
+  final val TOPIC_STATUSES_TABLE = "topic-statuses-table"
+  final val EASINESS_SCORE = "easiness-score"
+  final val EASINESS_EASY = "easiness-easy"
+  final val EASINESS_MEDIUM = "easiness-medium"
+  final val EASINESS_HARD = "easiness-hard"
+  final val SCORE_EXCELLENT = "score-excellent"
+  final val SCORE_GOOD = "score-good"
+  final val SCORE_POOR = "score-poor"
+  final val SCORE_BAD = "score-bad"
+
+
 }
