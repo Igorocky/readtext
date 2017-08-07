@@ -12,6 +12,8 @@ import shared.dto.{Easiness, Score, TopicState}
 import shared.pageparams.LearnCardsPageParams
 import upickle.default._
 
+
+// TODO: add possibility to change history
 object LearnCardsPage {
   protected type Props = LearnCardsPageParams
 
