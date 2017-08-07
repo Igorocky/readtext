@@ -190,4 +190,13 @@ object Css extends StyleSheet.Standalone {
     marginLeft(30 px)
   )
 
+  ".topic-statuses-table, .topic-statuses-table td, .topic-statuses-table th" - (
+    border(1 px, solid, black),
+    borderCollapse.collapse
+  )
+
+  ".topic-statuses-table tr:hover" - (
+    backgroundColor(yellow)
+  )
+
 }

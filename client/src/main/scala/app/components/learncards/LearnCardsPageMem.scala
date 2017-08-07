@@ -1,5 +1,7 @@
 package app.components.learncards
 
-import shared.dto.CardLearnInfo
+import shared.dto.{Topic, TopicState}
 
-case class LearnCardsPageMem(card: Option[CardLearnInfo] = None)
+case class LearnCardsPageMem(topic: Option[Topic] = None,
+                             topicStates: Option[List[TopicState]] = None,
+                             avgScore: Double = 0)

@@ -4,6 +4,9 @@ import app.Utils._
 import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import shared.dto.EasinessLevels._
+import shared.dto.ScoreLevels._
+import shared.dto.{Easiness, Score}
 
 object LearnCardCmp {
 
@@ -11,12 +14,12 @@ object LearnCardCmp {
                    ctx: WindowFunc,
                    question: TagMod,
                    answer: TagMod,
-                   scoreSelected: (Int/*easiness*/, Int/*score*/) => Callback
+                   scoreSelected: (Easiness, Score) => Callback
                    ) {
     @inline def render = comp.withKey(key)(this)
   }
 
-  protected case class State(easiness: Option[Int] = None)
+  protected case class State(easiness: Option[Easiness] = None)
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -43,40 +46,40 @@ object LearnCardCmp {
     )
 
     def selectEasinessButtons(implicit p: Props) = <.div(
-      easinessButton(0),easinessButton(1),easinessButton(2)
+      easinessButton(HARD),easinessButton(MEDIUM),easinessButton(EASY)
     )
 
     def selectScoreButtons(implicit p: Props, s: State) = <.div(
-      scoreButton(0),scoreButton(1),scoreButton(2),scoreButton(3)
+      scoreButton(BAD),scoreButton(POOR),scoreButton(GOOD),scoreButton(EXCELLENT)
     )
 
-    def easinessButton(level: Int) = buttonWithText(
-      onClick = $.modState(_.copy(easiness = Some(level))),
-      btnType = level match {
-        case 2 => BTN_SUCCESS
-        case 1 => BTN_WARNING
-        case 0 => BTN_DANGER
+    def easinessButton(easiness: Easiness) = buttonWithText(
+      onClick = $.modState(_.copy(easiness = Some(easiness))),
+      btnType = easiness match {
+        case EASY => BTN_SUCCESS
+        case MEDIUM => BTN_WARNING
+        case HARD => BTN_DANGER
       },
-      text = level match {
-        case 2 => "Easy"
-        case 1 => "Middle"
-        case 0 => "Hard"
+      text = easiness match {
+        case EASY => "Easy"
+        case MEDIUM => "Medium"
+        case HARD => "Hard"
       }
     )
 
-    def scoreButton(score: Int)(implicit p: Props, s: State) = buttonWithText(
+    def scoreButton(score: Score)(implicit p: Props, s: State) = buttonWithText(
       onClick = p.scoreSelected(s.easiness.get, score),
       btnType = score match {
-        case 0 => BTN_DANGER
-        case 1 => BTN_WARNING
-        case 2 => BTN_INFO
-        case 3 => BTN_SUCCESS
+        case BAD => BTN_DANGER
+        case POOR => BTN_WARNING
+        case GOOD => BTN_INFO
+        case EXCELLENT => BTN_SUCCESS
       },
       text = score match {
-        case 0 => "Bad"
-        case 1 => "Poor"
-        case 2 => "Good"
-        case 3 => "Excellent"
+        case BAD => "Bad"
+        case POOR => "Poor"
+        case GOOD => "Good"
+        case EXCELLENT => "Excellent"
       }
     )
 

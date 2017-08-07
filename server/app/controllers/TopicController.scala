@@ -30,6 +30,7 @@ class TopicController @Inject()(
   new PrintSchema
 
   val getTopicImgUrl = """/\w+""".r.findFirstIn(routes.TopicController.topicImg(1,"").url).get
+  val learnTopicsUrl = """/\w+""".r.findFirstIn(routes.TopicController.learnTopics(1).url).get
   def topics = Action { implicit request =>
     Ok(
       views.html.univpage(
@@ -38,6 +39,7 @@ class TopicController @Inject()(
           headerParams = headerParams(getSession.language),
           uploadTopicFileUrl = routes.TopicController.uploadTopicImage.url,
           getTopicImgUrl = getTopicImgUrl,
+          learnTopicsUrl = learnTopicsUrl,
           wsEntryUrl = routes.TopicController.wsEntry.url
         )),
         pageTitle = "Topics"
@@ -52,7 +54,8 @@ class TopicController @Inject()(
         customData = write(LearnCardsPageParams(
           headerParams = headerParams(getSession.language),
           wsEntryUrl = routes.TopicController.wsEntry.url,
-          poolId = paragraphId
+          paragraphId = paragraphId,
+          getTopicImgUrl = getTopicImgUrl
         )),
         pageTitle = "Learn Cards"
       )

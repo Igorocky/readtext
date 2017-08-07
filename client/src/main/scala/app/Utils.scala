@@ -23,6 +23,10 @@ object Utils {
     dom.window.location.href = url
   }
 
+  def navigateToInNewTab(url: String) = Callback {
+    dom.window.open(url, "_blank")
+  }
+
   def post[T](url: String, data: Ajax.InputData)(f: Try[Either[String,String]] => CallbackTo[T]): CallbackTo[Future[T]] =
     CallbackTo.future {
       Ajax.post(url = url, data = data).map {

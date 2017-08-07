@@ -1,5 +1,6 @@
 package app.components.listtopics
 
+import app.Utils
 import app.Utils._
 import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
@@ -30,6 +31,7 @@ object ParagraphActionsCmp {
       } else {
         TagMod(
           hideAllActionsButton,
+          learnButton,
           editParagraphButton,
           createParagraphButton,
           createTopicButton,
@@ -50,6 +52,12 @@ object ParagraphActionsCmp {
       onClick = $.modState(_.copy(hidden = true)),
       btnType = BTN_INFO,
       iconType = "fa-arrow-left"
+    )
+
+    def learnButton(implicit p: Props) = buttonWithIcon(
+      onClick = Utils.navigateToInNewTab(p.ctx.pageParams.learnTopicsUrl + "/" + p.paragraph.id.get),
+      btnType = BTN_INFO,
+      iconType = "fa-microchip"
     )
 
     def editParagraphButton(implicit p: Props) = buttonWithIcon(
