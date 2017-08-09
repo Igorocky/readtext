@@ -10,6 +10,7 @@ import shared.SharedConstants._
 import shared.dto.TopicTag
 import shared.forms.{FormData, Forms}
 
+// TODO: collapse actions list after a tag was added
 object TagsCmp {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext,

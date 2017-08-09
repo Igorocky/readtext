@@ -11,3 +11,5 @@ java -cp $PATH_TO_H2_JAR org.h2.tools.Script -url $DB_URL -user $DB_USER -passwo
 ##### restore db: #########################
 java -cp $H2_JAR org.h2.tools.RunScript -url "jdbc:h2:tcp://localhost:$DB_PORT/$DB_NAME" -user "$USER" -password "$PASSWORD" -script $PATH_TO_ZIPPED_SCRIPT -options compression zip
 
+##### apply db changes automatically: #########################
+-Dplay.evolutions.db.default.autoApply=true

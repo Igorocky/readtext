@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.dto.Paragraph
 
+// TODO: replace right arrow with three dots
 object ParagraphActionsCmp {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
