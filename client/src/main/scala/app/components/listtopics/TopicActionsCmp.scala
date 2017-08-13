@@ -6,7 +6,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.dto.Topic
 
-// TODO: replace right arrow with three dots
 object TopicActionsCmp {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
@@ -53,7 +52,7 @@ object TopicActionsCmp {
     def showAllActionsButton(implicit p: Props) = buttonWithIcon(
       onClick = $.modState(_.copy(hidden = false)),
       btnType = BTN_INFO,
-      iconType = "fa-arrow-right"
+      iconType = "fa-ellipsis-h"
     )
 
     def hideAllActionsButton(implicit p: Props) = buttonWithIcon(
