@@ -44,14 +44,6 @@ object TypeConversions {
     answerType => answerType.id,
     id => AnswerTypes.allElems.find(_.id == id).get
   )
-  implicit val easinessColumnType = MappedColumnType.base[Easiness, Int](
-    easiness => easiness.level,
-    level => EasinessLevels.allElems.find(_.level == level).get
-  )
-  implicit val scoreColumnType = MappedColumnType.base[Score, Int](
-    score => score.level,
-    level => ScoreLevels.allElems.find(_.level == level).get
-  )
   implicit val zdtColumnType = MappedColumnType.base[ZonedDateTime, Timestamp](
     zdt => new Timestamp(zdt.withZoneSameInstant(ZoneOffset.UTC).toEpochSecond*1000),
     ts => ZonedDateTime.ofInstant(ts.toInstant, ZoneOffset.UTC)
@@ -146,25 +138,23 @@ class ImageQATable(tag: Tag) extends Table[ImageQA](tag, "TOPIC_ANSWERS") {
 
 class TopicHistoryTable(tag: Tag) extends Table[TopicHistoryRecord](tag, "TOPIC_HISTORY_RECORDS") {
   def topicId = column[Long]("topicId")
-  def easiness = column[Easiness]("easiness")
-  def score = column[Score]("score")
+  def score = column[Long]("score")
   def time = column[ZonedDateTime]("time")
 
   def pk = primaryKey("TOPIC_HIST_REC_PK", (topicId, time))
   def topic = foreignKey("TOPIC_HIST_REC_2_TOPIC_FK", topicId, Tables.topicTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (topicId, easiness, score, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
+  def * = (topicId, score, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
 }
 
 class TopicStateTable(tag: Tag) extends Table[TopicHistoryRecord](tag, "TOPIC_LEARN_STATE") {
   def topicId = column[Long]("topicId", O.PrimaryKey)
-  def easiness = column[Easiness]("easiness")
-  def score = column[Score]("score")
+  def score = column[Long]("score")
   def time = column[ZonedDateTime]("time")
 
   def topic = foreignKey("TOPIC_STATE_2_TOPIC_FK", topicId, Tables.topicTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (topicId, easiness, score, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
+  def * = (topicId, score, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
 }
 
 

@@ -27,13 +27,12 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       case poolId => for {
         topics <- loadTopicsRecursively(poolId)
       } yield topics.map{
-        case (topic, None) => TopicState(topic.id.get, EasinessLevels.EASY, ScoreLevels.EXCELLENT, None, "")
+        case (topic, None) => TopicState(topicId = topic.id.get, score = 0, time = None, duration = "")
         case (topic, Some(r)) => TopicState(
-          topic.id.get,
-          r.easiness,
-          r.score,
-          Some(r.time.toString),
-          calcDuration(
+          topicId = topic.id.get,
+          score = r.score,
+          time = Some(r.time.toString),
+          duration = calcDuration(
             timeInPast = r.time,
             currTime = ZonedDateTime.now()
           )
@@ -41,8 +40,8 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       }
     }
 
-    .addHandler(forMethod3(_.updateCardState)) {
-      case (cardId, easiness, score) => updateTopicState(cardId, easiness, score)
+    .addHandler(forMethod2(_.updateCardState)) {
+      case (cardId, score) => updateTopicState(cardId, score)
     }
 
     .addHandler(forMethod(_.loadTopic)) {
@@ -51,8 +50,8 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       )
     }
 
-  protected[controllers] def updateTopicState(topicId: Long, easiness: Easiness, score: Score): Future[Unit] = {
-    val historyRecord = TopicHistoryRecord(topicId = topicId, easiness = easiness, score = score)
+  protected[controllers] def updateTopicState(topicId: Long, score: Long): Future[Unit] = {
+    val historyRecord = TopicHistoryRecord(topicId = topicId, score = score)
     db.run(DBIO.seq(
       topicHistoryTable += historyRecord,
       topicStateTable.insertOrUpdate(historyRecord)

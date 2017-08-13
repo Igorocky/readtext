@@ -4,6 +4,6 @@ import shared.dto._
 
 trait CardsApi {
   def loadCardStates(poolId: Long): List[TopicState]
-  def updateCardState(cardId: Long, easiness: Easiness, score: Score): Unit
+  def updateCardState(cardId: Long, score: Long): Unit
   def loadTopic(cardId: Long): Topic
 }

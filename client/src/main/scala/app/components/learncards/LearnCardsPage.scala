@@ -7,8 +7,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import shared.SharedConstants._
-import shared.dto.TopicHistoryRecordUtils._
-import shared.dto.{Easiness, Score, TopicState}
+import shared.dto.TopicState
 import shared.pageparams.LearnCardsPageParams
 import upickle.default._
 
@@ -47,22 +46,21 @@ object LearnCardsPage {
       windowFunc = s,
       content = (if (s.learnCardsPageMem.topicStates.isDefined) {
         <.div(
-          <.div(s"Number of topics: ${s.learnCardsPageMem.topicStates.get.size}, Average score: ${s.learnCardsPageMem.avgScore}"),
+          <.div(s"Number of topics: ${s.learnCardsPageMem.topicStates.get.size}"),
           <.table(^.`class`:=TOPIC_STATUSES_TABLE,
             <.thead(
-              <.th("#"),<.th("Duration"),<.th("Easiness"),<.th("Score"),<.th(""),<.th("Last learned")
+              <.th("#"),<.th("Duration"),<.th("Score"),<.th(""),<.th("Last learned")
             ),
             <.tbody(
               s.learnCardsPageMem.topicStates.get.zipWithIndex.toVdomArray{
-                case (TopicState(id, easiness, score, Some(time), duration), idx) => <.tr(^.key:=id.toString,
+                case (TopicState(id, score, Some(time), duration), idx) => <.tr(^.key:=id.toString,
                   <.td(idx.toString),
                   <.td(duration),
-                  easinessTd(easiness),
-                  scoreTd(score),
+                  <.td(score),
                   <.td(selectButton(id)),
                   <.td(time)
                 )
-                case (TopicState(id, _, _, None, _), idx) => <.tr(^.key:=id.toString,
+                case (TopicState(id, _, None, _), idx) => <.tr(^.key:=id.toString,
                   <.td(idx.toString),
                   <.td(""),
                   <.td(""),
@@ -96,14 +94,6 @@ object LearnCardsPage {
       onClick = s.topicSelected(topicId),
       btnType = BTN_INFO,
       text = "Select"
-    )
-
-    def easinessTd(easiness: Easiness) = <.td(^.`class`:=easinessClass(easiness) + " " + EASINESS_SCORE,
-      easinessStr(easiness)
-    )
-
-    def scoreTd(score: Score) = <.td(^.`class`:=scoreClass(score) + " " + EASINESS_SCORE,
-      scoreStr(score)
     )
   }
 }

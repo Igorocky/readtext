@@ -4,7 +4,6 @@ import app.WsClient
 import app.components.WindowFunc
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import shared.api.CardsApi
-import shared.dto.{Easiness, Score}
 import shared.pageparams.LearnCardsPageParams
 
 trait LearnCardsPageContext {
@@ -21,15 +20,12 @@ trait LearnCardsPageContext {
   def loadCardStates = wsClient.post(_.loadCardStates(pageParams.paragraphId), windowFunc.showError) {
     case topicStates => mod(_.copy(
       topic = None,
-      topicStates = Some(topicStates),
-      avgScore = topicStates
-        .map(st => if (st.time.isDefined) st.score.level else 0)
-        .map(s => s*100/3.0).sum / topicStates.size
+      topicStates = Some(topicStates)
     ))
   }
 
-  def scoreSelected(topicId: Long)(easiness: Easiness, score: Score) = windowFunc.openWaitPane >>
-    wsClient.post(_.updateCardState(topicId, easiness, score), windowFunc.showError) { _ =>
+  def scoreSelected(topicId: Long)(score: Long) = windowFunc.openWaitPane >>
+    wsClient.post(_.updateCardState(topicId, score), windowFunc.showError) { _ =>
       loadCardStates >> windowFunc.closeWaitPane
     }
 

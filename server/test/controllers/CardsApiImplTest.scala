@@ -4,8 +4,6 @@ import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
 
 import db.Tables._
 import db.{DaoCommon, DbTestHelperWithTables}
-import shared.dto.EasinessLevels._
-import shared.dto.ScoreLevels._
 import shared.dto._
 import slick.jdbc.H2Profile.api._
 
@@ -43,11 +41,11 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     topicStateTable.filter(_.topicId === topicId).result
   ).futureValue
 
-  def setTopicState(topicId: Long, easiness: Easiness, score: Score, time: ZonedDateTime) = db.run(
+  def setTopicState(topicId: Long, score: Long, time: ZonedDateTime) = db.run(
     topicStateTable += TopicHistoryRecord(
       topicId = topicId,
       time = time,
-      easiness = easiness, score = score
+      score = score
     )
   ).futureValue
 
@@ -101,7 +99,7 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val t8 = loadTopics("t8").head
     val timeZone = ZoneId.of("America/Anchorage")
     val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
-    setTopicState(t8.id.get, EASY, EXCELLENT, time)
+    setTopicState(t8.id.get, 100, time)
 
     val p9 = loadParagraphs("p9").head
 
@@ -112,8 +110,7 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     histRec.copy(time = histRec.time.withZoneSameInstant(timeZone)) should be(TopicHistoryRecord(
       topicId = t8.id.get,
       time = time,
-      easiness = EASY,
-      score = EXCELLENT
+      score = 100
     ))
   }
 
@@ -150,9 +147,9 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val t10 = loadTopics("t10").head
     val timeZone = ZoneOffset.UTC
     val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
-    setTopicState(t8.id.get, EASY, EXCELLENT, time)
-    setTopicState(t9.id.get, EASY, EXCELLENT, time.minusMinutes(5))
-    setTopicState(t10.id.get, EASY, EXCELLENT, time.plusMinutes(3))
+    setTopicState(t8.id.get, 100, time)
+    setTopicState(t9.id.get, 100, time.minusMinutes(5))
+    setTopicState(t10.id.get, 100, time.plusMinutes(3))
 
     val p4 = loadParagraphs("p4").head
 
@@ -174,22 +171,22 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     loadTopicHistory(t8.id.get).isEmpty should be(true)
 
     //when
-    cardsApiImpl.updateTopicState(t8.id.get, HARD, POOR).futureValue
+    cardsApiImpl.updateTopicState(t8.id.get, 100).futureValue
     Thread.sleep(1000)
 
     //then
     val hist1 = loadTopicHistory(t8.id.get)
     hist1.size should be(1)
-    hist1.exists(r => r.easiness == HARD && r.score == POOR) should be(true)
+    hist1.exists(r => r.score == 100) should be(true)
 
     //when
-    cardsApiImpl.updateTopicState(t8.id.get, MEDIUM, GOOD).futureValue
+    cardsApiImpl.updateTopicState(t8.id.get, 200).futureValue
 
     //then
     val hist2 = loadTopicHistory(t8.id.get)
     hist2.size should be(2)
-    hist2.exists(r => r.easiness == HARD && r.score == POOR) should be(true)
-    hist2.exists(r => r.easiness == MEDIUM && r.score == GOOD) should be(true)
+    hist2.exists(r => r.score == 100) should be(true)
+    hist2.exists(r => r.score == 200) should be(true)
   }
 
   "updateTopicState should update record in topic state table" in {
@@ -203,21 +200,21 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     loadTopicState(t8.id.get).isEmpty should be(true)
 
     //when
-    cardsApiImpl.updateTopicState(t8.id.get, HARD, POOR).futureValue
+    cardsApiImpl.updateTopicState(t8.id.get, 100).futureValue
     Thread.sleep(1000)
 
     //then
     val state1 = loadTopicState(t8.id.get)
     state1.size should be(1)
-    state1.exists(r => r.easiness == HARD && r.score == POOR) should be(true)
+    state1.exists(r => r.score == 100) should be(true)
 
     //when
-    cardsApiImpl.updateTopicState(t8.id.get, MEDIUM, GOOD).futureValue
+    cardsApiImpl.updateTopicState(t8.id.get, 200).futureValue
 
     //then
     val state2 = loadTopicState(t8.id.get)
     state2.size should be(1)
-    state2.exists(r => r.easiness == MEDIUM && r.score == GOOD) should be(true)
+    state2.exists(r => r.score == 200) should be(true)
   }
 
   "calcDuration should produce correct output" in {
