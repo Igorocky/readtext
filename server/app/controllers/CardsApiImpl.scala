@@ -80,6 +80,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
   private val SECONDS_IN_MINUTE = 60
   private val SECONDS_IN_HOUR = SECONDS_IN_MINUTE * MINUTES_IN_HOUR
   private val SECONDS_IN_DAY = SECONDS_IN_HOUR * HOURS_IN_DAY
+  private val SECONDS_IN_MONTH = SECONDS_IN_DAY * 30
   protected[controllers] def calcDuration(timeInPast: ZonedDateTime, currTime: ZonedDateTime): String = {
     val dur = Duration.between(timeInPast, currTime)
     val days = dur.getSeconds / SECONDS_IN_DAY
@@ -97,4 +98,18 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       s"${seconds}s"
     }
   }
+
+  protected[controllers] def strToDuration(str: String): Duration = Duration.ofSeconds(
+    str.trim.split("""\s+""")
+      .map(part => (part.substring(0, part.length - 1), part.charAt(part.length - 1)))
+      .groupBy(_._2)
+      .mapValues(_.map(_._1.toLong).sum)
+      .map {
+        case ('s', n) => n
+        case ('m', n) => n * SECONDS_IN_MINUTE
+        case ('h', n) => n * SECONDS_IN_HOUR
+        case ('d', n) => n * SECONDS_IN_DAY
+        case ('M', n) => n * SECONDS_IN_MONTH
+      }.sum
+  )
 }

@@ -257,4 +257,16 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     currenTime = ZonedDateTime.of(2017, 8, 6, 12, 50, 6, 0, ZoneId.of("Europe/Paris"))
     cardsApiImpl.calcDuration(timeInPast, currenTime) should be("1H 2m")
   }
+
+  "strToDuration should produce correct output" in {
+    cardsApiImpl.strToDuration("5s").getSeconds should be(5)
+    cardsApiImpl.strToDuration("6m").getSeconds should be(6*60)
+    cardsApiImpl.strToDuration("2h").getSeconds should be(2*60*60)
+    cardsApiImpl.strToDuration("3d").getSeconds should be(3*24*60*60)
+    cardsApiImpl.strToDuration("5M").getSeconds should be(5*30*24*60*60)
+
+    cardsApiImpl.strToDuration(" 2M\t18d 11h    37m 8s\r\n").getSeconds should be(
+      2*30*24*60*60 + 18*24*60*60 + 11*60*60 + 37*60 + 8
+    )
+  }
 }
