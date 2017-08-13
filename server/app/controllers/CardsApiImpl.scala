@@ -41,7 +41,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     }
 
     .addHandler(forMethod2(_.updateCardState)) {
-      case (cardId, score) => updateTopicState(cardId, score)
+      case (cardId, score) => updateTopicState(cardId, strToDuration(score).getSeconds)
     }
 
     .addHandler(forMethod(_.loadTopic)) {
@@ -51,7 +51,13 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     }
 
   protected[controllers] def updateTopicState(topicId: Long, score: Long): Future[Unit] = {
-    val historyRecord = TopicHistoryRecord(topicId = topicId, score = score)
+    val historyRecordWithoutActivationTime = TopicHistoryRecord(
+      topicId = topicId,
+      score = score
+    )
+    val historyRecord = historyRecordWithoutActivationTime.copy(
+      activationTime = historyRecordWithoutActivationTime.activationTime.plusSeconds(score)
+    )
     db.run(DBIO.seq(
       topicHistoryTable += historyRecord,
       topicStateTable.insertOrUpdate(historyRecord)
@@ -82,15 +88,18 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
   private val SECONDS_IN_MONTH = SECONDS_IN_DAY * 30
   protected[controllers] def calcDuration(timeInPast: ZonedDateTime, currTime: ZonedDateTime): String = {
     val dur = Duration.between(timeInPast, currTime)
-    val days = dur.getSeconds / SECONDS_IN_DAY
-    val hours = (dur.getSeconds - days * SECONDS_IN_DAY) / SECONDS_IN_HOUR
-    val minutes = (dur.getSeconds - days * SECONDS_IN_DAY - hours * SECONDS_IN_HOUR) / SECONDS_IN_MINUTE
+    val months = dur.getSeconds / SECONDS_IN_MONTH
+    val days = (dur.getSeconds - months * SECONDS_IN_MONTH) / SECONDS_IN_DAY
+    val hours = (dur.getSeconds - months * SECONDS_IN_MONTH - days * SECONDS_IN_DAY) / SECONDS_IN_HOUR
+    val minutes = (dur.getSeconds - months * SECONDS_IN_MONTH - days * SECONDS_IN_DAY - hours * SECONDS_IN_HOUR) / SECONDS_IN_MINUTE
     val seconds = dur.getSeconds % SECONDS_IN_MINUTE
 
-    if (days > 0) {
-      s"${days}D ${hours}H"
+    if (months > 0) {
+      s"${months}M ${days}d"
+    } else if (days > 0) {
+      s"${days}d ${hours}h"
     } else if (hours > 0) {
-      s"${hours}H ${minutes}m"
+      s"${hours}h ${minutes}m"
     } else if (minutes > 0) {
       s"${minutes}m ${seconds}s"
     } else {

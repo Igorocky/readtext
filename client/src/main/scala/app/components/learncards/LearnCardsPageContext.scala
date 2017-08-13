@@ -24,7 +24,7 @@ trait LearnCardsPageContext {
     ))
   }
 
-  def scoreSelected(topicId: Long)(score: Long) = windowFunc.openWaitPane >>
+  def scoreSelected(topicId: Long)(score: String) = windowFunc.openWaitPane >>
     wsClient.post(_.updateCardState(topicId, score), windowFunc.showError) { _ =>
       loadCardStates >> windowFunc.closeWaitPane
     }

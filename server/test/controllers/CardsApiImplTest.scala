@@ -1,6 +1,6 @@
 package controllers
 
-import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{Duration, ZoneId, ZoneOffset, ZonedDateTime}
 
 import db.Tables._
 import db.{DaoCommon, DbTestHelperWithTables}
@@ -41,11 +41,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     topicStateTable.filter(_.topicId === topicId).result
   ).futureValue
 
-  def setTopicState(topicId: Long, score: Long, time: ZonedDateTime) = db.run(
+  def setTopicState(topicId: Long, score: Long, activationTime: ZonedDateTime, time: ZonedDateTime) = db.run(
     topicStateTable += TopicHistoryRecord(
       topicId = topicId,
-      time = time,
-      score = score
+      score = score,
+      activationTime = activationTime,
+      time = time
     )
   ).futureValue
 
@@ -99,7 +100,7 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val t8 = loadTopics("t8").head
     val timeZone = ZoneId.of("America/Anchorage")
     val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
-    setTopicState(t8.id.get, 100, time)
+    setTopicState(t8.id.get, 100, time.plusSeconds(100), time)
 
     val p9 = loadParagraphs("p9").head
 
@@ -107,10 +108,14 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val (_, Some(histRec)) = cardsApiImpl.loadTopicsRecursively(p9.id.get).futureValue.head
 
     //then
-    histRec.copy(time = histRec.time.withZoneSameInstant(timeZone)) should be(TopicHistoryRecord(
+    histRec.copy(
+      time = histRec.time.withZoneSameInstant(timeZone),
+      activationTime = histRec.activationTime.withZoneSameInstant(timeZone)
+    ) should be(TopicHistoryRecord(
       topicId = t8.id.get,
-      time = time,
-      score = 100
+      score = 100,
+      activationTime = time.plusSeconds(100),
+      time = time
     ))
   }
 
@@ -147,9 +152,9 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val t10 = loadTopics("t10").head
     val timeZone = ZoneOffset.UTC
     val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
-    setTopicState(t8.id.get, 100, time)
-    setTopicState(t9.id.get, 100, time.minusMinutes(5))
-    setTopicState(t10.id.get, 100, time.plusMinutes(3))
+    setTopicState(t8.id.get, 100, time.plusSeconds(100), time)
+    setTopicState(t9.id.get, 100, time.plusSeconds(100), time.minusMinutes(5))
+    setTopicState(t10.id.get, 100, time.plusSeconds(100), time.plusMinutes(3))
 
     val p4 = loadParagraphs("p4").head
 
@@ -217,6 +222,23 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     state2.exists(r => r.score == 200) should be(true)
   }
 
+  "updateTopicState should calculate activationTime" in {
+    //given
+    buildTopicTree
+    val t8 = loadTopics("t8").head
+    val timeZone = ZoneOffset.UTC
+    val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
+
+    //when
+    cardsApiImpl.updateTopicState(t8.id.get, 100).futureValue
+
+    //then
+    val Vector(hist) = loadTopicHistory(t8.id.get)
+    Duration.between(hist.time, hist.activationTime).getSeconds should be(100)
+    val Vector(state) = loadTopicState(t8.id.get)
+    Duration.between(state.time, state.activationTime).getSeconds should be(100)
+  }
+
   "calcDuration should produce correct output" in {
     var timeInPast = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, ZoneOffset.UTC)
     var currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, ZoneOffset.UTC)
@@ -236,23 +258,27 @@ class CardsApiImplTest extends DbTestHelperWithTables {
 
     timeInPast = ZonedDateTime.of(2017, 8, 6, 9, 48, 6, 0, ZoneOffset.UTC)
     currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5, 0, ZoneOffset.UTC)
-    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("12H 0m")
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("12h 0m")
 
     timeInPast = ZonedDateTime.of(2017, 8, 6, 9, 48, 5, 0, ZoneOffset.UTC)
     currenTime = ZonedDateTime.of(2017, 8, 6, 21, 49, 5, 0, ZoneOffset.UTC)
-    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("12H 1m")
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("12h 1m")
 
     timeInPast = ZonedDateTime.of(2017, 8, 2, 9, 48, 6, 0, ZoneOffset.UTC)
     currenTime = ZonedDateTime.of(2017, 8, 6, 21, 48, 5, 0, ZoneOffset.UTC)
-    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("4D 11H")
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("4d 11h")
 
     timeInPast = ZonedDateTime.of(2017, 8, 2, 9, 48, 6, 0, ZoneOffset.UTC)
     currenTime = ZonedDateTime.of(2017, 8, 6, 21, 48, 6, 0, ZoneOffset.UTC)
-    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("4D 12H")
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("4d 12h")
+
+    timeInPast = ZonedDateTime.of(2017, 6, 2, 9, 48, 6, 0, ZoneOffset.UTC)
+    currenTime = ZonedDateTime.of(2017, 8, 6, 21, 48, 6, 0, ZoneOffset.UTC)
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("2M 5d")
 
     timeInPast = ZonedDateTime.of(2017, 8, 6, 9, 48, 6, 0, ZoneOffset.UTC)
     currenTime = ZonedDateTime.of(2017, 8, 6, 12, 50, 6, 0, ZoneId.of("Europe/Paris"))
-    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("1H 2m")
+    cardsApiImpl.calcDuration(timeInPast, currenTime) should be("1h 2m")
   }
 
   "strToDuration should produce correct output" in {

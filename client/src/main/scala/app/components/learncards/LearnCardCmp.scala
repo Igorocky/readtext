@@ -1,6 +1,5 @@
 package app.components.learncards
 
-import app.Utils._
 import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
@@ -11,7 +10,7 @@ object LearnCardCmp {
                    ctx: WindowFunc,
                    question: TagMod,
                    answer: TagMod,
-                   scoreSelected: Long => Callback
+                   scoreSelected: String => Callback
                    ) {
     @inline def render = comp.withKey(key)(this)
   }
