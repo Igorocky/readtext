@@ -8,4 +8,6 @@ trait DaoCommonTestHelper extends DbTestHelperWithTables {
   override protected val tables = List(directoryTable, itemTable, hiddenDirectoryTable, taggTable)
 
   val dao = new DaoCommon
+
+  override def localBeforeEach: Unit = ()
 }

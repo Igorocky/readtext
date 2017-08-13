@@ -11,7 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SessionApiImpl @Inject()(implicit private val ec: ExecutionContext) extends RouterBuilderUtils[SessionApi] {
 
   val router: Router = RouterBuilder()
-
+    // TODO: add macros for methods without future
     .addHandlerWithSession(forMethod(_.changeLanguage)) {
       case (session, newLang) => Future.successful((session.copy(language = newLang), ()))
     }

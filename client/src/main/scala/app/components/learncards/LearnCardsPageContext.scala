@@ -17,13 +17,13 @@ trait LearnCardsPageContext {
 
   //actions
 
-  def loadCardStates = wsClient.post(_.loadCardStates(pageParams.paragraphId), windowFunc.showError) {
+  def loadCardStates = Callback.empty/*wsClient.post(_.loadCardStates(pageParams.paragraphId), windowFunc.showError) {
     case topicStates => mod(_.copy(
       topic = None,
       topicStates = Some(topicStates)
     ))
   }
-
+*/
   def scoreSelected(topicId: Long)(score: String) = windowFunc.openWaitPane >>
     wsClient.post(_.updateCardState(topicId, score), windowFunc.showError) { _ =>
       loadCardStates >> windowFunc.closeWaitPane

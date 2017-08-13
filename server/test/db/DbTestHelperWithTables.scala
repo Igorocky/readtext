@@ -13,6 +13,8 @@ trait DbTestHelperWithTables extends DbTestHelper with BeforeAndAfter {
     ).futureValue
   }
 
+  def localBeforeEach
+
   before {
     db.run(
       DBIO.seq(tables.map(_.delete):_*).transactionally
@@ -20,5 +22,6 @@ trait DbTestHelperWithTables extends DbTestHelper with BeforeAndAfter {
     for {t <- tables} {
       db.run(t.length.result).futureValue should be(0)
     }
+    localBeforeEach
   }
 }

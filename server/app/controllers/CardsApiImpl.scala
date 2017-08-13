@@ -1,6 +1,6 @@
 package controllers
 
-import java.time.{Duration, ZonedDateTime}
+import java.time.{Clock, Duration, ZonedDateTime}
 import javax.inject._
 
 import app.RouterBuilderUtils
@@ -16,32 +16,19 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvider,
-                             val dao: DaoCommon
+                             val dao: DaoCommon,
+                             val clock: Clock
                             )(implicit private val ec: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile] with RouterBuilderUtils[CardsApi] {
 
   var questionCnt = 0
 
   val router: Router = RouterBuilder()
     // TODO: use timezone of the user
-    .addHandler(forMethod(_.loadCardStates)) {
-      case poolId => for {
-        topics <- loadTopicsRecursively(poolId)
-      } yield topics.map{
-        case (topic, None) => TopicState(topicId = topic.id.get, score = 0, time = None, duration = "")
-        case (topic, Some(r)) => TopicState(
-          topicId = topic.id.get,
-          score = r.score,
-          time = Some(r.time.toString),
-          duration = calcDuration(
-            timeInPast = r.time,
-            currTime = ZonedDateTime.now()
-          )
-        )
-      }
-    }
+//    .addHandler(forMethod(_.loadCardStates))(loadTopicStates)
+//    .addHandler(("shared.api.CardsApi.loadCardStates", upickle.default.read[Long](_), (a: List[TopicStatePair]) => upickle.default.write(a)(upickle.default.Writer[List[TopicStatePair]])))(loadTopicStates)
 
     .addHandler(forMethod2(_.updateCardState)) {
-      case (cardId, score) => updateTopicState(cardId, strToDuration(score).getSeconds)
+      case (cardId, score) => updateTopicState(cardId, score)
     }
 
     .addHandler(forMethod(_.loadTopic)) {
@@ -50,13 +37,41 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       )
     }
 
+  protected[controllers] def loadTopicStates(paragraphId: Long): Future[List[(Long, Option[TopicState])]] = {
+    val currTime = ZonedDateTime.now(clock)
+    for {
+      topics <- loadTopicsRecursively(paragraphId)
+    } yield topics.map{
+      case (topic, None) => (topic.id.get, None)
+      case (topic, Some(r)) => {
+        val secondsUntilActivation = Duration.between(currTime, r.activationTime).getSeconds
+        val isActive = secondsUntilActivation <= 0
+        (topic.id.get, Some(TopicState(
+          timeOfChange = r.time.toString,
+          lastChangedDuration = calcDuration(
+            timeInPast = r.time,
+            currTime = currTime
+          ),
+          score = secondsDurationToStr(r.score),
+          activationTime = r.activationTime.toString,
+          isActive = isActive,
+          timeLeftUntilActivation = if (!isActive) Some(secondsDurationToStr(secondsUntilActivation)) else None,
+          timePassedAfterActivation = if (isActive) Some(secondsDurationToStr(-secondsUntilActivation)) else None
+        )))
+      }
+    }
+  }
+
+  protected[controllers] def updateTopicState(topicId: Long, score: String): Future[Unit] =
+    updateTopicState(topicId, strToDuration(score).getSeconds)
+
   protected[controllers] def updateTopicState(topicId: Long, score: Long): Future[Unit] = {
-    val historyRecordWithoutActivationTime = TopicHistoryRecord(
+    val currTime = ZonedDateTime.now(clock)
+    val historyRecord = TopicHistoryRecord(
       topicId = topicId,
-      score = score
-    )
-    val historyRecord = historyRecordWithoutActivationTime.copy(
-      activationTime = historyRecordWithoutActivationTime.activationTime.plusSeconds(score)
+      score = score,
+      time = currTime,
+      activationTime = currTime.plusSeconds(score)
     )
     db.run(DBIO.seq(
       topicHistoryTable += historyRecord,
@@ -87,12 +102,15 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
   private val SECONDS_IN_DAY = SECONDS_IN_HOUR * HOURS_IN_DAY
   private val SECONDS_IN_MONTH = SECONDS_IN_DAY * 30
   protected[controllers] def calcDuration(timeInPast: ZonedDateTime, currTime: ZonedDateTime): String = {
-    val dur = Duration.between(timeInPast, currTime)
-    val months = dur.getSeconds / SECONDS_IN_MONTH
-    val days = (dur.getSeconds - months * SECONDS_IN_MONTH) / SECONDS_IN_DAY
-    val hours = (dur.getSeconds - months * SECONDS_IN_MONTH - days * SECONDS_IN_DAY) / SECONDS_IN_HOUR
-    val minutes = (dur.getSeconds - months * SECONDS_IN_MONTH - days * SECONDS_IN_DAY - hours * SECONDS_IN_HOUR) / SECONDS_IN_MINUTE
-    val seconds = dur.getSeconds % SECONDS_IN_MINUTE
+    secondsDurationToStr(Duration.between(timeInPast, currTime).getSeconds)
+  }
+
+  protected[controllers] def secondsDurationToStr(durationSeconds: Long): String = {
+    val months = durationSeconds / SECONDS_IN_MONTH
+    val days = (durationSeconds - months * SECONDS_IN_MONTH) / SECONDS_IN_DAY
+    val hours = (durationSeconds - months * SECONDS_IN_MONTH - days * SECONDS_IN_DAY) / SECONDS_IN_HOUR
+    val minutes = (durationSeconds - months * SECONDS_IN_MONTH - days * SECONDS_IN_DAY - hours * SECONDS_IN_HOUR) / SECONDS_IN_MINUTE
+    val seconds = durationSeconds % SECONDS_IN_MINUTE
 
     if (months > 0) {
       s"${months}M ${days}d"

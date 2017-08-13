@@ -52,7 +52,7 @@ object LearnCardsPage {
               <.th("#"),<.th("Duration"),<.th("Score"),<.th(""),<.th("Last learned")
             ),
             <.tbody(
-              s.learnCardsPageMem.topicStates.get.zipWithIndex.toVdomArray{
+              /*s.learnCardsPageMem.topicStates.get.zipWithIndex.toVdomArray{
                 case (TopicState(id, score, Some(time), duration), idx) => <.tr(^.key:=id.toString,
                   <.td(idx.toString),
                   <.td(duration),
@@ -68,7 +68,7 @@ object LearnCardsPage {
                   <.td(selectButton(id)),
                   <.td("")
                 )
-              }
+              }*/
             )
           )
         )
