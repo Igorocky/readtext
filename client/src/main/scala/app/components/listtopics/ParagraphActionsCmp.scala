@@ -25,22 +25,20 @@ object ParagraphActionsCmp {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    def render(implicit p: Props, s: State) = <.span(
-      if (s.hidden) {
-        showAllActionsButton
-      } else {
-        TagMod(
-          hideAllActionsButton,
-          learnButton,
-          editParagraphButton,
-          createParagraphButton,
-          createTopicButton,
-          moveUpButton,
-          moveDownButton,
-          deleteParagraphButton
-        )
-      }
-    )
+    def render(implicit p: Props, s: State) = if (s.hidden) {
+      <.span(showAllActionsButton)
+    } else {
+      <.div(
+        hideAllActionsButton,
+        learnButton,
+        editParagraphButton,
+        createParagraphButton,
+        createTopicButton,
+        moveUpButton,
+        moveDownButton,
+        deleteParagraphButton
+      )
+    }
 
     def showAllActionsButton(implicit p: Props) = buttonWithIcon(
       onClick = $.modState(_.copy(hidden = false)),

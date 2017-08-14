@@ -22,31 +22,30 @@ object TopicActionsCmp {
     .build
 
   protected class Backend($: BackendScope[Props, State]) {
-    def render(implicit p: Props, s: State) = <.span(
-      if (s.hidden) {
-        showAllActionsButton
-      } else {
-        TagMod(
-          hideAllActionsButton,
-          editTopicButton,
-          moveUpButton,
-          moveDownButton,
-          deleteTopicButton
-        )
-      },
-      TagsCmp.Props(
-        readOnly = s.hidden,
-        ctx = p.ctx,
-        submitFunction = tag => p.ctx.wsClient.post(
-          _.addTagForTopic(tag),
-          th => p.ctx.openOkDialog("Error adding tag: " + th.getMessage)
-        ),
-        entityId = p.topic.id.get,
-        tags = p.topic.tags,
-        tagAdded = p.ctx.tagAdded(p.topic.id.get, _),
-        removeTag = p.ctx.removeTagAction(p.topic.id.get, _)
-      ).render
-    )
+    def render(implicit p: Props, s: State) = if (s.hidden) {
+      <.span(showAllActionsButton)
+    } else {
+      <.div(
+        hideAllActionsButton,
+        editTopicButton,
+        moveUpButton,
+        moveDownButton,
+        deleteTopicButton,
+        TagsCmp.Props(
+          readOnly = s.hidden,
+          ctx = p.ctx,
+          submitFunction = tag => p.ctx.wsClient.post(
+            _.addTagForTopic(tag),
+            th => p.ctx.openOkDialog("Error adding tag: " + th.getMessage)
+          ),
+          entityId = p.topic.id.get,
+          tags = p.topic.tags,
+          tagAdded = p.ctx.tagAdded(p.topic.id.get, _),
+          removeTag = p.ctx.removeTagAction(p.topic.id.get, _)
+        ).render
+      )
+    }
+
 
 
     def showAllActionsButton(implicit p: Props) = buttonWithIcon(
