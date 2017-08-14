@@ -32,6 +32,7 @@ object ListTopicsPage {
           modState = $.modState(_),
           getState = () => $.state,
           wsClient = Utils.createWsClient($.props.wsEntryUrl),
+          cardsClient = Utils.createWsClient($.props.wsEntryUrl),
           sessionWsClient = Utils.createWsClient($.props.wsEntryUrl)
       )}
     }
@@ -83,7 +84,7 @@ object ListTopicsPage {
         )
         case Some(p: Paragraph) => Tree.Props(
           key = "par-" + p.id.get,
-          nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter, node.selected).render),
+          nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter, node.attrs.selected).render),
           mayHaveChildren = true,
           children = node.children.map(_.map(mapMainTopicTree)),
           loadChildren = ctx.loadChildrenIntoMainTopicTree(p.id),
@@ -93,7 +94,7 @@ object ListTopicsPage {
         )
         case Some(t: Topic) => Tree.Props(
           key = "top-" + t.id.get,
-          nodeValue = Some(TopicCmp.Props(ctx, t, node.selected).render),
+          nodeValue = Some(TopicCmp.Props(ctx, t, node.attrs.selected, node.attrs.showImg).render),
           mayHaveChildren = false,
           children = None,
           loadChildren = Callback.empty,

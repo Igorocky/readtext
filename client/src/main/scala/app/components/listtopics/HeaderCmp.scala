@@ -3,7 +3,7 @@ package app.components.listtopics
 import app.Utils._
 import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, CallbackTo, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.dto.Paragraph
 
 object HeaderCmp {
@@ -47,7 +47,7 @@ object HeaderCmp {
                 onClick = p.ctx.openSelectParagraphWindow,
                 btnType = BTN_INFO,
                 text = "Select target",
-                disabled = p.ctx.listTopicsPageMem.topicTree.findNodes(_.selected).isEmpty
+                disabled = p.ctx.listTopicsPageMem.topicTree.findNodes(_.attrs.selected).isEmpty
               ),
               buttonWithText(
                 onClick = p.ctx.cancelSelectMode,

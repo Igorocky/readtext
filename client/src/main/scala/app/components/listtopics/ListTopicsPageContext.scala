@@ -4,7 +4,7 @@ import app.WsClient
 import app.components.WindowFunc
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import org.scalajs.dom.raw.File
-import shared.api.{SessionApi, TopicApi}
+import shared.api.{CardsApi, SessionApi, TopicApi}
 import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
@@ -14,6 +14,7 @@ trait ListTopicsPageContext {
   //abstract members
   protected def modListTopicsPageMem(f: ListTopicsPageMem => ListTopicsPageMem): CallbackTo[ListTopicsPageMem]
   val wsClient: WsClient[TopicApi]
+  val cardsClient: WsClient[CardsApi]
   val sessionWsClient: WsClient[SessionApi]
   val pageParams: ListTopicsPageParams
   val listTopicsPageMem: ListTopicsPageMem
@@ -107,20 +108,20 @@ trait ListTopicsPageContext {
     )
   }
 
-  def gotoSelectMode = mod(m => m.copy(selectMode = true, topicTree = m.topicTree.modNode(_.selected, _.copy(selected = false))))
+  def gotoSelectMode = mod(m => m.copy(selectMode = true, topicTree = m.topicTree.modNode(_.attrs.selected, _.changeAttrs(_.copy(selected = false)))))
   def cancelSelectMode = closeSelectParagraphWindow >> mod(_.copy(selectMode = false))
   def selectTopicAction(id: Long, selected: Boolean): Callback = mod(_.changeTopicTree(_.selectTopic(id, selected)))
   def selectParagraphAction(id: Long, selected: Boolean): Callback = mod(_.changeTopicTree(_.selectParagraph(Some(id), selected)))
   def selectParagraphInDialogAction(id: Option[Long]): Callback = mod(_.changeSelectParagraphTree(
-    _.modNode(_.selected, _.copy(selected = false)).selectParagraph(id, true)
+    _.modNode(_.attrs.selected, _.changeAttrs(_.copy(selected = false))).selectParagraph(id, true)
   ))
   def openSelectParagraphWindow = mod(mem => mem.copy(
     selectedParagraphs = mem.topicTree.findNodes {
-      case TopicTree(Some(p: Paragraph), _, true) => true
+      case TopicTree(Some(p: Paragraph), _, attrs) => attrs.selected
       case _ => false
     }.map(_.value.get.asInstanceOf[Paragraph].id.get),
     selectedTopics = mem.topicTree.findNodes {
-      case TopicTree(Some(t: Topic), _, true) => true
+      case TopicTree(Some(t: Topic), _, attrs) => attrs.selected
       case _ => false
     }.map(_.value.get.asInstanceOf[Topic].id.get)
   )) >> mod(mem => mem.copy(
@@ -129,7 +130,7 @@ trait ListTopicsPageContext {
   ))
   def closeSelectParagraphWindow = mod(_.copy(selectParagraphTree = None, selectedParagraphs = Nil))
   def moveSelectedItems = action{mem=>
-    val destParId = mem.selectParagraphTree.get.findNodes(_.selected).head
+    val destParId = mem.selectParagraphTree.get.findNodes(_.attrs.selected).head
       .value.get.asInstanceOf[Paragraph].id
     windowFunc.openWaitPane >>
       wsClient.post(_.changeParagraphsParent(mem.selectedParagraphs, destParId), windowFunc.showError) {_=>
@@ -147,6 +148,16 @@ trait ListTopicsPageContext {
           }) >> cancelSelectMode >> windowFunc.closeWaitPane
       }
   }
+
+  def topicStateUpdated(topicId: Long) = showTopicImgBtnClicked(topicId, Some(false))
+  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None) = mod(mem => mem.copy(
+    topicTree = mem.topicTree.modNode(
+      mem.topicTree.topicSelector(topicId),
+      topicNode => topicNode.changeAttrs(
+        _.copy(showImg = newValue.getOrElse(!topicNode.attrs.showImg))
+      )
+    )
+  ))
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void

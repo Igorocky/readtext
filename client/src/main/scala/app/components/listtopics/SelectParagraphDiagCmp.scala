@@ -33,7 +33,7 @@ object SelectParagraphDiagCmp {
               onClick = p.ctx.moveSelectedItems,
               btnType = BTN_INFO,
               text = "Move",
-              disabled = paragraphTree.findNodes(_.selected).isEmpty
+              disabled = paragraphTree.findNodes(_.attrs.selected).isEmpty
             ),
             buttonWithText(
               onClick = p.ctx.closeSelectParagraphWindow,
@@ -64,7 +64,7 @@ object SelectParagraphDiagCmp {
         )
         case Some(p: Paragraph) if p.id == None => Tree.Props(
           key = "rootNode",
-          nodeValue = Some(drawParagraph(p.name, p.id, node.selected)),
+          nodeValue = Some(drawParagraph(p.name, p.id, node.attrs.selected)),
           mayHaveChildren = true,
           children = node.children.map(
             _.filterNot{
@@ -79,7 +79,7 @@ object SelectParagraphDiagCmp {
         )
         case Some(p: Paragraph) => Tree.Props(
           key = "par-" + p.id.get,
-          nodeValue = Some(drawParagraph(p.name, p.id, node.selected)),
+          nodeValue = Some(drawParagraph(p.name, p.id, node.attrs.selected)),
           mayHaveChildren = true,
           children = node.children.map(_.map(mapSelectParagraphTree)),
           loadChildren = ctx.loadChildrenIntoSelectParagraphTree(p.id),

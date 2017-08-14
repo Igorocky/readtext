@@ -154,6 +154,10 @@ object Css extends StyleSheet.Standalone {
     borderRadius(10 px)
   )
 
+  ".ScoreCmp" - (
+    marginTop(10 px)
+  )
+
   ".TagsCmp > div" - (
     display.inlineBlock
   )

@@ -27,7 +27,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     .addHandler(forMethod(_.loadCardStates))(loadTopicStates)
 
     .addHandler(forMethod2(_.updateCardState)) {
-      case (cardId, score) => updateTopicState(cardId, score)
+      case (cardId, commentAndScore) => updateTopicState(cardId, commentAndScore).map(_ => Right(Unit))
     }
 
     .addHandler(forMethod(_.loadTopic)) {
@@ -52,6 +52,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
             currTime = currTime
           ),
           score = secondsDurationToStr(r.score),
+          comment = r.comment,
           activationTime = r.activationTime.toString,
           isActive = isActive,
           timeLeftUntilActivation = if (!isActive) Some(secondsDurationToStr(secondsUntilActivation)) else None,
@@ -61,14 +62,18 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     }
   }
 
-  protected[controllers] def updateTopicState(topicId: Long, score: String): Future[Unit] =
-    updateTopicState(topicId, strToDuration(score).getSeconds)
+  protected[controllers] def updateTopicState(topicId: Long, commentAndScore: String): Future[Unit] = {
+    val Array(comment, scoreStr) = commentAndScore.split(";")
+    updateTopicState(topicId, comment, strToDuration(scoreStr).getSeconds)
+  }
 
-  protected[controllers] def updateTopicState(topicId: Long, score: Long): Future[Unit] = {
+
+  protected[controllers] def updateTopicState(topicId: Long, comment: String, score: Long): Future[Unit] = {
     val currTime = ZonedDateTime.now(clock)
     val historyRecord = TopicHistoryRecord(
       topicId = topicId,
       score = score,
+      comment = comment,
       time = currTime,
       activationTime = currTime.plusSeconds(score)
     )

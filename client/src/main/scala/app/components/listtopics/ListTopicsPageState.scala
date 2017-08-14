@@ -4,7 +4,7 @@ import app.WsClient
 import app.components.{WindowFunc, WindowFuncMem}
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import org.scalajs.dom.raw.File
-import shared.api.{SessionApi, TopicApi}
+import shared.api.{CardsApi, SessionApi, TopicApi}
 import shared.messages.Language
 import shared.pageparams.ListTopicsPageParams
 
@@ -13,6 +13,7 @@ case class ListTopicsPageState(modState: (ListTopicsPageState => ListTopicsPageS
                                windowFuncMem: WindowFuncMem = WindowFuncMem(),
                                listTopicsPageMem: ListTopicsPageMem = ListTopicsPageMem(),
                                wsClient: WsClient[TopicApi] = null,
+                               cardsClient: WsClient[CardsApi] = null,
                                sessionWsClient: WsClient[SessionApi] = null,
                                pageParams: ListTopicsPageParams) extends WindowFunc with ListTopicsPageContext {
 

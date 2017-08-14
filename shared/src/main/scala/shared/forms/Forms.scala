@@ -22,4 +22,9 @@ object Forms {
     val value = field(_.value)(nonEmpty)
     end
   }
+
+  lazy val scoreForm = new FormMethods[String] {
+    val value = fieldFromGetterAndSetter("scoreAndComment", s => s, (_:String, v:String) => v)(nonEmpty)
+    end
+  }
 }

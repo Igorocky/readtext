@@ -4,12 +4,17 @@ import shared.dto.{Paragraph, Topic}
 import shared.utils.Utils
 import shared.utils.tree.LazyTreeNodeLike
 
+case class ParTopicAttrs(selected: Boolean = false,
+                         showImg: Boolean = false)
+
 case class TopicTree(value: Option[Any] = None,
                      children: Option[List[TopicTree]] = None,
-                     selected: Boolean = false
+                     attrs: ParTopicAttrs = ParTopicAttrs()
                     ) extends LazyTreeNodeLike[TopicTree] {
   override def setChildren(newChildren: Option[List[TopicTree]]): TopicTree = copy(children = newChildren)
   override def setValue(newValue: Option[Any]): TopicTree = copy(value = newValue)
+
+  def changeAttrs(f: ParTopicAttrs => ParTopicAttrs): TopicTree = copy(attrs = f(attrs))
 
   def addParagraph(paragraph: Paragraph): TopicTree = addChild(
     paragraphSelector(paragraph.paragraphId),
@@ -67,12 +72,12 @@ case class TopicTree(value: Option[Any] = None,
 
   def selectTopic(id: Long, selected: Boolean) = modNode(
     topicSelector(id),
-    _.copy(selected = selected)
+    _.changeAttrs(_.copy(selected = selected))
   )
 
   def selectParagraph(id: Option[Long], selected: Boolean) = modNode(
     paragraphSelector(id),
-    _.copy(selected = selected)
+    _.changeAttrs(_.copy(selected = selected))
   )
 
   def deleteTopic(topId: Long) = removeNode(topicSelector(topId))
@@ -129,5 +134,5 @@ case class TopicTree(value: Option[Any] = None,
       case _ => false
     }
 
-  private def topicSelector(id: Long): TopicTree => Boolean = topicSelector(Some(id))
+  def topicSelector(id: Long): TopicTree => Boolean = topicSelector(Some(id))
 }

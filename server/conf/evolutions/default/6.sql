@@ -6,5 +6,4 @@ alter table "TOPIC_LEARN_STATE" alter column "score" BIGINT NOT NULL;
 
 # --- !Downs
 
---ALTER TABLE TEST DROP COLUMN NAME
 

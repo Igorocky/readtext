@@ -11,11 +11,12 @@ object TopicCmp {
 
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    topic: Topic,
-                   selected: Boolean) {
+                   selected: Boolean,
+                   showImg: Boolean) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
 
-  protected case class State(editMode: Boolean = false, showImg: Boolean = false)
+  protected case class State(editMode: Boolean = false)
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
@@ -25,7 +26,7 @@ object TopicCmp {
           <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
             ^.onClick --> props.ctx.selectTopicAction(props.topic.id.get, !props.selected),
             if (props.ctx.listTopicsPageMem.selectMode) checkboxForTopic(props) else EmptyVdom,
-            showImgButton(props.topic, state, $.modState(_.copy(showImg = !state.showImg))),
+            showImgButton(props.topic, state, props.ctx.showTopicImgBtnClicked(props.topic.id.get)),
             <.span(
               ^.`class`:=HIGHLIGHTED,
               props.topic.title
@@ -36,12 +37,18 @@ object TopicCmp {
               onEdit = $.modState(_.copy(editMode = true))
             ).render
           ),
-          if (state.showImg) {
-            <.div(props.topic.images.toVdomArray { img =>
-              <.div(^.key:= img,
-                <.img(^.src := props.ctx.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img)
-              )
-            })
+          if (props.showImg) {
+            TagMod(
+              ScoreCmp.Props(
+                ctx = props.ctx,
+                entityId = props.topic.id.get
+              ).render,
+              <.div(props.topic.images.toVdomArray { img =>
+                <.div(^.key:= img,
+                  <.img(^.src := props.ctx.pageParams.getTopicImgUrl + "/" + props.topic.id.get + "/" + img)
+                )
+              })
+            )
           } else EmptyVdom
         )
       } else {

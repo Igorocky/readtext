@@ -139,24 +139,26 @@ class ImageQATable(tag: Tag) extends Table[ImageQA](tag, "TOPIC_ANSWERS") {
 class TopicHistoryTable(tag: Tag) extends Table[TopicHistoryRecord](tag, "TOPIC_HISTORY_RECORDS") {
   def topicId = column[Long]("topicId")
   def score = column[Long]("score")
+  def comment = column[String]("comment")
   def activationTime = column[ZonedDateTime]("activationTime")
   def time = column[ZonedDateTime]("time")
 
   def pk = primaryKey("TOPIC_HIST_REC_PK", (topicId, time))
   def topic = foreignKey("TOPIC_HIST_REC_2_TOPIC_FK", topicId, Tables.topicTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (topicId, score, activationTime, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
+  def * = (topicId, score, comment, activationTime, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
 }
 
 class TopicStateTable(tag: Tag) extends Table[TopicHistoryRecord](tag, "TOPIC_LEARN_STATE") {
   def topicId = column[Long]("topicId", O.PrimaryKey)
   def score = column[Long]("score")
+  def comment = column[String]("comment")
   def activationTime = column[ZonedDateTime]("activationTime")
   def time = column[ZonedDateTime]("time")
 
   def topic = foreignKey("TOPIC_STATE_2_TOPIC_FK", topicId, Tables.topicTable)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-  def * = (topicId, score, activationTime, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
+  def * = (topicId, score, comment, activationTime, time) <> (TopicHistoryRecord.tupled, TopicHistoryRecord.unapply)
 }
 
 
