@@ -6,7 +6,7 @@ val projVersion = "1.0-SNAPSHOT"
 
 val scalaV = "2.11.8"
 lazy val scalaTestVersion = "3.0.1"
-lazy val upickleVersion = "0.4.3"
+lazy val upickleVersion = "0.4.4"
 
 lazy val server = (project in file("server")).settings(
   name := """readtext""",
@@ -59,9 +59,7 @@ lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
   settings(
     scalaVersion := scalaV,
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % upickleVersion
-
-      ,"org.scalatest" %%% "scalatest" % scalaTestVersion % Test
+      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   ).jsConfigure(_ enablePlugins ScalaJSWeb)
 

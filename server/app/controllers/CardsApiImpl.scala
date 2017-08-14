@@ -24,8 +24,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
 
   val router: Router = RouterBuilder()
     // TODO: use timezone of the user
-//    .addHandler(forMethod(_.loadCardStates))(loadTopicStates)
-//    .addHandler(("shared.api.CardsApi.loadCardStates", upickle.default.read[Long](_), (a: List[TopicStatePair]) => upickle.default.write(a)(upickle.default.Writer[List[TopicStatePair]])))(loadTopicStates)
+    .addHandler(forMethod(_.loadCardStates))(loadTopicStates)
 
     .addHandler(forMethod2(_.updateCardState)) {
       case (cardId, score) => updateTopicState(cardId, score)
