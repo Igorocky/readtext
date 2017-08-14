@@ -20,9 +20,10 @@ object SharedConstants {
   final val PARAGRAPH_NAME = "paragraph-name"
   final val SELECTED_PARAGRAPH = "selected-paragraph"
 
-  final val TREE_NODE_VALUE_WRAPPER = "tree-node-value-wrapper"
+  final val TREE_TD_EXPAND_BUTTON = "tree-td-expand-button"
   final val TREE_NODE_VALUE = "tree-node-value"
   final val TREE_NODE_CHILDREN = "tree-node-children"
+  final val MAIN_TOPIC_TREE = "main_topic_tree"
 
   final val REM_TAG_BTN = "rem-tag-btn"
   final val TAG_TEXT = "tag-text"

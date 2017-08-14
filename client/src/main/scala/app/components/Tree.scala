@@ -5,10 +5,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.SharedConstants._
 
-// TODO: align expand button and node value text
 object Tree {
 
   case class Props(key: String,
+                   outerClass: Option[String] = None,
                              nodeValue: Option[VdomElement],
                              mayHaveChildren: Boolean,
                              children: Option[List[Props]],
@@ -29,17 +29,23 @@ object Tree {
     ).build
 
   protected class Backend($: BackendScope[Props, State]) {
-    def render(implicit props: Props, state: State) = <.div(
-      ^.`class` := Tree.getClass.getSimpleName,
-      props.nodeValue.whenDefined(nodeValue =>
-        <.div(^.`class` := TREE_NODE_VALUE_WRAPPER,
-          if (props.mayHaveChildren) expandCollapseButton else EmptyVdom,
-          <.div(^.`class`:=TREE_NODE_VALUE, nodeValue)
+    def render(implicit props: Props, state: State) = <.table(
+      ^.`class` := Tree.getClass.getSimpleName + props.outerClass.map(" " + _).getOrElse(""),
+      <.tbody(<.tr(
+        if (props.mayHaveChildren && props.nodeValue.isDefined)
+          <.td(^.`class`:=TREE_TD_EXPAND_BUTTON, expandCollapseButton)
+        else
+          EmptyVdom,
+        <.td(
+          props.nodeValue.whenDefined(nodeValue =>
+            <.div(^.`class`:=TREE_NODE_VALUE, nodeValue)
+          ),
+          if (props.mayHaveChildren && isExpanded) {
+            <.div(^.`class`:=TREE_NODE_CHILDREN, renderChildren)
+          } else EmptyVdom
         )
-      ),
-      if (props.mayHaveChildren && isExpanded) {
-        <.div(^.`class`:=TREE_NODE_CHILDREN, renderChildren)
-      } else EmptyVdom
+      )
+      )
     )
 
     def isExpanded(implicit props: Props, state: State): Boolean =

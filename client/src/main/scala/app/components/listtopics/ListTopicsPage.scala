@@ -7,6 +7,7 @@ import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.ClipboardEvent
+import shared.SharedConstants._
 import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
@@ -77,7 +78,8 @@ object ListTopicsPage {
           loadChildren = ctx.loadChildrenIntoMainTopicTree(None),
           expanded = Some(true),
           onExpand = Callback.empty,
-          onCollapse = Callback.empty
+          onCollapse = Callback.empty,
+          outerClass = Some(MAIN_TOPIC_TREE)
         )
         case Some(p: Paragraph) => Tree.Props(
           key = "par-" + p.id.get,

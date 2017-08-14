@@ -182,12 +182,16 @@ object Css extends StyleSheet.Standalone {
     )
   )
 
-  s".$TREE_NODE_VALUE" - (
-    display.inlineBlock
+  s".$TREE_TD_EXPAND_BUTTON" - (
+    verticalAlign.top
   )
 
-  s".$TREE_NODE_CHILDREN" - (
-    marginLeft(30 px)
+  s".$MAIN_TOPIC_TREE .$TREE_TD_EXPAND_BUTTON" - (
+    paddingTop(18 px)
+  )
+
+  s".$TREE_NODE_VALUE" - (
+    display.inlineBlock
   )
 
   ".topic-statuses-table, .topic-statuses-table td, .topic-statuses-table th" - (

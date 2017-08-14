@@ -35,7 +35,7 @@ object ParagraphForm {
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         beforeSubmit = props.ctx.openWaitPane,
         submitFunction = props.submitFunction,
-        onSubmitSuccess = props.submitComplete,
+        onSubmitSuccess = paragraph => props.ctx.closeWaitPane >> props.submitComplete(paragraph),
         onSubmitFormCheckFailure = props.ctx.closeWaitPane,
         editMode = props.editMode
       )
