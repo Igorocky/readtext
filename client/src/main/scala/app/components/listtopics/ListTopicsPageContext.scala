@@ -149,15 +149,26 @@ trait ListTopicsPageContext {
       }
   }
 
-  def topicStateUpdated(topicId: Long) = showTopicImgBtnClicked(topicId, Some(false))
-  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None) = mod(mem => mem.copy(
+  private def modTopicAttribute(topicId: Long, f: ParTopicAttrs => ParTopicAttrs) = mod(mem => mem.copy(
     topicTree = mem.topicTree.modNode(
       mem.topicTree.topicSelector(topicId),
-      topicNode => topicNode.changeAttrs(
-        _.copy(showImg = newValue.getOrElse(!topicNode.attrs.showImg))
-      )
+      topicNode => topicNode.changeAttrs(f)
     )
   ))
+
+  def topicStateUpdated(topicId: Long) =
+    showTopicImgBtnClicked(topicId, Some(false)) >>
+    showTopicActions(topicId, false)
+
+  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None) = modTopicAttribute(
+    topicId,
+    attrs => attrs.copy(showImg = newValue.getOrElse(!attrs.showImg))
+  )
+
+  def showTopicActions(topicId: Long, show: Boolean) = modTopicAttribute(
+    topicId,
+    _.copy(actionsHidden = !show)
+  )
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void

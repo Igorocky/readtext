@@ -5,7 +5,8 @@ import shared.utils.Utils
 import shared.utils.tree.LazyTreeNodeLike
 
 case class ParTopicAttrs(selected: Boolean = false,
-                         showImg: Boolean = false)
+                         showImg: Boolean = false,
+                         actionsHidden: Boolean = true)
 
 case class TopicTree(value: Option[Any] = None,
                      children: Option[List[TopicTree]] = None,

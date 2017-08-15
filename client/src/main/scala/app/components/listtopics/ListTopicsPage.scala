@@ -94,7 +94,7 @@ object ListTopicsPage {
         )
         case Some(t: Topic) => Tree.Props(
           key = "top-" + t.id.get,
-          nodeValue = Some(TopicCmp.Props(ctx, t, node.attrs.selected, node.attrs.showImg).render),
+          nodeValue = Some(TopicCmp.Props(ctx, t, node.attrs.selected, node.attrs.showImg, node.attrs.actionsHidden).render),
           mayHaveChildren = false,
           children = None,
           loadChildren = Callback.empty,

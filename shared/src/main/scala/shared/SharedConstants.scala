@@ -33,6 +33,8 @@ object SharedConstants {
 
   final val FILE = "FILE"
 
+  final val TOPIC_HISTORY_TABLE = "topic-history-table"
+
   final val TOPIC_STATUSES_TABLE = "topic-statuses-table"
   final val EASINESS_SCORE = "easiness-score"
   final val EASINESS_EASY = "easiness-easy"

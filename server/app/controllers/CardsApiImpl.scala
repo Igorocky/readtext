@@ -4,7 +4,8 @@ import java.time.{Clock, Duration, ZonedDateTime}
 import javax.inject._
 
 import app.RouterBuilderUtils
-import db.DaoCommon
+import db.{DaoCommon, TypeConversions}
+import TypeConversions._
 import db.Tables._
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import shared.api.CardsApi
@@ -25,6 +26,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
   val router: Router = RouterBuilder()
     // TODO: use timezone of the user
     .addHandler(forMethod(_.loadCardState))(loadTopicState)
+    .addHandler(forMethod(_.loadCardHistory))(loadCardHistory)
 
     .addHandler(forMethod2(_.updateCardState)) {
       case (cardId, commentAndScore) => updateTopicState(cardId, commentAndScore).map(_ => Right(Unit))
@@ -35,6 +37,35 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
         topicTable.filter(_.id === topicId).result.head
       )
     }
+
+  protected[controllers] def loadCardHistory(topicId: Long): Future[List[List[String]]] = {
+    val header = List("Time", "abs. duration", "estimated", "overtime", "comment")
+    db.run(
+      topicHistoryTable.filter(_.topicId === topicId).sortBy(_.time).result
+    )
+      .map(_.map(Some(_)))
+      .map(Seq(None) ++ _)
+      .map(seq => seq zip seq.tail)
+      .map(_.map {
+        case (None, Some(cur)) => List(cur.time.toString, "", "", "", cur.comment)
+        case (Some(prev), Some(cur)) =>
+          val actualDuration = Duration.between(prev.time, cur.time).getSeconds
+          List(
+            cur.time.toString,
+            secondsDurationToStr(actualDuration),
+            secondsDurationToStr(prev.score),
+            calcOvertime(prev.score, actualDuration),
+            cur.comment
+          )
+      })
+      .map(_.toList.reverse)
+      .map(header::_)
+  }
+
+  private def calcOvertime(estimated: Long, actual: Long): String = {
+    val diffAbs = secondsDurationToStr((estimated - actual).abs)
+    (if (actual < estimated) '-' else '+') + diffAbs
+  }
 
   protected[controllers] def loadTopicState(topicId: Long): Future[Option[TopicState]] = {
     val currTime = ZonedDateTime.now(clock)

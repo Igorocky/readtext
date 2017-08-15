@@ -12,7 +12,8 @@ object TopicCmp {
   case class Props(ctx: WindowFunc with ListTopicsPageContext,
                    topic: Topic,
                    selected: Boolean,
-                   showImg: Boolean) {
+                   showImg: Boolean,
+                   actionsHidden: Boolean) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
 
@@ -34,7 +35,8 @@ object TopicCmp {
             TopicActionsCmp.Props(
               ctx = props.ctx,
               topic = props.topic,
-              onEdit = $.modState(_.copy(editMode = true))
+              onEdit = $.modState(_.copy(editMode = true)),
+              actionsHidden = props.actionsHidden
             ).render
           ),
           if (props.showImg) {

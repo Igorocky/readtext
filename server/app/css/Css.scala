@@ -198,7 +198,16 @@ object Css extends StyleSheet.Standalone {
     display.inlineBlock
   )
 
-  ".topic-statuses-table, .topic-statuses-table td, .topic-statuses-table th" - (
+  s".$TOPIC_HISTORY_TABLE, .$TOPIC_HISTORY_TABLE td, .$TOPIC_HISTORY_TABLE th" - (
+    border(1 px, solid, black),
+    borderCollapse.collapse
+  )
+
+  s".$TOPIC_HISTORY_TABLE th, .$TOPIC_HISTORY_TABLE td" - (
+    padding(1 px, 10 px)
+    )
+
+  s".$TOPIC_STATUSES_TABLE, .$TOPIC_STATUSES_TABLE td, .$TOPIC_STATUSES_TABLE th" - (
     border(1 px, solid, black),
     borderCollapse.collapse
   )
