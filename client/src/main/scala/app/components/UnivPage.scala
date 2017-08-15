@@ -109,7 +109,7 @@ trait WindowFunc {
   def openOkCancelDialog(text: String, onOk: Callback, onCancel: Callback): Callback =
     openWaitPane >> mod(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = onCancel))
 
-  def openOkCancelDialog(text: String, onOk: Callback): Callback =
+  def openOkCancelDialog(text: String, onOk: => Callback): Callback =
     openWaitPane >> mod(_.copy(okCancelDiagText = Some(text), onOk = onOk, onCancel = Callback.empty))
 
   def closeOkCancelDialog: Callback =

@@ -1,18 +1,27 @@
 package app.components.listtopics
 
 import app.Utils._
+import app.WsClient
 import app.components.WindowFunc
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.SharedConstants._
+import shared.api.{CardsApi, TopicApi}
 import shared.dto.{Topic, TopicState}
 
 object TopicActionsCmp {
 
-  case class Props(ctx: WindowFunc with ListTopicsPageContext,
+  case class Props(ctx: WindowFunc,
                    topic: Topic,
                    actionsHidden: Boolean,
-                   onEdit: Callback) {
+                   onEdit: Callback,
+                   showTopicActions: (Long, Boolean) => Callback,
+                   cardsClient: WsClient[CardsApi],
+                   moveUpTopicAction: Long => Callback,
+                   moveDownTopicAction: Long => Callback,
+                   topicDeleted: Long => Callback,
+                   wsClient: WsClient[TopicApi],
+                   readOnly: Boolean) {
     @inline def render = comp(this)
   }
 
@@ -40,10 +49,12 @@ object TopicActionsCmp {
       <.div(
         <.div(
           hideAllActionsButton,
-          editTopicButton,
-          moveUpButton,
-          moveDownButton,
-          deleteTopicButton
+          if (!p.readOnly) TagMod(
+            editTopicButton,
+            moveUpButton,
+            moveDownButton,
+            deleteTopicButton
+          ) else EmptyVdom
         ),
         <.div(currTopicSate)
       )
@@ -52,8 +63,8 @@ object TopicActionsCmp {
 
 
     def showAllActionsButton(implicit p: Props) = buttonWithIcon(
-      onClick = p.ctx.showTopicActions(p.topic.id.get, true) >>
-        p.ctx.cardsClient.post(_.loadCardState(p.topic.id.get), p.ctx.showError) (
+      onClick = p.showTopicActions(p.topic.id.get, true) >>
+        p.cardsClient.post(_.loadCardState(p.topic.id.get), p.ctx.showError) (
           st => $.modState(_.copy(currTopicState = Some(st)))
         ),
       btnType = BTN_INFO,
@@ -61,7 +72,7 @@ object TopicActionsCmp {
     )
 
     def hideAllActionsButton(implicit p: Props) = buttonWithIcon(
-      onClick = p.ctx.showTopicActions(p.topic.id.get, false) >> $.modState(_.copy(currTopicState = None, history = None)),
+      onClick = p.showTopicActions(p.topic.id.get, false) >> $.modState(_.copy(currTopicState = None, history = None)),
       btnType = BTN_INFO,
       iconType = "fa-arrow-left"
     )
@@ -73,13 +84,13 @@ object TopicActionsCmp {
     )
 
     def moveUpButton(implicit p: Props) = buttonWithIcon(
-      onClick = p.ctx.moveUpTopicAction(p.topic.id.get),
+      onClick = p.moveUpTopicAction(p.topic.id.get),
       btnType = BTN_INFO,
       iconType = "fa-long-arrow-up"
     )
 
     def moveDownButton(implicit p: Props) = buttonWithIcon(
-      onClick = p.ctx.moveDownTopicAction(p.topic.id.get),
+      onClick = p.moveDownTopicAction(p.topic.id.get),
       btnType = BTN_INFO,
       iconType = "fa-long-arrow-down"
     )
@@ -87,11 +98,11 @@ object TopicActionsCmp {
     def deleteTopicButton(implicit p: Props) = buttonWithIcon(
       onClick = p.ctx.openOkCancelDialog(
         text = s"Delete topic '${p.topic.title}'?",
-        onOk = p.ctx.openWaitPane >> p.ctx.wsClient.post(
+        onOk = p.ctx.openWaitPane >> p.wsClient.post(
           _.deleteTopic(p.topic.id.get),
           th => p.ctx.openOkDialog("Could not delete topic: " + th.getMessage)
         ) {
-          case () => p.ctx.closeWaitPane >> p.ctx.topicDeleted(p.topic.id.get)
+          case () => p.ctx.closeWaitPane >> p.topicDeleted(p.topic.id.get)
         }
       ),
       btnType = BTN_DANGER,
@@ -99,7 +110,7 @@ object TopicActionsCmp {
     )
 
     def showHistoryButton(implicit p: Props, s: State) = buttonWithText(
-      onClick = p.ctx.cardsClient.post(_.loadCardHistory(p.topic.id.get), p.ctx.showError)(
+      onClick = p.cardsClient.post(_.loadCardHistory(p.topic.id.get), p.ctx.showError)(
         hist => $.modState(_.copy(history = Some(hist)))
       ),
       btnType = BTN_INFO,

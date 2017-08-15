@@ -3,8 +3,10 @@ package app.components.listtopics
 import app.components.{Checkbox, WindowFunc}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.raw.File
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, Topic}
+import shared.messages.Language
 
 // TODO: display average score near each paragraph
 // TODO: tags for paragraphs
@@ -13,7 +15,12 @@ object ParagraphCmp {
   case class Props(paragraph: Paragraph,
                    ctx: WindowFunc with ListTopicsPageContext,
                    tagFilter: String,
-                   selected: Boolean) {
+                   selected: Boolean,
+                   language: Language,
+                   uploadTopicFileUrl: String,
+                   getTopicImgUrl: String,
+                   unregisterPasteListener: Long => Callback,
+                   registerPasteListener: (Long, File => Callback) => Callback) {
     @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
   }
 
@@ -102,7 +109,12 @@ object ParagraphCmp {
         submitComplete = topic => closeDiag >> props.ctx.topicCreated(topic),
         textFieldLabel = "New topic:",
         ctx = props.ctx,
-        submitButtonName = "Create"
+        submitButtonName = "Create",
+        language = props.language,
+        uploadTopicFileUrl = props.uploadTopicFileUrl,
+        getTopicImgUrl = props.getTopicImgUrl,
+        unregisterPasteListener = props.unregisterPasteListener,
+        registerPasteListener = props.registerPasteListener
       ).render
 
     def createNewParagraphDiag(implicit p: Props) =

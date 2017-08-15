@@ -8,4 +8,5 @@ trait CardsApi {
   def loadCardHistory(topicId: Long): List[List[String]]
   def updateCardState(cardId: Long, scoreAndComment: String): SubmitResponse[String,Unit]
   def loadTopic(cardId: Long): Topic
+  def loadActiveTopics(paragraphId: Long, activationTimeReduction: Option[String]): List[Topic]
 }

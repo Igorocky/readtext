@@ -156,16 +156,16 @@ trait ListTopicsPageContext {
     )
   ))
 
-  def topicStateUpdated(topicId: Long) =
+  def topicStateUpdated(topicId: Long): CallbackTo[Unit] =
     showTopicImgBtnClicked(topicId, Some(false)) >>
     showTopicActions(topicId, false)
 
-  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None) = modTopicAttribute(
+  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
     topicId,
     attrs => attrs.copy(showImg = newValue.getOrElse(!attrs.showImg))
   )
 
-  def showTopicActions(topicId: Long, show: Boolean) = modTopicAttribute(
+  def showTopicActions(topicId: Long, show: Boolean): Callback = modTopicAttribute(
     topicId,
     _.copy(actionsHidden = !show)
   )

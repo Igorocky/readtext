@@ -1,13 +1,12 @@
 package app.components.learncards
 
 import app.Utils
-import app.Utils.{BTN_INFO, buttonWithText}
 import app.components._
+import app.components.listtopics.TopicCmp
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
-import shared.SharedConstants._
-import shared.dto.TopicState
+import shared.dto.Topic
 import shared.pageparams.LearnCardsPageParams
 import upickle.default._
 
@@ -31,7 +30,7 @@ object LearnCardsPage {
           wsClient = Utils.createWsClient($.props.wsEntryUrl),
           sessionWsClient = Utils.createWsClient($.props.wsEntryUrl)
         ),
-        CallbackTo($.state) >>= (_.loadCardStates)
+        CallbackTo($.state) >>= (_.loadActiveTopics(None))
       )
     }
     .build
@@ -44,56 +43,57 @@ object LearnCardsPage {
       onLanguageChange = newLang => $.modState(_.setLanguage(newLang)),
       windowFuncMem = s.windowFuncMem,
       windowFunc = s,
-      content = (if (s.learnCardsPageMem.topicStates.isDefined) {
+      content = <.div(
+        <.h2(s.pageParams.paragraphTitle),
+        s.learnCardsPageMem.activationTimeReduction.whenDefined("Activation time reduction: " + _),
         <.div(
-          <.div(s"Number of topics: ${s.learnCardsPageMem.topicStates.get.size}"),
-          <.table(^.`class`:=TOPIC_STATUSES_TABLE,
-            <.thead(
-              <.th("#"),<.th("Duration"),<.th("Score"),<.th(""),<.th("Last learned")
-            ),
-            <.tbody(
-              /*s.learnCardsPageMem.topicStates.get.zipWithIndex.toVdomArray{
-                case (TopicState(id, score, Some(time), duration), idx) => <.tr(^.key:=id.toString,
-                  <.td(idx.toString),
-                  <.td(duration),
-                  <.td(score),
-                  <.td(selectButton(id)),
-                  <.td(time)
-                )
-                case (TopicState(id, _, None, _), idx) => <.tr(^.key:=id.toString,
-                  <.td(idx.toString),
-                  <.td(""),
-                  <.td(""),
-                  <.td(""),
-                  <.td(selectButton(id)),
-                  <.td("")
-                )
-              }*/
-            )
-          )
-        )
-      } else if (s.learnCardsPageMem.topic.isDefined) {
-        LearnCardCmp.Props(
-          key = s.learnCardsPageMem.topic.get.id.get.toString,
-          ctx = s,
-          question = <.h2(s.learnCardsPageMem.topic.get.title),
-          answer = <.div(s.learnCardsPageMem.topic.get.images.toVdomArray { img =>
-            <.div(^.key:= img,
-              <.img(^.src := s.pageParams.getTopicImgUrl + "/" + s.learnCardsPageMem.topic.get.id.get + "/" + img)
-            )
-          }),
-          scoreSelected = s.scoreSelected(s.learnCardsPageMem.topic.get.id.get)
-        ).render
-      } else {
-        "Loading..."
-      })
+          TextField.Props(
+            onEnter = str => s.changeActivationTimeReduction(str).map(_ => ""),
+            onEscape = _ => CallbackTo(""),
+            placeholder = "Activation time reduction",
+            width = 300
+          ).render
+        ),
+        if (s.learnCardsPageMem.activeTopics.children.isEmpty) {
+          "Loading..."
+        } else if (s.learnCardsPageMem.activeTopics.children.get.isEmpty) {
+          "No active topics."
+        } else {
+          s.learnCardsPageMem.activeTopics.children.get.toVdomArray{topicNode=>
+            val t = topicNode.value.get.asInstanceOf[Topic]
+            TopicCmp.Props(
+              ctx = s,
+              topic = t,
+              selected = false,
+              showImg = topicNode.attrs.showImg,
+              actionsHidden = topicNode.attrs.actionsHidden,
+              selectTopicAction = (_, _) => Callback.empty,
+              selectMode = false,
+              showTopicImgBtnClicked = s.showTopicImgBtnClicked(t.id.get),
+              getTopicImgUrl = s.pageParams.getTopicImgUrl,
+              wsClient = null/*new WsClient[TopicApi] {
+                override def doCall[O](path: String, dataStr: String, reader: (String) => O, errHnd: (Throwable) => Callback): (O => Callback) => Callback = {
+                  println(s"PATH = '$path'")
+                  oc => Callback.empty
+                }
+              }*/,
+              topicUpdated = _ => Callback.empty,
+              showTopicActions = s.showTopicActions,
+              cardsClient = s.wsClient,
+              moveUpTopicAction = _ => Callback.empty,
+              moveDownTopicAction = _ => Callback.empty,
+              topicDeleted = _ => Callback.empty,
+              language = s.pageParams.headerParams.language,
+              uploadTopicFileUrl = null,
+              unregisterPasteListener = _ => Callback.empty,
+              registerPasteListener = (_,_) => Callback.empty,
+              topicStateUpdated = _ => s.loadActiveTopics(s.learnCardsPageMem.activationTimeReduction),
+              readOnly = true
+            ).render
+          }
+        }
+      )
     ).render
 
-
-    def selectButton(topicId: Long)(implicit s: State) = buttonWithText(
-      onClick = s.topicSelected(topicId),
-      btnType = BTN_INFO,
-      text = "Select"
-    )
   }
 }

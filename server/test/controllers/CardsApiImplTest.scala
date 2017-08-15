@@ -81,8 +81,8 @@ class CardsApiImplTest extends DbTestHelperWithTables {
      |  |  |  +--t1
      |  |  |  +--t2
      |  |  +--p12
-     |  |  |  +--t3
-     |  |  |  +--t4
+     |  |     +--t3
+     |  |     +--t4
      |  +--p6
      |  |  +--p13
      |  |     +--t5
@@ -166,26 +166,6 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val names = db.run(topicTable.filter(_.id inSet(topicIds)).map(_.title).result).futureValue
     names.size should be(3)
     names.toSet should be(Set("t10","t8","t9"))
-  }
-  "loadTopicCurrHistRecs should return topics sorted by time in asc order" in {
-    //given
-    buildTopicTree
-    val t8 = loadTopics("t8").head
-    val t9 = loadTopics("t9").head
-    val t10 = loadTopics("t10").head
-    val timeZone = ZoneOffset.UTC
-    val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
-    setTopicState(t8.id.get, 100, time.plusSeconds(100), time)
-    setTopicState(t9.id.get, 100, time.plusSeconds(100), time.minusMinutes(5))
-    setTopicState(t10.id.get, 100, time.plusSeconds(100), time.plusMinutes(3))
-
-    val topicIds = loadTopics("t9", "t8", "t10").map(_.id.get)
-
-    //when
-    val topics = cardsApiImpl.loadTopicCurrHistRecs(topicIds).futureValue.map(_._1.title)
-
-    //then
-    topics should be(List("t9","t8","t10"))
   }
 
   "updateTopicState should append records to history table" in {
@@ -461,5 +441,85 @@ class CardsApiImplTest extends DbTestHelperWithTables {
 
     //then
     state.comment should be("cmm mt 12344 56 7sdf g dsfg")
+  }
+
+  "loadActiveTopics should return active topics" in {
+    //given
+    buildTopicTree
+    val p11 = loadParagraphs("p11").head.id.get
+    val t1 = loadTopics("t1").head.id.get
+    val t2 = loadTopics("t2").head.id.get
+    cardsApiImpl.updateTopicState(t1, ";4h")
+    cardsApiImpl.updateTopicState(t2, ";8h")
+    clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("4h 1m").getSeconds))
+
+    //when
+    val topics = cardsApiImpl.loadActiveTopics(p11, None).futureValue
+
+    //then
+    topics.size should be(1)
+    topics.head.title should be("t1")
+  }
+  "loadActiveTopics should not return inactive topics" in {
+    //given
+    buildTopicTree
+    val p11 = loadParagraphs("p11").head.id.get
+    val t1 = loadTopics("t1").head.id.get
+    val t2 = loadTopics("t2").head.id.get
+    cardsApiImpl.updateTopicState(t1, ";4h")
+    cardsApiImpl.updateTopicState(t2, ";8h")
+    clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("3h 1m").getSeconds))
+
+    //when
+    val topics = cardsApiImpl.loadActiveTopics(p11, None).futureValue
+
+    //then
+    topics.isEmpty should be(true)
+  }
+  "loadActiveTopics should take into account activationTimeReduction" in {
+    //given
+    buildTopicTree
+    val p11 = loadParagraphs("p11").head.id.get
+    val t1 = loadTopics("t1").head.id.get
+    val t2 = loadTopics("t2").head.id.get
+    cardsApiImpl.updateTopicState(t1, ";4h")
+    cardsApiImpl.updateTopicState(t2, ";8h")
+    clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("3h 1m").getSeconds))
+
+    //when
+    val topics = cardsApiImpl.loadActiveTopics(p11, Some("1d")).futureValue
+
+    //then
+    topics.size should be(2)
+  }
+  "loadActiveTopics should return topics sorted by overtime" in {
+    //given
+    buildTopicTree
+    val p5 = loadParagraphs("p5").head.id.get
+    val t1 = loadTopics("t1").head.id.get
+    val t2 = loadTopics("t2").head.id.get
+    val t3 = loadTopics("t3").head.id.get
+    val t4 = loadTopics("t4").head.id.get
+    cardsApiImpl.updateTopicState(t1, ";8h")
+    cardsApiImpl.updateTopicState(t2, ";4h")
+    cardsApiImpl.updateTopicState(t3, ";5h")
+    cardsApiImpl.updateTopicState(t4, ";1h")
+
+    //when
+    val topics = cardsApiImpl.loadActiveTopics(p5, Some("1d")).futureValue
+
+    //then
+    topics.map(_.title) should be(List("t4", "t2", "t3", "t1"))
+  }
+  "loadActiveTopics should not return topics without history" in {
+    //given
+    buildTopicTree
+    val p11 = loadParagraphs("p11").head.id.get
+
+    //when
+    val topics = cardsApiImpl.loadActiveTopics(p11, Some("1d")).futureValue
+
+    //then
+    topics.isEmpty should be(true)
   }
 }

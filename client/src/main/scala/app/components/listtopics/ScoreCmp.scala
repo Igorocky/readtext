@@ -1,15 +1,21 @@
 package app.components.listtopics
 
+import app.WsClient
 import app.components.WindowFunc
 import app.components.forms.{FormCommonParams, FormTextField}
-import japgolly.scalajs.react.ScalaComponent
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import shared.api.CardsApi
 import shared.forms.{FormData, Forms}
+import shared.messages.Language
 
 object ScoreCmp {
 
-  case class Props(ctx: WindowFunc with ListTopicsPageContext,
-                   entityId: Long) {
+  case class Props(ctx: WindowFunc,
+                   entityId: Long,
+                   language: Language,
+                   topicStateUpdated: Long => Callback,
+                   cardsClient: WsClient[CardsApi]) {
     @inline def render = comp(this)
   }
 
@@ -17,7 +23,7 @@ object ScoreCmp {
 
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
-    .initialStateFromProps(p => State(FormData(p.ctx.language, "")))
+    .initialStateFromProps(p => State(FormData(p.language, "")))
     .renderPS{ ($,props,state) =>
       val formMethods = Forms.scoreForm
       implicit val fParams = FormCommonParams[String, Unit](
@@ -25,12 +31,12 @@ object ScoreCmp {
         formMethods = formMethods,
         onChange = fd => $.modState(_.copy(formData = fd)).map(_ => fd),
         beforeSubmit = props.ctx.openWaitPane,
-        submitFunction = commentAndScore => props.ctx.cardsClient.post(
+        submitFunction = commentAndScore => props.cardsClient.post(
           _.updateCardState(props.entityId, commentAndScore),
           th => props.ctx.openOkDialog("Error saving score: " + th.getMessage)
         ),
         onSubmitSuccess =
-          _ => props.ctx.closeWaitPane >> props.ctx.topicStateUpdated(props.entityId) >>
+          _ => props.ctx.closeWaitPane >> props.topicStateUpdated(props.entityId) >>
             $.modState(s => s.copy(formData = s.formData.copy(data = ""))),
         onSubmitFormCheckFailure = props.ctx.closeWaitPane,
         editMode = false

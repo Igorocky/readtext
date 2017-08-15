@@ -28,6 +28,10 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     .addHandler(forMethod(_.loadCardState))(loadTopicState)
     .addHandler(forMethod(_.loadCardHistory))(loadCardHistory)
 
+    .addHandler(forMethod2(_.loadActiveTopics)){
+      case (paragraphId, activationTimeReduction) => loadActiveTopics(paragraphId, activationTimeReduction)
+    }
+
     .addHandler(forMethod2(_.updateCardState)) {
       case (cardId, commentAndScore) => updateTopicState(cardId, commentAndScore).map(_ => Right(Unit))
     }
@@ -135,7 +139,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
           .joinLeft(topicStateTable).on(_.id === _.topicId)
           .result
       )
-    } yield res.sortBy(_._2.map(_.time.toEpochSecond).getOrElse(0L))
+    } yield res
   }
 
   private val MINUTES_IN_HOUR = 60
@@ -181,4 +185,21 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
         case ('M', n) => n * SECONDS_IN_MONTH
       }.sum
   )
+
+  protected[controllers] def loadActiveTopics(paragraphId: Long,
+                                              activationTimeReduction: Option[String]): Future[List[Topic]] = {
+    val currTime = ZonedDateTime.now(clock)
+    val reductionSeconds = strToDuration(activationTimeReduction.getOrElse("0s")).getSeconds
+    (for {
+      topicIds <- loadTopicIdsRecursively(paragraphId)
+      topics <- loadTopicCurrHistRecs(topicIds)
+    } yield topics).map{
+      _.filter(_._2.isDefined)
+        .map{case (t, Some(h)) => (t, Duration.between(h.activationTime, currTime).getSeconds + reductionSeconds)}
+        .filter{case (t, overtime) => overtime >= 0}
+        .sortBy(t => -t._2)
+        .map(_._1)
+        .toList
+    }
+  }
 }

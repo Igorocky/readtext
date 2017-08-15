@@ -1,6 +1,7 @@
 package app.components.learncards
 
-import shared.dto.{Topic, TopicState}
+import app.components.listtopics.TopicTree
+import shared.dto.Topic
 
-case class LearnCardsPageMem(topic: Option[Topic] = None,
-                             topicStates: Option[List[TopicState]] = None)
+case class LearnCardsPageMem(activeTopics: TopicTree = TopicTree(children = None),
+                             activationTimeReduction: Option[String] = None)

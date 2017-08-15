@@ -3,7 +3,7 @@ package controllers
 import java.io.File
 import javax.inject._
 
-import db.{DaoCommon, PrintSchema}
+import db.{DaoCommon, PrintSchema, Tables}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
@@ -13,6 +13,7 @@ import shared.pageparams.{LearnCardsPageParams, ListTopicsPageParams}
 import slick.jdbc.JdbcProfile
 import upickle.default._
 import utils.ServerUtils._
+import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,19 +48,24 @@ class TopicController @Inject()(
     )
   }
 
-  def learnTopics(paragraphId: Long) = Action { implicit request =>
-    Ok(
-      views.html.univpage(
-        pageType = LearnCardsPageParams.getClass.getName,
-        customData = write(LearnCardsPageParams(
-          headerParams = headerParams(getSession.language),
-          wsEntryUrl = routes.TopicController.wsEntry.url,
-          paragraphId = paragraphId,
-          getTopicImgUrl = getTopicImgUrl
-        )),
-        pageTitle = "Learn Cards"
+  def learnTopics(paragraphId: Long) = Action.async { implicit request =>
+    db.run(
+      Tables.paragraphTable.filter(_.id === paragraphId).map(_.name).result.head
+    ).map{paragraphName =>
+      Ok(
+        views.html.univpage(
+          pageType = LearnCardsPageParams.getClass.getName,
+          customData = write(LearnCardsPageParams(
+            headerParams = headerParams(getSession.language),
+            wsEntryUrl = routes.TopicController.wsEntry.url,
+            paragraphId = paragraphId,
+            getTopicImgUrl = getTopicImgUrl,
+            paragraphTitle = paragraphName
+          )),
+          pageTitle = "Learn Topics"
+        )
       )
-    )
+    }
   }
 
   def wsEntry = postRequest(read[(String, String)]) {

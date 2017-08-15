@@ -1,14 +1,16 @@
 package app.components.listtopics
 
 import app.components._
-import app.{JsGlobalScope, Utils}
+import app.{JsGlobalScope, Utils, WsClient}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
-import org.scalajs.dom.raw.ClipboardEvent
+import org.scalajs.dom.raw.{ClipboardEvent, File}
 import shared.SharedConstants._
+import shared.api.CardsApi
 import shared.dto.{Paragraph, Topic}
+import shared.messages.Language
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
 
@@ -84,7 +86,17 @@ object ListTopicsPage {
         )
         case Some(p: Paragraph) => Tree.Props(
           key = "par-" + p.id.get,
-          nodeValue = Some(ParagraphCmp.Props(p, ctx, ctx.listTopicsPageMem.tagFilter, node.attrs.selected).render),
+          nodeValue = Some(ParagraphCmp.Props(
+            paragraph = p,
+            ctx = ctx,
+            tagFilter = ctx.listTopicsPageMem.tagFilter,
+            selected = node.attrs.selected,
+            language = ctx.language,
+            uploadTopicFileUrl = ctx.pageParams.uploadTopicFileUrl,
+            getTopicImgUrl = ctx.pageParams.getTopicImgUrl,
+            unregisterPasteListener = ctx.unregisterPasteListener,
+            registerPasteListener = ctx.registerPasteListener
+          ).render),
           mayHaveChildren = true,
           children = node.children.map(_.map(mapMainTopicTree)),
           loadChildren = ctx.loadChildrenIntoMainTopicTree(p.id),
@@ -94,7 +106,30 @@ object ListTopicsPage {
         )
         case Some(t: Topic) => Tree.Props(
           key = "top-" + t.id.get,
-          nodeValue = Some(TopicCmp.Props(ctx, t, node.attrs.selected, node.attrs.showImg, node.attrs.actionsHidden).render),
+          nodeValue = Some(TopicCmp.Props(
+            ctx = ctx,
+            topic = t,
+            selected = node.attrs.selected,
+            showImg = node.attrs.showImg,
+            actionsHidden = node.attrs.actionsHidden,
+            selectTopicAction = ctx.selectTopicAction,
+            selectMode = ctx.listTopicsPageMem.selectMode,
+            showTopicImgBtnClicked = ctx.showTopicImgBtnClicked(t.id.get),
+            getTopicImgUrl = ctx.pageParams.getTopicImgUrl,
+            wsClient = ctx.wsClient,
+            topicUpdated = ctx.topicUpdated,
+            showTopicActions = ctx.showTopicActions,
+            cardsClient = ctx.cardsClient,
+            moveUpTopicAction = ctx.moveUpTopicAction,
+            moveDownTopicAction = ctx.moveDownTopicAction,
+            topicDeleted = ctx.topicDeleted,
+            language = ctx.language,
+            uploadTopicFileUrl = ctx.pageParams.uploadTopicFileUrl,
+            unregisterPasteListener = ctx.unregisterPasteListener,
+            registerPasteListener = ctx.registerPasteListener,
+            topicStateUpdated = ctx.topicStateUpdated,
+            readOnly = false
+          ).render),
           mayHaveChildren = false,
           children = None,
           loadChildren = Callback.empty,
