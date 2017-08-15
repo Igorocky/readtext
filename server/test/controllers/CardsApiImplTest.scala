@@ -9,6 +9,7 @@ import shared.dto._
 import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
 class CardsApiImplTest extends DbTestHelperWithTables {
 
   override protected val tables = List(paragraphTable, topicTable, topicHistoryTable, topicStateTable)
@@ -17,7 +18,7 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     paragraphTable returning paragraphTable.map(_.id) += Paragraph(name = name, paragraphId = parentId)
   ).futureValue)
 
-  def loadParagraphs(ids: List[Long]): Seq[Paragraph] = db.run(
+  def loadParagraphsByIds(ids: Seq[Long]): Seq[Paragraph] = db.run(
     paragraphTable.filter(_.id inSet(ids)).result
   ).futureValue
 
@@ -137,60 +138,36 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     val ids = cardsApiImpl.loadParagraphsRecursively(List(p2.id.get)).futureValue
 
     //then
-    val paragraphs = loadParagraphs(ids)
+    val paragraphs = loadParagraphsByIds(ids)
     paragraphs.size should be(7)
     paragraphs.map(_.name).toSet should be(Set("p2", "p5", "p6", "p7", "p11", "p12", "p13"))
   }
 
-  "loadTopicsRecursively should return correct topic state" in {
+  "loadTopicCurrHistRecs should return None as history record for a topic without history" in {
     //given
     buildTopicTree
-    val t8 = loadTopics("t8").head
-    val timeZone = ZoneId.of("America/Anchorage")
-    val time = ZonedDateTime.of(2017, 8, 6, 21, 49, 4, 0, timeZone)
-    setTopicState(t8.id.get, 100, time.plusSeconds(100), time)
-
-    val p9 = loadParagraphs("p9").head
+    val topicIds = loadTopics("t8").map(_.id.get)
 
     //when
-    val (_, Some(histRec)) = cardsApiImpl.loadTopicsRecursively(p9.id.get).futureValue.head
-
-    //then
-    histRec.copy(
-      time = histRec.time.withZoneSameInstant(timeZone),
-      activationTime = histRec.activationTime.withZoneSameInstant(timeZone)
-    ) should be(TopicHistoryRecord(
-      topicId = t8.id.get,
-      score = 100,
-      comment = "",
-      activationTime = time.plusSeconds(100),
-      time = time
-    ))
-  }
-  "loadTopicsRecursively should return None as history record for a topic without history" in {
-    //given
-    buildTopicTree
-    val p4 = loadParagraphs("p4").head
-
-    //when
-    val topics = cardsApiImpl.loadTopicsRecursively(p4.id.get).futureValue
+    val topics = cardsApiImpl.loadTopicCurrHistRecs(topicIds).futureValue
 
     //then
     topics.find(_._1.title == "t8").get._2 should be(None)
   }
-  "loadTopicsRecursively should return all topics recursively" in {
+  "loadTopicIdsRecursively should return all topics recursively" in {
     //given
     buildTopicTree
     val p4 = loadParagraphs("p4").head
 
     //when
-    val names = cardsApiImpl.loadTopicsRecursively(p4.id.get).futureValue.map(_._1.title)
+    val topicIds = cardsApiImpl.loadTopicIdsRecursively(p4.id.get).futureValue
 
     //then
+    val names = db.run(topicTable.filter(_.id inSet(topicIds)).map(_.title).result).futureValue
     names.size should be(3)
     names.toSet should be(Set("t10","t8","t9"))
   }
-  "loadTopicsRecursively should return all topics sorted by time in asc order" in {
+  "loadTopicCurrHistRecs should return topics sorted by time in asc order" in {
     //given
     buildTopicTree
     val t8 = loadTopics("t8").head
@@ -202,10 +179,10 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     setTopicState(t9.id.get, 100, time.plusSeconds(100), time.minusMinutes(5))
     setTopicState(t10.id.get, 100, time.plusSeconds(100), time.plusMinutes(3))
 
-    val p4 = loadParagraphs("p4").head
+    val topicIds = loadTopics("t9", "t8", "t10").map(_.id.get)
 
     //when
-    val topics = cardsApiImpl.loadTopicsRecursively(p4.id.get).futureValue.map(_._1.title)
+    val topics = cardsApiImpl.loadTopicCurrHistRecs(topicIds).futureValue.map(_._1.title)
 
     //then
     topics should be(List("t9","t8","t10"))
@@ -336,10 +313,10 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return None for a topic without history" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
+    val t9 = loadTopics("t9").head.id.get
 
     //when
-    val List((_, state)) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val state = cardsApiImpl.loadTopicState(t9).futureValue
 
     //then
     state should be(None)
@@ -347,12 +324,11 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct timeOfChange for a topic with history" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.timeOfChange should be("2017-08-06T19:49:04Z")
@@ -360,13 +336,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct lastChangedDuration for a topic with history" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("7d 3h").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.lastChangedDuration should be("7d 3h")
@@ -374,12 +349,11 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct score for a topic with history" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.score should be("7d 0h")
@@ -387,12 +361,11 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct activationTime for a topic with history" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.activationTime should be("2017-08-13T19:49:04Z")
@@ -400,13 +373,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return isActive==false for an inactive topic" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("6d").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.isActive should be(false)
@@ -414,13 +386,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return isActive==true for an active topic" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("7d 1s").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.isActive should be(true)
@@ -428,13 +399,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct timeLeftUntilActivation for an inactive topic" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("5d 3h").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.timeLeftUntilActivation should be(Some("1d 21h"))
@@ -448,7 +418,7 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("10d 3h").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.timeLeftUntilActivation should be(None)
@@ -456,13 +426,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return timePassedAfterActivation==None for an inactive topic" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("3d 14h").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.timePassedAfterActivation should be(None)
@@ -470,13 +439,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct timePassedAfterActivation for an active topic" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, ";7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("10d 7h").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.timePassedAfterActivation should be(Some("3d 7h"))
@@ -484,13 +452,12 @@ class CardsApiImplTest extends DbTestHelperWithTables {
   "loadTopicStates should return correct comment" in {
     //given
     buildTopicTree
-    val p9 = loadParagraphs("p9").head.id.get
     val t8 = loadTopics("t8").head.id.get
     cardsApiImpl.updateTopicState(t8, "cmm mt 12344 56 7sdf g dsfg;7d")
     clock.setTime(currTime.plusSeconds(cardsApiImpl.strToDuration("10d 7h").getSeconds))
 
     //when
-    val List((_, Some(state))) = cardsApiImpl.loadTopicStates(p9).futureValue
+    val Some(state) = cardsApiImpl.loadTopicState(t8).futureValue
 
     //then
     state.comment should be("cmm mt 12344 56 7sdf g dsfg")

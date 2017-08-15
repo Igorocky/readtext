@@ -24,7 +24,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
 
   val router: Router = RouterBuilder()
     // TODO: use timezone of the user
-    .addHandler(forMethod(_.loadCardStates))(loadTopicStates)
+    .addHandler(forMethod(_.loadCardState))(loadTopicState)
 
     .addHandler(forMethod2(_.updateCardState)) {
       case (cardId, commentAndScore) => updateTopicState(cardId, commentAndScore).map(_ => Right(Unit))
@@ -36,10 +36,10 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
       )
     }
 
-  protected[controllers] def loadTopicStates(paragraphId: Long): Future[List[(Long, Option[TopicState])]] = {
+  protected[controllers] def loadTopicState(topicId: Long): Future[Option[TopicState]] = {
     val currTime = ZonedDateTime.now(clock)
     for {
-      topics <- loadTopicsRecursively(paragraphId)
+      topics <- loadTopicCurrHistRecs(List(topicId))
     } yield topics.map{
       case (topic, None) => (topic.id.get, None)
       case (topic, Some(r)) => {
@@ -60,7 +60,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
         )))
       }
     }
-  }
+  }.map(_.head._2)
 
   protected[controllers] def updateTopicState(topicId: Long, commentAndScore: String): Future[Unit] = {
     val Array(comment, scoreStr) = commentAndScore.split(";")
@@ -83,21 +83,29 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     ).transactionally)
   }
 
-  protected[controllers] def loadParagraphsRecursively(parentParagraphIds: List[Long]): Future[List[Long]] = for {
-      childParagraphs <- db.run(paragraphTable.filter(_.parentId inSet(parentParagraphIds)).map(_.id).result).map(_.toList)
-      rest <- if (childParagraphs.isEmpty) Future.successful(Nil) else loadParagraphsRecursively(childParagraphs)
-    } yield parentParagraphIds:::rest
+  protected[controllers] def loadParagraphsRecursively(parentParagraphIds: Seq[Long]): Future[Seq[Long]] = for {
+      childParagraphs <- db.run(paragraphTable.filter(_.parentId inSet(parentParagraphIds)).map(_.id).result)
+      rest <- if (childParagraphs.isEmpty) Future.successful(Seq()) else loadParagraphsRecursively(childParagraphs)
+    } yield parentParagraphIds++rest
 
-  protected[controllers] def loadTopicsRecursively(paragraphId: Long): Future[List[(Topic, Option[TopicHistoryRecord])]] = {
+  protected[controllers] def loadTopicIdsRecursively(paragraphId: Long): Future[Seq[Long]] = {
     for {
       paragraphIds <- loadParagraphsRecursively(List(paragraphId))
       res <- db.run(
-        topicTable.filter(_.paragraphId inSet(paragraphIds))
+        topicTable.filter(_.paragraphId inSet(paragraphIds)).map(_.id).result
+      )
+    } yield res
+  }
+
+  protected[controllers] def loadTopicCurrHistRecs(topicIds: Seq[Long]): Future[Seq[(Topic, Option[TopicHistoryRecord])]] = {
+    for {
+      res <- db.run(
+        topicTable.filter(_.id inSet(topicIds))
           .joinLeft(topicStateTable).on(_.id === _.topicId)
           .result
       )
     } yield res.sortBy(_._2.map(_.time.toEpochSecond).getOrElse(0L))
-  }.map(_.toList)
+  }
 
   private val MINUTES_IN_HOUR = 60
   private val HOURS_IN_DAY = 24
