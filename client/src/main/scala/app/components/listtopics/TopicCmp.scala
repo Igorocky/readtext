@@ -11,6 +11,7 @@ import shared.api.{CardsApi, TopicApi}
 import shared.dto.Topic
 import shared.messages.Language
 
+// TODO: move all actions into per component trait
 object TopicCmp {
 
   case class Props(ctx: WindowFunc,

@@ -1,19 +1,18 @@
 package app.components.listtopics
 
 import app.components._
-import app.{JsGlobalScope, Utils, WsClient}
+import app.{JsGlobalScope, Utils}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.Scala.Unmounted
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
-import org.scalajs.dom.raw.{ClipboardEvent, File}
+import org.scalajs.dom.raw.ClipboardEvent
 import shared.SharedConstants._
-import shared.api.CardsApi
 import shared.dto.{Paragraph, Topic}
-import shared.messages.Language
 import shared.pageparams.ListTopicsPageParams
 import upickle.default._
 
+// TODO: components should not use WS clients
 object ListTopicsPage {
   protected type Props = ListTopicsPageParams
 
