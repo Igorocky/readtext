@@ -13,6 +13,7 @@ import upickle.default._
 
 
 // TODO: add possibility to change history
+// TODO: show number of topics
 object LearnCardsPage {
   protected type Props = LearnCardsPageParams
 
