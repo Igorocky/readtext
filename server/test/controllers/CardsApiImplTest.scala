@@ -522,4 +522,42 @@ class CardsApiImplTest extends DbTestHelperWithTables {
     //then
     topics.isEmpty should be(true)
   }
+
+  "loadNewTopics should return topics in right order" in {
+    //given
+    buildTopicTree
+    val p1 = loadParagraphs("p1").head.id.get
+
+    //when
+    val topics = cardsApiImpl.loadNewTopics(p1).futureValue
+
+    //then
+    topics.map(_.title) should be(List("t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10"))
+  }
+  "loadNewTopics should return only topics without history" in {
+    //given
+    buildTopicTree
+    val p5 = loadParagraphs("p5").head.id.get
+    val t2 = loadTopics("t2").head.id.get
+    cardsApiImpl.updateTopicState(t2, ";1m")
+    val t3 = loadTopics("t3").head.id.get
+    cardsApiImpl.updateTopicState(t3, ";1m")
+
+    //when
+    val topics = cardsApiImpl.loadNewTopics(p5).futureValue
+
+    //then
+    topics.map(_.title) should be(List("t1", "t4"))
+  }
+  "loadNewTopics should return search topics under specified paragraph only" in {
+    //given
+    buildTopicTree
+    val p5 = loadParagraphs("p5").head.id.get
+
+    //when
+    val topics = cardsApiImpl.loadNewTopics(p5).futureValue
+
+    //then
+    topics.map(_.title) should be(List("t1", "t2", "t3", "t4"))
+  }
 }

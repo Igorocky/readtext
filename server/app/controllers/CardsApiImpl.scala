@@ -27,6 +27,7 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
     // TODO: use timezone of the user
     .addHandler(forMethod(_.loadCardState))(loadTopicState)
     .addHandler(forMethod(_.loadCardHistory))(loadCardHistory)
+    .addHandler(forMethod(_.loadNewTopics))(loadNewTopics)
 
     .addHandler(forMethod2(_.loadActiveTopics)){
       case (paragraphId, activationTimeReduction) => loadActiveTopics(paragraphId, activationTimeReduction)
@@ -201,5 +202,40 @@ class CardsApiImpl @Inject()(protected val dbConfigProvider: DatabaseConfigProvi
         .map(_._1)
         .toList
     }
+  }
+
+  protected[controllers] def loadNewTopics(paragraphId: Long): Future[List[Topic]] = for {
+    tree <- loadNewTopics(TopicTreeServ(Some(Paragraph(id = Some(paragraphId), name = "rootPar"))))
+  } yield tree.findNodes {
+    case TopicTreeServ(Some(_:Topic), _) => true
+    case _ => false
+  }.map(_.value.get.asInstanceOf[Topic])
+
+
+  private def loadNewTopics(tree: TopicTreeServ): Future[TopicTreeServ] = tree.findNodes {
+    case TopicTreeServ(Some(par: Paragraph), None) => true
+    case _ => false
+  } match {
+    case Nil => Future.successful(tree)
+    case TopicTreeServ(Some(par: Paragraph), _) :: _ => loadNewTopics(tree, par).flatMap{newTree=>
+      if (newTree eq tree) Future.successful(tree)
+      else loadNewTopics(newTree)
+    }
+  }
+
+  private def loadNewTopics(tree: TopicTreeServ, parent: Paragraph): Future[TopicTreeServ] = {
+    for {
+      paragraphs <- db.run(dao.loadOrderedChildren(paragraphTable, parent.id))
+      topics <- db.run(
+        topicTable.filter(_.paragraphId === parent.id)
+          .joinLeft(topicStateTable).on(_.id === _.topicId)
+          .filter(_._2.isEmpty)
+          .map(_._1)
+          .sortBy(_.order)
+          .result
+      )
+    } yield paragraphs ++ topics
+  }.map{children=>
+    tree.setChildren(parent.id, children.map(ch => TopicTreeServ(value = Some(ch))).toList)
   }
 }

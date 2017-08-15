@@ -46,4 +46,10 @@ object SharedConstants {
   final val SCORE_BAD = "score-bad"
 
 
+  final val TOPIC_ACTION_BUTTONS = "topic-action-buttons"
+  final val TOPIC_CURR_STATE = "topic-curr-state"
+
+  final val TOPIC_LIST_ON_LEARN_CARDS_PAGE = "topic-list-on-learn-cards-page"
+
+
 }

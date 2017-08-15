@@ -46,7 +46,7 @@ object TopicActionsCmp {
     def render(implicit p: Props, s: State) = if (p.actionsHidden) {
       <.span(showAllActionsButton)
     } else {
-      <.div(
+      <.div(^.`class`:=TOPIC_ACTION_BUTTONS,
         <.div(
           hideAllActionsButton,
           if (!p.readOnly) TagMod(
@@ -56,7 +56,9 @@ object TopicActionsCmp {
             deleteTopicButton
           ) else EmptyVdom
         ),
-        <.div(currTopicSate)
+        <.div(^.`class`:=TOPIC_CURR_STATE,
+          currTopicSate
+        )
       )
     }
 

@@ -18,16 +18,21 @@ trait LearnCardsPageContext {
 
   //actions
 
-  def loadActiveTopics(activationTimeReduction: Option[String]) = wsClient.post(
+  def loadTopics(activationTimeReduction: Option[String]) = wsClient.post(
     _.loadActiveTopics(pageParams.paragraphId, activationTimeReduction),
     windowFunc.showError
-  ) {
-    topics => mod(_.copy(activeTopics = TopicTree(children = Some(topics.map(topic => TopicTree(value = Some(topic)))))))
+  ) {activeTopics =>
+    wsClient.post(_.loadNewTopics(pageParams.paragraphId), windowFunc.showError) {newTopics =>
+      mod(_.copy(
+        activeTopics = TopicTree(children = Some(activeTopics.map(topic => TopicTree(value = Some(topic))))),
+        newTopics = TopicTree(children = Some(newTopics.map(topic => TopicTree(value = Some(topic)))))
+      ))
+    }
   }
 
   def changeActivationTimeReduction(newValue: String) = {
     val newActivationTimeReduction = if(newValue.trim.isEmpty) None else Some(newValue)
-    mod(_.copy(activationTimeReduction = newActivationTimeReduction)) >> loadActiveTopics(newActivationTimeReduction)
+    mod(_.copy(activationTimeReduction = newActivationTimeReduction)) >> loadTopics(newActivationTimeReduction)
   }
 
   def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
@@ -43,6 +48,11 @@ trait LearnCardsPageContext {
   private def modTopicAttribute(topicId: Long, f: ParTopicAttrs => ParTopicAttrs) = mod(mem => mem.copy(
     activeTopics = mem.activeTopics.modNode(
       mem.activeTopics.topicSelector(topicId),
+      topicNode => topicNode.changeAttrs(f)
+    )
+  )) >> mod(mem => mem.copy(
+    newTopics = mem.newTopics.modNode(
+      mem.newTopics.topicSelector(topicId),
       topicNode => topicNode.changeAttrs(f)
     )
   ))

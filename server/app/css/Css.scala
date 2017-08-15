@@ -252,5 +252,13 @@ object Css extends StyleSheet.Standalone {
     padding(1 px, 10 px)
   )
 
+  s".$TOPIC_ACTION_BUTTONS" - (
+    marginTop(5 px)
+  )
+
+  s".$TOPIC_CURR_STATE" - (
+    marginTop(3 px)
+  )
+
 
 }
