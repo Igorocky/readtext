@@ -14,6 +14,8 @@ import upickle.default._
 
 // TODO: add possibility to change history
 // TODO: show number of topics
+// TODO: add forecast for the days in the future
+// TODO: add filter by tag
 object LearnCardsPage {
   protected type Props = LearnCardsPageParams
 

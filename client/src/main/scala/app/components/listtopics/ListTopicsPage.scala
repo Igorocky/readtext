@@ -13,6 +13,7 @@ import shared.pageparams.ListTopicsPageParams
 import upickle.default._
 
 // TODO: components should not use WS clients
+// TODO: add quick references (from a topic to another topic)
 object ListTopicsPage {
   protected type Props = ListTopicsPageParams
 
