@@ -33,8 +33,8 @@ object ListTopicsPage {
       $.modState {_.copy(
           modState = $.modState(_),
           getState = () => $.state,
-          wsClient = Utils.createWsClient($.props.wsEntryUrl),
-          cardsClient = Utils.createWsClient($.props.wsEntryUrl),
+          topicApi = Utils.createWsClient($.props.wsEntryUrl),
+          cardsApi = Utils.createWsClient($.props.wsEntryUrl),
           sessionWsClient = Utils.createWsClient($.props.wsEntryUrl)
       )}
     }
@@ -114,7 +114,7 @@ object ListTopicsPage {
             actionsHidden = node.attrs.actionsHidden,
             selectMode = ctx.listTopicsPageMem.selectMode,
             getTopicImgUrl = ctx.pageParams.getTopicImgUrl,
-            wsClient = ctx.wsClient,
+            topicApi = ctx.topicApi,
             topicUpdated = ctx.topicUpdated,
             language = ctx.language,
             uploadTopicFileUrl = ctx.pageParams.uploadTopicFileUrl,

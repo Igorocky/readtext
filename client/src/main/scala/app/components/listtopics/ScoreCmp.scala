@@ -3,16 +3,16 @@ package app.components.listtopics
 import app.WsClient
 import app.components.WindowFunc
 import app.components.forms.{FormCommonParams, FormTextField}
-import japgolly.scalajs.react.{Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.api.CardsApi
 import shared.forms.{FormData, Forms}
 import shared.messages.Language
 
 trait ScoreCmpActions {
   def wf: WindowFunc
-  def cardsClient: WsClient[CardsApi]
-  def updateCardState(commentAndScore: String, cardId: Long) = cardsClient.post(
+  def cardsApi: WsClient[CardsApi]
+  def updateCardState(commentAndScore: String, cardId: Long) = cardsApi.post(
     _.updateCardState(cardId, commentAndScore),
     th => wf.openOkDialog("Error saving score: " + th.getMessage)
   )

@@ -65,7 +65,7 @@ object ParagraphCmp {
           ParagraphForm.Props(
             ctx = props.ctx,
             paragraph = props.paragraph,
-            submitFunction = par => props.ctx.wsClient.post(
+            submitFunction = par => props.ctx.topicApi.post(
               _.updateParagraph(par),
               th => props.ctx.openOkDialog("Error updating paragraph: " + th.getMessage)
             ),
@@ -101,7 +101,7 @@ object ParagraphCmp {
     def createNewTopicDiag(p: Paragraph, props: Props, closeDiag: Callback) =
       TopicForm.Props(
         topic = Topic(paragraphId = p.id.get),
-        submitFunction = topic => props.ctx.wsClient.post(
+        submitFunction = topic => props.ctx.topicApi.post(
           _.createTopic(topic),
           th => props.ctx.openOkDialog("Error creating topic: " + th.getMessage)
         ),
@@ -121,7 +121,7 @@ object ParagraphCmp {
       ParagraphForm.Props(
         ctx = p.ctx,
         paragraph = Paragraph(name = "", paragraphId = p.paragraph.id),
-        submitFunction = paragraph => p.ctx.wsClient.post(
+        submitFunction = paragraph => p.ctx.topicApi.post(
           _.createParagraph(paragraph),
           th => p.ctx.openOkDialog("Error creating paragraph: " + th.getMessage)
         ),

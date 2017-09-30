@@ -11,7 +11,7 @@ trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with To
 
   //abstract members
   protected def modLearnCardsPageMem(f: LearnCardsPageMem => LearnCardsPageMem): CallbackTo[LearnCardsPageMem]
-  val wsClient: WsClient[CardsApi]
+  val cardsApi: WsClient[CardsApi]
   val topicApi: WsClient[TopicApi]
   val learnCardsPageMem: LearnCardsPageMem
   val pageParams: LearnCardsPageParams
@@ -19,11 +19,11 @@ trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with To
 
   //actions
 
-  def loadTopics(activationTimeReduction: Option[String]) = wsClient.post(
+  def loadTopics(activationTimeReduction: Option[String]) = cardsApi.post(
     _.loadActiveTopics(pageParams.paragraphId, activationTimeReduction),
     windowFunc.showError
   ) {activeTopics =>
-    wsClient.post(_.loadNewTopics(pageParams.paragraphId), windowFunc.showError) {newTopics =>
+    cardsApi.post(_.loadNewTopics(pageParams.paragraphId), windowFunc.showError) { newTopics =>
       mod(_.copy(
         activeTopics = TopicTree(children = Some(activeTopics.map(topic => TopicTree(value = Some(topic))))),
         newTopics = TopicTree(children = Some(newTopics.map(topic => TopicTree(value = Some(topic)))))
@@ -58,12 +58,9 @@ trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with To
     )
   ))
 
-  //**********ScoreCmpActions begin********************
   override def wf = windowFunc
-  override def cardsClient = wsClient
   override def cardStateUpdated(cardId: Long): CallbackTo[Unit] =
     loadTopics(learnCardsPageMem.activationTimeReduction)
-  //**********ScoreCmpActions end********************
 
   override def changeTopicSelection(topicId: Long, selected: Boolean) = Callback.empty
 

@@ -64,7 +64,7 @@ object HeaderCmp {
             ParagraphForm.Props(
               ctx = p.ctx,
               paragraph = Paragraph(name = ""),
-              submitFunction = paragraph => p.ctx.wsClient.post(
+              submitFunction = paragraph => p.ctx.topicApi.post(
                 _.createParagraph(paragraph),
                 th => p.ctx.openOkDialog("Error creating paragraph: " + th.getMessage)
               ),

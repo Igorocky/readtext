@@ -11,7 +11,7 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
                                getState: () => LearnCardsPageState = null,
                                windowFuncMem: WindowFuncMem = WindowFuncMem(),
                                learnCardsPageMem: LearnCardsPageMem = LearnCardsPageMem(),
-                               wsClient: WsClient[CardsApi] = null,
+                               cardsApi: WsClient[CardsApi] = null,
                                topicApi: WsClient[TopicApi] = Utils.stubWsClient[TopicApi]("topicApiStub"),
                                sessionWsClient: WsClient[SessionApi] = null,
                                pageParams: LearnCardsPageParams) extends WindowFunc with LearnCardsPageContext {

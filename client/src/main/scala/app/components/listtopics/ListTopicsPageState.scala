@@ -12,8 +12,8 @@ case class ListTopicsPageState(modState: (ListTopicsPageState => ListTopicsPageS
                                getState: () => ListTopicsPageState = null,
                                windowFuncMem: WindowFuncMem = WindowFuncMem(),
                                listTopicsPageMem: ListTopicsPageMem = ListTopicsPageMem(),
-                               wsClient: WsClient[TopicApi] = null,
-                               cardsClient: WsClient[CardsApi] = null,
+                               topicApi: WsClient[TopicApi] = null,
+                               cardsApi: WsClient[CardsApi] = null,
                                sessionWsClient: WsClient[SessionApi] = null,
                                pageParams: ListTopicsPageParams) extends WindowFunc with ListTopicsPageContext {
 

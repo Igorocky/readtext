@@ -21,7 +21,7 @@ trait TopicActionsCmpActions {
   def moveUpTopicAction(topicId: Long): Callback
   def moveDownTopicAction(topicId: Long): Callback
   def topicDeleted(topicId: Long): Callback
-  def cardsClient: WsClient[CardsApi]
+  def cardsApi: WsClient[CardsApi]
   def topicApi: WsClient[TopicApi]
 }
 
@@ -76,7 +76,7 @@ object TopicActionsCmp {
 
     def showAllActionsButton(implicit p: Props) = buttonWithIcon(
       onClick = p.ctx.showTopicActions(p.topic.id.get, true) >>
-        p.ctx.cardsClient.post(_.loadCardState(p.topic.id.get), p.ctx.showError) (
+        p.ctx.cardsApi.post(_.loadCardState(p.topic.id.get), p.ctx.showError) (
           st => $.modState(_.copy(currTopicState = Some(st)))
         ),
       btnType = BTN_INFO,
@@ -117,7 +117,7 @@ object TopicActionsCmp {
     )
 
     def showHistoryButton(implicit p: Props, s: State) = buttonWithText(
-      onClick = p.ctx.cardsClient.post(_.loadCardHistory(p.topic.id.get), p.ctx.showError)(
+      onClick = p.ctx.cardsApi.post(_.loadCardHistory(p.topic.id.get), p.ctx.showError)(
         hist => $.modState(_.copy(history = Some(hist)))
       ),
       btnType = BTN_INFO,

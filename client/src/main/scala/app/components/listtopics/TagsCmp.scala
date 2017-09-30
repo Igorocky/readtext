@@ -46,7 +46,7 @@ object TagsCmp {
               formMethods = formMethods,
               onChange = fd => $.modState(_.copy(formData = Some(fd))).map(_ => fd),
               beforeSubmit = props.ctx.openWaitPane,
-              submitFunction = tag => props.ctx.wsClient.post(
+              submitFunction = tag => props.ctx.topicApi.post(
                 _.addTagForTopic(tag),
                 th => props.ctx.openOkDialog("Error adding tag: " + th.getMessage)
               ),

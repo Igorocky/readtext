@@ -13,8 +13,8 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
 
   //abstract members
   protected def modListTopicsPageMem(f: ListTopicsPageMem => ListTopicsPageMem): CallbackTo[ListTopicsPageMem]
-  val wsClient: WsClient[TopicApi]
-  val cardsClient: WsClient[CardsApi]
+  val topicApi: WsClient[TopicApi]
+  val cardsApi: WsClient[CardsApi]
   val sessionWsClient: WsClient[SessionApi]
   val pageParams: ListTopicsPageParams
   val listTopicsPageMem: ListTopicsPageMem
@@ -37,7 +37,7 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
   def topicDeleted(id: Long): Callback = mod(_.changeTopicTree(_.deleteTopic(id)))
 
   def expandParagraphsAction(ids: List[(Long, NewValueExpanded)]): Callback =
-    wsClient.post(_.expand(ids), windowFunc.showError) {
+    topicApi.post(_.expand(ids), windowFunc.showError) {
       case () => mod(_.changeTopicTree(_.expandParagraphs(ids)))
     }
 
@@ -50,29 +50,29 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
   }
 
   def moveUpParagraphAction(id: Long): Callback =
-    wsClient.post(_.moveUpParagraph(id), windowFunc.showError) {
+    topicApi.post(_.moveUpParagraph(id), windowFunc.showError) {
       case () => mod(_.changeTopicTree(_.moveUpParagraph(id)))
     }
 
   def moveUpTopicAction(id: Long): Callback =
-    wsClient.post(_.moveUpTopic(id), windowFunc.showError) {
+    topicApi.post(_.moveUpTopic(id), windowFunc.showError) {
       case () => mod(_.changeTopicTree(_.moveUpTopic(id)))
     }
 
   def moveDownParagraphAction(id: Long): Callback =
-    wsClient.post(_.moveDownParagraph(id), windowFunc.showError) {
+    topicApi.post(_.moveDownParagraph(id), windowFunc.showError) {
       case () => mod(_.changeTopicTree(_.moveDownParagraph(id)))
     }
 
   def moveDownTopicAction(id: Long): Callback =
-    wsClient.post(_.moveDownTopic(id), windowFunc.showError) {
+    topicApi.post(_.moveDownTopic(id), windowFunc.showError) {
       case () => mod(_.changeTopicTree(_.moveDownTopic(id)))
     }
 
   def tagAdded(topicId: Long, newTags: List[String]) : Callback = mod(_.changeTopicTree(_.setTags(topicId, newTags)))
 
   def removeTagAction(topicId: Long, tag: String) : Callback =
-    wsClient.post(_.removeTagFromTopic(topicId, tag), windowFunc.showError) {
+    topicApi.post(_.removeTagFromTopic(topicId, tag), windowFunc.showError) {
       case tags => mod(_.changeTopicTree(_.setTags(topicId, tags)))
     }
 
@@ -88,9 +88,9 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
     def setChildren(children: List[Any]) =
       setChildrenOfMainTopicTree(paragraphId, children.map(c => TopicTree(Some(c), None)))
 
-    windowFunc.openWaitPane >> wsClient.post(_.loadParagraphsByParentId(paragraphId), _ => windowFunc.openOkDialog("Error loading paragraphs"))(
+    windowFunc.openWaitPane >> topicApi.post(_.loadParagraphsByParentId(paragraphId), _ => windowFunc.openOkDialog("Error loading paragraphs"))(
       paragraphs => if (paragraphId.isDefined) {
-        wsClient.post(_.loadTopicsByParentId(paragraphId.get), _ => windowFunc.openOkDialog("Error loading topics"))(
+        topicApi.post(_.loadTopicsByParentId(paragraphId.get), _ => windowFunc.openOkDialog("Error loading topics"))(
           topics => setChildren(paragraphs ::: topics) >> windowFunc.closeWaitPane
         )
       } else {
@@ -103,7 +103,7 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
     def setChildren(children: List[Any]) =
       setChildrenOfSelectParagraphTree(paragraphId, children.map(c => TopicTree(Some(c), None)))
 
-    windowFunc.openWaitPane >> wsClient.post(_.loadParagraphsByParentId(paragraphId), _ => windowFunc.openOkDialog("Error loading paragraphs"))(
+    windowFunc.openWaitPane >> topicApi.post(_.loadParagraphsByParentId(paragraphId), _ => windowFunc.openOkDialog("Error loading paragraphs"))(
       paragraphs => setChildren(paragraphs) >> windowFunc.closeWaitPane
     )
   }
@@ -133,12 +133,12 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
     val destParId = mem.selectParagraphTree.get.findNodes(_.attrs.selected).head
       .value.get.asInstanceOf[Paragraph].id
     windowFunc.openWaitPane >>
-      wsClient.post(_.changeParagraphsParent(mem.selectedParagraphs, destParId), windowFunc.showError) {_=>
+      topicApi.post(_.changeParagraphsParent(mem.selectedParagraphs, destParId), windowFunc.showError) { _=>
         mem.selectedParagraphs.foldLeft(Callback.empty) {
           case (cb, parIdToBeRelocated) => cb >> mod(_.changeTopicTree(_.relocateParagraph(parIdToBeRelocated, destParId)))
         } >>
           (if (mem.selectedTopics.nonEmpty) {
-            wsClient.post(_.changeTopicsParent(mem.selectedTopics, destParId.get), windowFunc.showError) { _ =>
+            topicApi.post(_.changeTopicsParent(mem.selectedTopics, destParId.get), windowFunc.showError) { _ =>
               mem.selectedTopics.foldLeft(Callback.empty) {
                 case (cb, topIdToBeRelocated) => cb >> mod(_.changeTopicTree(_.relocateTopic(topIdToBeRelocated, destParId.get)))
               }
@@ -174,8 +174,6 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with To
   //**********ScoreCmpActions end********************
 
   override def showTopicImgBtnClicked(topicId: Long) = showTopicImgBtnClicked2(topicId)
-
-  override def topicApi = wsClient
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void

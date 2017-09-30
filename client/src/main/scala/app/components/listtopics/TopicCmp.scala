@@ -29,7 +29,7 @@ object TopicCmp {
                    readOnly: Boolean,
                    language: Language,
                    uploadTopicFileUrl: String,
-                   wsClient: WsClient[TopicApi],
+                   topicApi: WsClient[TopicApi],
                    topicUpdated: Topic => Callback,
                    unregisterPasteListener: Long => Callback,
                    registerPasteListener: (Long, File => Callback) => Callback
@@ -77,7 +77,7 @@ object TopicCmp {
         )
       } else {
         TopicForm.Props(
-          submitFunction = topic => props.wsClient.post(
+          submitFunction = topic => props.topicApi.post(
             _.updateTopic(topic),
             th => props.ctx.openOkDialog("Error updating topic: " + th.getMessage)
           ),

@@ -91,7 +91,7 @@ object ParagraphActionsCmp {
     def deleteParagraphButton(implicit p: Props) = buttonWithIcon(
       onClick = p.ctx.openOkCancelDialog(
         text = s"Delete paragraph '${p.paragraph.name}'?",
-        onOk = p.ctx.openWaitPane >> p.ctx.wsClient.post(
+        onOk = p.ctx.openWaitPane >> p.ctx.topicApi.post(
           _.deleteParagraph(p.paragraph.id.get),
           th => p.ctx.openOkDialog("Could not delete paragraph: " + th.getMessage)
         ) { case () => p.ctx.paragraphDeleted(p.paragraph.id.get) >> p.ctx.closeWaitPane }

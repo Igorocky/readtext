@@ -31,7 +31,7 @@ object LearnCardsPage {
         _.copy(
           modState = $.modState(_),
           getState = () => $.state,
-          wsClient = Utils.createWsClient($.props.wsEntryUrl),
+          cardsApi = Utils.createWsClient($.props.wsEntryUrl),
           sessionWsClient = Utils.createWsClient($.props.wsEntryUrl)
         ),
         CallbackTo($.state) >>= (_.loadTopics(None))
@@ -86,7 +86,7 @@ object LearnCardsPage {
         actionsHidden = topicNode.attrs.actionsHidden,
         selectMode = false,
         getTopicImgUrl = s.pageParams.getTopicImgUrl,
-        wsClient = null /*new WsClient[TopicApi] {
+        topicApi = null /*new WsClient[TopicApi] {
                 override def doCall[O](path: String, dataStr: String, reader: (String) => O, errHnd: (Throwable) => Callback): (O => Callback) => Callback = {
                   println(s"PATH = '$path'")
                   oc => Callback.empty
