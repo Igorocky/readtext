@@ -3,8 +3,8 @@ package app.components.listtopics
 import app.Utils
 import app.components.WindowFunc
 import app.components.forms.FormCommonParams
-import japgolly.scalajs.react.{Callback, _}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, _}
 import org.scalajs.dom.raw.{File, FormData}
 import shared.SharedConstants._
 import shared.dto.Topic
@@ -12,44 +12,43 @@ import shared.forms.FormField
 
 import scala.util.{Failure, Success}
 
+trait ImgUploaderActions {
+  def unregisterPasteListener(listenerId: Long): Callback
+  def registerPasteListener(listenerId: Long, listener: File => Callback): Callback
+}
+
 object ImgUploader {
 
-  protected case class Props(ctx: WindowFunc,
+  protected case class Props(ctx: WindowFunc with ImgUploaderActions,
                              topic: Topic,
-                             onChange: List[String] => Callback,
                              uploadTopicFileUrl: String,
                              getTopicImgUrl: String,
-                             unregisterPasteListener: Long => Callback,
-                             registerPasteListener: (Long, File => Callback) => Callback
+                             onChange: List[String] => Callback
                             )
 
   protected case class State(images: List[String])
 
-  def apply[T, S](ctx: WindowFunc,
+  def apply[T, S](ctx: WindowFunc with ImgUploaderActions,
                   topic: Topic,
                   field: FormField[T, List[String]],
                   uploadTopicFileUrl: String,
-                  getTopicImgUrl: String,
-                  unregisterPasteListener: Long => Callback,
-                  registerPasteListener: (Long, File => Callback) => Callback)
+                  getTopicImgUrl: String)
            (implicit formParams: FormCommonParams[T,S]) =
     comp(Props(
       ctx = ctx,
       topic = topic,
       onChange = formParams.valueWasChanged(field),
       uploadTopicFileUrl = uploadTopicFileUrl,
-      getTopicImgUrl = getTopicImgUrl,
-      unregisterPasteListener = unregisterPasteListener,
-      registerPasteListener = registerPasteListener
+      getTopicImgUrl = getTopicImgUrl
     ))
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialStateFromProps(p => State(p.topic.images))
     .renderBackend[Backend]
     .componentWillMount { $ =>
-      $.props.registerPasteListener($.props.topic.id.get, $.backend.uploadImage)
+      $.props.ctx.registerPasteListener($.props.topic.id.get, $.backend.uploadImage)
     }.componentWillUnmount{ $ =>
-      $.props.unregisterPasteListener($.props.topic.id.get)
+      $.props.ctx.unregisterPasteListener($.props.topic.id.get)
     }.build
 
   protected class Backend($: BackendScope[Props, State]) {

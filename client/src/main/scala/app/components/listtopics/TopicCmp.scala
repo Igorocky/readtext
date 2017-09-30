@@ -5,7 +5,6 @@ import app.WsClient
 import app.components.{Checkbox, WindowFunc}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import org.scalajs.dom.raw.File
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
 import shared.api.TopicApi
 import shared.dto.Topic
@@ -14,12 +13,14 @@ import shared.messages.Language
 trait TopicCmpActions {
   def changeTopicSelection(topicId: Long, selected: Boolean): Callback
   def showTopicImgBtnClicked(topicId: Long): Callback
+  def topicApi: WsClient[TopicApi]
+  def topicUpdated(topic: Topic): Callback
 }
 
 // TODO: move all actions into per component trait
 object TopicCmp {
 
-  case class Props(ctx: WindowFunc with TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions,
+  case class Props(ctx: WindowFunc with TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions with ImgUploaderActions,
                    topic: Topic,
                    selected: Boolean,
                    showImg: Boolean,
@@ -28,11 +29,7 @@ object TopicCmp {
                    getTopicImgUrl: String,
                    readOnly: Boolean,
                    language: Language,
-                   uploadTopicFileUrl: String,
-                   topicApi: WsClient[TopicApi],
-                   topicUpdated: Topic => Callback,
-                   unregisterPasteListener: Long => Callback,
-                   registerPasteListener: (Long, File => Callback) => Callback
+                   uploadTopicFileUrl: String
                   ) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
@@ -77,22 +74,20 @@ object TopicCmp {
         )
       } else {
         TopicForm.Props(
-          submitFunction = topic => props.topicApi.post(
+          submitFunction = topic => props.ctx.topicApi.post(
             _.updateTopic(topic),
             th => props.ctx.openOkDialog("Error updating topic: " + th.getMessage)
           ),
           topic = props.topic,
           cancelled = $.modState(_.copy(editMode = false)),
-          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.topicUpdated(topic),
+          submitComplete = topic => $.modState(_.copy(editMode = false)) >> props.ctx.topicUpdated(topic),
           textFieldLabel = "",
           submitButtonName = "Save",
           editMode = true,
           ctx = props.ctx,
           language = props.language,
           uploadTopicFileUrl = props.uploadTopicFileUrl,
-          getTopicImgUrl = props.getTopicImgUrl,
-          unregisterPasteListener = props.unregisterPasteListener,
-          registerPasteListener = props.registerPasteListener
+          getTopicImgUrl = props.getTopicImgUrl
         ).render
       }
 

@@ -112,9 +112,7 @@ object ParagraphCmp {
         submitButtonName = "Create",
         language = props.language,
         uploadTopicFileUrl = props.uploadTopicFileUrl,
-        getTopicImgUrl = props.getTopicImgUrl,
-        unregisterPasteListener = props.unregisterPasteListener,
-        registerPasteListener = props.registerPasteListener
+        getTopicImgUrl = props.getTopicImgUrl
       ).render
 
     def createNewParagraphDiag(implicit p: Props) =

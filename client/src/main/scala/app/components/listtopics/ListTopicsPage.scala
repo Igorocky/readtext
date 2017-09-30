@@ -114,12 +114,8 @@ object ListTopicsPage {
             actionsHidden = node.attrs.actionsHidden,
             selectMode = ctx.listTopicsPageMem.selectMode,
             getTopicImgUrl = ctx.pageParams.getTopicImgUrl,
-            topicApi = ctx.topicApi,
-            topicUpdated = ctx.topicUpdated,
             language = ctx.language,
             uploadTopicFileUrl = ctx.pageParams.uploadTopicFileUrl,
-            unregisterPasteListener = ctx.unregisterPasteListener,
-            registerPasteListener = ctx.registerPasteListener,
             readOnly = false
           ).render),
           mayHaveChildren = false,

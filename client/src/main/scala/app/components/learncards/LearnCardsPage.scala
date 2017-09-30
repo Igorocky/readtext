@@ -86,17 +86,8 @@ object LearnCardsPage {
         actionsHidden = topicNode.attrs.actionsHidden,
         selectMode = false,
         getTopicImgUrl = s.pageParams.getTopicImgUrl,
-        topicApi = null /*new WsClient[TopicApi] {
-                override def doCall[O](path: String, dataStr: String, reader: (String) => O, errHnd: (Throwable) => Callback): (O => Callback) => Callback = {
-                  println(s"PATH = '$path'")
-                  oc => Callback.empty
-                }
-              }*/ ,
-        topicUpdated = _ => Callback.empty,
         language = s.pageParams.headerParams.language,
         uploadTopicFileUrl = null,
-        unregisterPasteListener = _ => Callback.empty,
-        registerPasteListener = (_, _) => Callback.empty,
         readOnly = true
       ).render
     }

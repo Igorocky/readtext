@@ -4,10 +4,12 @@ import app.WsClient
 import app.components.WindowFunc
 import app.components.listtopics._
 import japgolly.scalajs.react.{Callback, CallbackTo}
+import org.scalajs.dom.raw.File
 import shared.api.{CardsApi, TopicApi}
+import shared.dto.Topic
 import shared.pageparams.LearnCardsPageParams
 
-trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions {
+trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions with ImgUploaderActions {
 
   //abstract members
   protected def modLearnCardsPageMem(f: LearnCardsPageMem => LearnCardsPageMem): CallbackTo[LearnCardsPageMem]
@@ -71,6 +73,12 @@ trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with To
   override def moveDownTopicAction(topicId: Long) = Callback.empty
 
   override def topicDeleted(topicId: Long) = Callback.empty
+
+  override def topicUpdated(topic: Topic) = Callback.empty
+
+  override def unregisterPasteListener(listenerId: Long) = Callback.empty
+
+  override def registerPasteListener(listenerId: Long, listener: (File) => Callback) = Callback.empty
 
   //inner methods
   private def mod(f: LearnCardsPageMem => LearnCardsPageMem): Callback = modLearnCardsPageMem(f).void

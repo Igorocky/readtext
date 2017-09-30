@@ -8,7 +8,7 @@ import shared.api.{CardsApi, SessionApi, TopicApi}
 import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
-trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions {
+trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions with ImgUploaderActions {
   type NewValueExpanded = Boolean
 
   //abstract members

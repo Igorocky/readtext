@@ -6,14 +6,13 @@ import app.components.forms.FormCommonParams.SubmitFunction
 import app.components.forms.{FormCommonParams, FormTextField, SubmitButton}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
-import org.scalajs.dom.raw.File
 import shared.dto.Topic
 import shared.forms.{FormData, Forms}
 import shared.messages.Language
 
 object TopicForm {
 
-  case class Props(ctx: WindowFunc,
+  case class Props(ctx: WindowFunc with ImgUploaderActions,
                    topic: Topic,
                    cancelled: Callback,
                    submitFunction: SubmitFunction[Topic, Topic],
@@ -23,9 +22,7 @@ object TopicForm {
                    editMode: Boolean = false,
                    language: Language,
                    uploadTopicFileUrl: String,
-                   getTopicImgUrl: String,
-                   unregisterPasteListener: Long => Callback,
-                   registerPasteListener: (Long, File => Callback) => Callback) {
+                   getTopicImgUrl: String) {
     @inline def render = comp(this)
   }
 
@@ -54,9 +51,7 @@ object TopicForm {
           props.topic,
           field = formMethods.images,
           uploadTopicFileUrl = props.uploadTopicFileUrl,
-          getTopicImgUrl = props.getTopicImgUrl,
-          unregisterPasteListener = props.unregisterPasteListener,
-          registerPasteListener = props.registerPasteListener
+          getTopicImgUrl = props.getTopicImgUrl
         ) else EmptyVdom,
         SubmitButton(props.submitButtonName),
         buttonWithText(
