@@ -104,7 +104,6 @@ object LearnCardsPage {
         uploadTopicFileUrl = null,
         unregisterPasteListener = _ => Callback.empty,
         registerPasteListener = (_, _) => Callback.empty,
-        topicStateUpdated = _ => s.loadTopics(s.learnCardsPageMem.activationTimeReduction),
         readOnly = true
       ).render
     }

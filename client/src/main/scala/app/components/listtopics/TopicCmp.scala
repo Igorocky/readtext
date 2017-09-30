@@ -11,10 +11,14 @@ import shared.api.{CardsApi, TopicApi}
 import shared.dto.Topic
 import shared.messages.Language
 
+trait TopicCmpActions {
+
+}
+
 // TODO: move all actions into per component trait
 object TopicCmp {
 
-  case class Props(ctx: WindowFunc,
+  case class Props(ctx: WindowFunc with TopicCmpActions with ScoreCmpActions,
                    topic: Topic,
                    selected: Boolean,
                    showImg: Boolean,
@@ -34,7 +38,6 @@ object TopicCmp {
                    uploadTopicFileUrl: String,
                    unregisterPasteListener: Long => Callback,
                    registerPasteListener: (Long, File => Callback) => Callback,
-                   topicStateUpdated: Long => Callback,
                    readOnly: Boolean
                   ) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
@@ -73,10 +76,8 @@ object TopicCmp {
             TagMod(
               ScoreCmp.Props(
                 ctx = props.ctx,
-                entityId = props.topic.id.get,
-                cardsClient = props.cardsClient,
-                language = props.language,
-                topicStateUpdated = props.topicStateUpdated
+                cardId = props.topic.id.get,
+                language = props.language
               ).render,
               <.div(props.topic.images.toVdomArray { img =>
                 <.div(^.key:= img,

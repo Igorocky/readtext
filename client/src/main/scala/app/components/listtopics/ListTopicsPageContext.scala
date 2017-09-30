@@ -8,7 +8,7 @@ import shared.api.{CardsApi, SessionApi, TopicApi}
 import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
-trait ListTopicsPageContext {
+trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions {
   type NewValueExpanded = Boolean
 
   //abstract members
@@ -156,10 +156,6 @@ trait ListTopicsPageContext {
     )
   ))
 
-  def topicStateUpdated(topicId: Long): CallbackTo[Unit] =
-    showTopicImgBtnClicked(topicId, Some(false)) >>
-    showTopicActions(topicId, false)
-
   def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
     topicId,
     attrs => attrs.copy(showImg = newValue.getOrElse(!attrs.showImg))
@@ -169,6 +165,13 @@ trait ListTopicsPageContext {
     topicId,
     _.copy(actionsHidden = !show)
   )
+
+  //**********ScoreCmpActions begin********************
+  override def wf = windowFunc
+
+  override def cardStateUpdated(cardId: Long): CallbackTo[Unit] =
+    showTopicImgBtnClicked(cardId, Some(false)) >> showTopicActions(cardId, false)
+  //**********ScoreCmpActions end********************
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void

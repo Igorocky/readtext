@@ -1,6 +1,7 @@
 package app.components.learncards
 
 import app.WsClient
+import app.components.listtopics.{ScoreCmpActions, TopicCmpActions}
 import app.components.{WindowFunc, WindowFuncMem}
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import shared.api.{CardsApi, SessionApi}
@@ -13,7 +14,7 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
                                learnCardsPageMem: LearnCardsPageMem = LearnCardsPageMem(),
                                wsClient: WsClient[CardsApi] = null,
                                sessionWsClient: WsClient[SessionApi] = null,
-                               pageParams: LearnCardsPageParams) extends WindowFunc with LearnCardsPageContext {
+                               pageParams: LearnCardsPageParams) extends WindowFunc with LearnCardsPageContext with TopicCmpActions with ScoreCmpActions {
 
   override protected def modWindowFuncMem(f: WindowFuncMem => WindowFuncMem): Callback =
     modState(s => s.copy(windowFuncMem = f(s.windowFuncMem)))
@@ -33,6 +34,14 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
         )
       )
     )
+
+  //**********ScoreCmpActions begin********************
+  override def wf = windowFunc
+  override def cardsClient = wsClient
+  override def cardStateUpdated(cardId: Long): CallbackTo[Unit] =
+    loadTopics(learnCardsPageMem.activationTimeReduction)
+  //**********ScoreCmpActions end********************
+
 }
 
 

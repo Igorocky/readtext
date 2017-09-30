@@ -127,7 +127,6 @@ object ListTopicsPage {
             uploadTopicFileUrl = ctx.pageParams.uploadTopicFileUrl,
             unregisterPasteListener = ctx.unregisterPasteListener,
             registerPasteListener = ctx.registerPasteListener,
-            topicStateUpdated = ctx.topicStateUpdated,
             readOnly = false
           ).render),
           mayHaveChildren = false,
