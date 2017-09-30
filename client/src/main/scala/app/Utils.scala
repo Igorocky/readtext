@@ -62,6 +62,15 @@ object Utils {
     )
   }
 
+  def stubWsClient[A](stubName: String): WsClient[A] = new WsClient[A] {
+    override def doCall[O](path: String,
+                           dataStr: String,
+                           reader: String => O,
+                           errHnd: Throwable => Callback): (O => Callback) => Callback = outputConsumer => Callback{
+      println(s"stubbed $stubName.doCall invoked: path = '$path', dataStr = '$dataStr'")
+    }
+  }
+
   def bootstrapButton(onClick: Callback, btnType: String, tagMod: TagMod, disabled: Boolean = false) = <.button(
     ^.`type`:="button",
     ^.onClick --> onClick,

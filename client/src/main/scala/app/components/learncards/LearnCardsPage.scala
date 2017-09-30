@@ -93,11 +93,6 @@ object LearnCardsPage {
                 }
               }*/ ,
         topicUpdated = _ => Callback.empty,
-        showTopicActions = s.showTopicActions,
-        cardsClient = s.wsClient,
-        moveUpTopicAction = _ => Callback.empty,
-        moveDownTopicAction = _ => Callback.empty,
-        topicDeleted = _ => Callback.empty,
         language = s.pageParams.headerParams.language,
         uploadTopicFileUrl = null,
         unregisterPasteListener = _ => Callback.empty,

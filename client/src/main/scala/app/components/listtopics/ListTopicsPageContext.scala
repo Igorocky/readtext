@@ -8,7 +8,7 @@ import shared.api.{CardsApi, SessionApi, TopicApi}
 import shared.dto.{Paragraph, Topic}
 import shared.pageparams.ListTopicsPageParams
 
-trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions {
+trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions {
   type NewValueExpanded = Boolean
 
   //abstract members
@@ -174,6 +174,8 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions {
   //**********ScoreCmpActions end********************
 
   override def showTopicImgBtnClicked(topicId: Long) = showTopicImgBtnClicked2(topicId)
+
+  override def topicApi = wsClient
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void

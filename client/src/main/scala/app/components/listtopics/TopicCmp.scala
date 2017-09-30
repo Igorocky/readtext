@@ -7,7 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import org.scalajs.dom.raw.File
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
-import shared.api.{CardsApi, TopicApi}
+import shared.api.TopicApi
 import shared.dto.Topic
 import shared.messages.Language
 
@@ -19,25 +19,20 @@ trait TopicCmpActions {
 // TODO: move all actions into per component trait
 object TopicCmp {
 
-  case class Props(ctx: WindowFunc with TopicCmpActions with ScoreCmpActions,
+  case class Props(ctx: WindowFunc with TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions,
                    topic: Topic,
                    selected: Boolean,
                    showImg: Boolean,
                    actionsHidden: Boolean,
                    selectMode: Boolean,
                    getTopicImgUrl: String,
-                   wsClient: WsClient[TopicApi],
-                   topicUpdated: Topic => Callback,
-                   showTopicActions: (Long, Boolean) => Callback,
-                   cardsClient: WsClient[CardsApi],
-                   moveUpTopicAction: Long => Callback,
-                   moveDownTopicAction: Long => Callback,
-                   topicDeleted: Long => Callback,
+                   readOnly: Boolean,
                    language: Language,
                    uploadTopicFileUrl: String,
+                   wsClient: WsClient[TopicApi],
+                   topicUpdated: Topic => Callback,
                    unregisterPasteListener: Long => Callback,
-                   registerPasteListener: (Long, File => Callback) => Callback,
-                   readOnly: Boolean
+                   registerPasteListener: (Long, File => Callback) => Callback
                   ) {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
@@ -60,15 +55,9 @@ object TopicCmp {
             TopicActionsCmp.Props(
               ctx = props.ctx,
               topic = props.topic,
-              onEdit = $.modState(_.copy(editMode = true)),
               actionsHidden = props.actionsHidden,
-              showTopicActions = props.showTopicActions,
-              cardsClient = props.cardsClient,
-              moveUpTopicAction = props.moveUpTopicAction,
-              moveDownTopicAction = props.moveDownTopicAction,
-              topicDeleted = props.topicDeleted,
-              wsClient = props.wsClient,
-              readOnly = props.readOnly
+              readOnly = props.readOnly,
+              onEdit = $.modState(_.copy(editMode = true))
             ).render
           ),
           if (props.showImg) {

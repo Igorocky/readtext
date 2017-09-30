@@ -2,16 +2,17 @@ package app.components.learncards
 
 import app.WsClient
 import app.components.WindowFunc
-import app.components.listtopics.{ParTopicAttrs, ScoreCmpActions, TopicCmpActions, TopicTree}
+import app.components.listtopics._
 import japgolly.scalajs.react.{Callback, CallbackTo}
-import shared.api.CardsApi
+import shared.api.{CardsApi, TopicApi}
 import shared.pageparams.LearnCardsPageParams
 
-trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions{
+trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions {
 
   //abstract members
   protected def modLearnCardsPageMem(f: LearnCardsPageMem => LearnCardsPageMem): CallbackTo[LearnCardsPageMem]
   val wsClient: WsClient[CardsApi]
+  val topicApi: WsClient[TopicApi]
   val learnCardsPageMem: LearnCardsPageMem
   val pageParams: LearnCardsPageParams
   protected def windowFunc: WindowFunc
@@ -67,6 +68,12 @@ trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions{
   override def changeTopicSelection(topicId: Long, selected: Boolean) = Callback.empty
 
   override def showTopicImgBtnClicked(topicId: Long) = showTopicImgBtnClicked2(topicId)
+
+  override def moveUpTopicAction(topicId: Long) = Callback.empty
+
+  override def moveDownTopicAction(topicId: Long) = Callback.empty
+
+  override def topicDeleted(topicId: Long) = Callback.empty
 
   //inner methods
   private def mod(f: LearnCardsPageMem => LearnCardsPageMem): Callback = modLearnCardsPageMem(f).void

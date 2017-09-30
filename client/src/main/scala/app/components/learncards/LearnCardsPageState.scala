@@ -1,10 +1,9 @@
 package app.components.learncards
 
-import app.WsClient
-import app.components.listtopics.{ScoreCmpActions, TopicCmpActions}
 import app.components.{WindowFunc, WindowFuncMem}
+import app.{Utils, WsClient}
 import japgolly.scalajs.react.{Callback, CallbackTo}
-import shared.api.{CardsApi, SessionApi}
+import shared.api.{CardsApi, SessionApi, TopicApi}
 import shared.messages.Language
 import shared.pageparams.LearnCardsPageParams
 
@@ -13,6 +12,7 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
                                windowFuncMem: WindowFuncMem = WindowFuncMem(),
                                learnCardsPageMem: LearnCardsPageMem = LearnCardsPageMem(),
                                wsClient: WsClient[CardsApi] = null,
+                               topicApi: WsClient[TopicApi] = Utils.stubWsClient[TopicApi]("topicApiStub"),
                                sessionWsClient: WsClient[SessionApi] = null,
                                pageParams: LearnCardsPageParams) extends WindowFunc with LearnCardsPageContext {
 
