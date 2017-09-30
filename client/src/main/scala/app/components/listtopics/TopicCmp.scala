@@ -12,7 +12,7 @@ import shared.dto.Topic
 import shared.messages.Language
 
 trait TopicCmpActions {
-
+  def changeTopicSelection(topicId: Long, selected: Boolean): Callback
 }
 
 // TODO: move all actions into per component trait
@@ -23,7 +23,6 @@ object TopicCmp {
                    selected: Boolean,
                    showImg: Boolean,
                    actionsHidden: Boolean,
-                   selectTopicAction: (Long, Boolean) => Callback,
                    selectMode: Boolean,
                    showTopicImgBtnClicked: Callback,
                    getTopicImgUrl: String,
@@ -51,7 +50,7 @@ object TopicCmp {
       if (!state.editMode) {
         <.div(^.`class` := this.getClass.getSimpleName /*+ (if (props.topic.checked) " checked" else "")*/,
           <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
-            ^.onClick --> props.selectTopicAction(props.topic.id.get, !props.selected),
+            ^.onClick --> props.ctx.changeTopicSelection(props.topic.id.get, !props.selected),
             if (props.selectMode) checkboxForTopic(props) else EmptyVdom,
             showImgButton(props.topic, state, props.showTopicImgBtnClicked),
             <.span(
@@ -112,7 +111,7 @@ object TopicCmp {
 
   def checkboxForTopic(props: Props) = Checkbox.Props(
     checked = props.selected,
-    onChange = newVal => props.selectTopicAction(props.topic.id.get, newVal)
+    onChange = newVal => props.ctx.changeTopicSelection(props.topic.id.get, newVal)
   ).render
 
   def showImgButton(topic: Topic, state: State, onClick: Callback) = buttonWithIcon(

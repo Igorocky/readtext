@@ -110,7 +110,7 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions {
 
   def gotoSelectMode = mod(m => m.copy(selectMode = true, topicTree = m.topicTree.modNode(_.attrs.selected, _.changeAttrs(_.copy(selected = false)))))
   def cancelSelectMode = closeSelectParagraphWindow >> mod(_.copy(selectMode = false))
-  def selectTopicAction(id: Long, selected: Boolean): Callback = mod(_.changeTopicTree(_.selectTopic(id, selected)))
+  def changeTopicSelection(id: Long, selected: Boolean): Callback = mod(_.changeTopicTree(_.selectTopic(id, selected)))
   def selectParagraphAction(id: Long, selected: Boolean): Callback = mod(_.changeTopicTree(_.selectParagraph(Some(id), selected)))
   def selectParagraphInDialogAction(id: Option[Long]): Callback = mod(_.changeSelectParagraphTree(
     _.modNode(_.attrs.selected, _.changeAttrs(_.copy(selected = false))).selectParagraph(id, true)

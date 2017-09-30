@@ -112,7 +112,6 @@ object ListTopicsPage {
             selected = node.attrs.selected,
             showImg = node.attrs.showImg,
             actionsHidden = node.attrs.actionsHidden,
-            selectTopicAction = ctx.selectTopicAction,
             selectMode = ctx.listTopicsPageMem.selectMode,
             showTopicImgBtnClicked = ctx.showTopicImgBtnClicked(t.id.get),
             getTopicImgUrl = ctx.pageParams.getTopicImgUrl,

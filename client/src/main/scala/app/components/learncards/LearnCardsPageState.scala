@@ -42,6 +42,7 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
     loadTopics(learnCardsPageMem.activationTimeReduction)
   //**********ScoreCmpActions end********************
 
+  override def changeTopicSelection(topicId: Long, selected: Boolean) = Callback.empty
 }
 
 

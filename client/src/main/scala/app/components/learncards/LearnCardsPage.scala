@@ -84,7 +84,6 @@ object LearnCardsPage {
         selected = false,
         showImg = topicNode.attrs.showImg,
         actionsHidden = topicNode.attrs.actionsHidden,
-        selectTopicAction = (_, _) => Callback.empty,
         selectMode = false,
         showTopicImgBtnClicked = s.showTopicImgBtnClicked(t.id.get),
         getTopicImgUrl = s.pageParams.getTopicImgUrl,
