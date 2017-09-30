@@ -13,6 +13,7 @@ import shared.messages.Language
 
 trait TopicCmpActions {
   def changeTopicSelection(topicId: Long, selected: Boolean): Callback
+  def showTopicImgBtnClicked(topicId: Long): Callback
 }
 
 // TODO: move all actions into per component trait
@@ -24,7 +25,6 @@ object TopicCmp {
                    showImg: Boolean,
                    actionsHidden: Boolean,
                    selectMode: Boolean,
-                   showTopicImgBtnClicked: Callback,
                    getTopicImgUrl: String,
                    wsClient: WsClient[TopicApi],
                    topicUpdated: Topic => Callback,
@@ -52,7 +52,7 @@ object TopicCmp {
           <.div(^.`class` := HIGHLIGHT_CHILD_SPAN_ON_HOVER,
             ^.onClick --> props.ctx.changeTopicSelection(props.topic.id.get, !props.selected),
             if (props.selectMode) checkboxForTopic(props) else EmptyVdom,
-            showImgButton(props.topic, state, props.showTopicImgBtnClicked),
+            showImgButton(props.topic, state, props.ctx.showTopicImgBtnClicked(props.topic.id.get)),
             <.span(
               ^.`class`:=HIGHLIGHTED,
               props.topic.title

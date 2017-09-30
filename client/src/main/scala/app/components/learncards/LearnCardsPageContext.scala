@@ -2,12 +2,12 @@ package app.components.learncards
 
 import app.WsClient
 import app.components.WindowFunc
-import app.components.listtopics.{ParTopicAttrs, TopicTree}
+import app.components.listtopics.{ParTopicAttrs, ScoreCmpActions, TopicCmpActions, TopicTree}
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import shared.api.CardsApi
 import shared.pageparams.LearnCardsPageParams
 
-trait LearnCardsPageContext {
+trait LearnCardsPageContext extends TopicCmpActions with ScoreCmpActions{
 
   //abstract members
   protected def modLearnCardsPageMem(f: LearnCardsPageMem => LearnCardsPageMem): CallbackTo[LearnCardsPageMem]
@@ -35,7 +35,7 @@ trait LearnCardsPageContext {
     mod(_.copy(activationTimeReduction = newActivationTimeReduction)) >> loadTopics(newActivationTimeReduction)
   }
 
-  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
+  def showTopicImgBtnClicked2(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
     topicId,
     attrs => attrs.copy(showImg = newValue.getOrElse(!attrs.showImg))
   )
@@ -57,6 +57,16 @@ trait LearnCardsPageContext {
     )
   ))
 
+  //**********ScoreCmpActions begin********************
+  override def wf = windowFunc
+  override def cardsClient = wsClient
+  override def cardStateUpdated(cardId: Long): CallbackTo[Unit] =
+    loadTopics(learnCardsPageMem.activationTimeReduction)
+  //**********ScoreCmpActions end********************
+
+  override def changeTopicSelection(topicId: Long, selected: Boolean) = Callback.empty
+
+  override def showTopicImgBtnClicked(topicId: Long) = showTopicImgBtnClicked2(topicId)
 
   //inner methods
   private def mod(f: LearnCardsPageMem => LearnCardsPageMem): Callback = modLearnCardsPageMem(f).void

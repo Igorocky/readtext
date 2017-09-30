@@ -156,7 +156,7 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions {
     )
   ))
 
-  def showTopicImgBtnClicked(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
+  def showTopicImgBtnClicked2(topicId: Long, newValue: Option[Boolean] = None): Callback = modTopicAttribute(
     topicId,
     attrs => attrs.copy(showImg = newValue.getOrElse(!attrs.showImg))
   )
@@ -170,8 +170,10 @@ trait ListTopicsPageContext extends TopicCmpActions with ScoreCmpActions {
   override def wf = windowFunc
 
   override def cardStateUpdated(cardId: Long): CallbackTo[Unit] =
-    showTopicImgBtnClicked(cardId, Some(false)) >> showTopicActions(cardId, false)
+    showTopicImgBtnClicked2(cardId, Some(false)) >> showTopicActions(cardId, false)
   //**********ScoreCmpActions end********************
+
+  override def showTopicImgBtnClicked(topicId: Long) = showTopicImgBtnClicked2(topicId)
 
   //inner methods
   private def mod(f: ListTopicsPageMem => ListTopicsPageMem): Callback = modListTopicsPageMem(f).void

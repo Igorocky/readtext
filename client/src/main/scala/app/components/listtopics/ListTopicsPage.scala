@@ -113,7 +113,6 @@ object ListTopicsPage {
             showImg = node.attrs.showImg,
             actionsHidden = node.attrs.actionsHidden,
             selectMode = ctx.listTopicsPageMem.selectMode,
-            showTopicImgBtnClicked = ctx.showTopicImgBtnClicked(t.id.get),
             getTopicImgUrl = ctx.pageParams.getTopicImgUrl,
             wsClient = ctx.wsClient,
             topicUpdated = ctx.topicUpdated,

@@ -14,7 +14,7 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
                                learnCardsPageMem: LearnCardsPageMem = LearnCardsPageMem(),
                                wsClient: WsClient[CardsApi] = null,
                                sessionWsClient: WsClient[SessionApi] = null,
-                               pageParams: LearnCardsPageParams) extends WindowFunc with LearnCardsPageContext with TopicCmpActions with ScoreCmpActions {
+                               pageParams: LearnCardsPageParams) extends WindowFunc with LearnCardsPageContext {
 
   override protected def modWindowFuncMem(f: WindowFuncMem => WindowFuncMem): Callback =
     modState(s => s.copy(windowFuncMem = f(s.windowFuncMem)))
@@ -34,15 +34,6 @@ case class LearnCardsPageState(modState: (LearnCardsPageState => LearnCardsPageS
         )
       )
     )
-
-  //**********ScoreCmpActions begin********************
-  override def wf = windowFunc
-  override def cardsClient = wsClient
-  override def cardStateUpdated(cardId: Long): CallbackTo[Unit] =
-    loadTopics(learnCardsPageMem.activationTimeReduction)
-  //**********ScoreCmpActions end********************
-
-  override def changeTopicSelection(topicId: Long, selected: Boolean) = Callback.empty
 }
 
 

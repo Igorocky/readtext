@@ -85,7 +85,6 @@ object LearnCardsPage {
         showImg = topicNode.attrs.showImg,
         actionsHidden = topicNode.attrs.actionsHidden,
         selectMode = false,
-        showTopicImgBtnClicked = s.showTopicImgBtnClicked(t.id.get),
         getTopicImgUrl = s.pageParams.getTopicImgUrl,
         wsClient = null /*new WsClient[TopicApi] {
                 override def doCall[O](path: String, dataStr: String, reader: (String) => O, errHnd: (Throwable) => Callback): (O => Callback) => Callback = {
