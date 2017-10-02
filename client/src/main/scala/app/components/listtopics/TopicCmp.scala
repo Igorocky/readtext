@@ -3,12 +3,14 @@ package app.components.listtopics
 import app.Utils._
 import app.WsClient
 import app.components.{Checkbox, WindowFunc}
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER}
 import shared.api.TopicApi
 import shared.dto.Topic
 import shared.messages.Language
+import app.Reusabilities._
 
 trait TopicCmpActions {
   def changeTopicSelection(topicId: Long, selected: Boolean): Callback
@@ -17,9 +19,9 @@ trait TopicCmpActions {
   def topicUpdated(topic: Topic): Callback
 }
 
-// TODO: move all actions into per component trait
 object TopicCmp {
 
+  implicit val propsReuse = Reusability.caseClassExcept[Props]('ctx)
   case class Props(ctx: WindowFunc with TopicCmpActions with ScoreCmpActions with TopicActionsCmpActions with ImgUploaderActions,
                    topic: Topic,
                    selected: Boolean,
@@ -34,6 +36,7 @@ object TopicCmp {
     @inline def render = comp.withKey("top-" + topic.id.get.toString)(this)
   }
 
+  implicit val stateReuse = Reusability.byRef[State]
   protected case class State(editMode: Boolean = false)
 
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
@@ -91,7 +94,8 @@ object TopicCmp {
         ).render
       }
 
-    }.build
+    }.configure(Reusability.shouldComponentUpdate)
+    .build
 
   def checkboxForTopic(props: Props) = Checkbox.Props(
     checked = props.selected,

@@ -2,28 +2,29 @@ package app.components.listtopics
 
 import app.components.{Checkbox, WindowFunc}
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.raw.File
 import shared.SharedConstants.{HIGHLIGHTED, HIGHLIGHT_CHILD_SPAN_ON_HOVER, PARAGRAPH_NAME}
 import shared.dto.{Paragraph, Topic}
 import shared.messages.Language
+import app.Reusabilities._
 
 // TODO: display average score near each paragraph
 // TODO: tags for paragraphs
 object ParagraphCmp {
 
+  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept[Props]('ctx)
   case class Props(paragraph: Paragraph,
                    ctx: WindowFunc with ListTopicsPageContext,
                    tagFilter: String,
                    selected: Boolean,
                    language: Language,
                    uploadTopicFileUrl: String,
-                   getTopicImgUrl: String,
-                   unregisterPasteListener: Long => Callback,
-                   registerPasteListener: (Long, File => Callback) => Callback) {
+                   getTopicImgUrl: String) {
     @inline def render = comp.withKey("par-" + paragraph.id.get.toString)(this)
   }
 
+  implicit val stateReuse = Reusability.byRef[State]
   protected case class State(editMode: Boolean = false,
                              createTopicDiagOpened: Boolean = false,
                              newParagraphFormOpened: Boolean = false)
@@ -31,6 +32,7 @@ object ParagraphCmp {
   private lazy val comp = ScalaComponent.builder[Props](this.getClass.getName)
     .initialState(State())
     .renderBackend[Backend]
+    .configure(Reusability.shouldComponentUpdate)
     .build
 
   protected class Backend($: BackendScope[Props, State]) {

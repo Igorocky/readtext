@@ -3,6 +3,8 @@ package app.components.listtopics
 import app.Utils._
 import app.WsClient
 import app.components.WindowFunc
+import app.Reusabilities._
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import shared.SharedConstants._
@@ -27,6 +29,7 @@ trait TopicActionsCmpActions {
 
 object TopicActionsCmp {
 
+  implicit val propsReuse = Reusability.caseClassExcept[Props]('ctx)
   case class Props(ctx: WindowFunc with TopicActionsCmpActions,
                    topic: Topic,
                    actionsHidden: Boolean,
@@ -35,6 +38,7 @@ object TopicActionsCmp {
     @inline def render = comp(this)
   }
 
+  implicit val stateReuse = Reusability.byRef[State]
   protected case class State(currTopicState: Option[Option[TopicState]] = None,
                              history: Option[List[List[String]]] = None)
 
@@ -50,6 +54,7 @@ object TopicActionsCmp {
           Callback.empty
         }
       }
+    .configure(Reusability.shouldComponentUpdate)
     .build
 
   protected class Backend($: BackendScope[Props, State]) {

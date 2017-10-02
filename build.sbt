@@ -45,6 +45,7 @@ lazy val client = (project in file("client"))
   scalaVersion := scalaV,
   libraryDependencies ++= Seq(
     "com.github.japgolly.scalajs-react" %%% "core" % "1.1.0"
+    ,"com.github.japgolly.scalajs-react" %%% "extra" % "1.1.0"
     ,"com.lihaoyi" %%% "upickle" % upickleVersion
 
     ,"org.scalatest" %%% "scalatest" % scalaTestVersion % Test

@@ -93,9 +93,7 @@ object ListTopicsPage {
             selected = node.attrs.selected,
             language = ctx.language,
             uploadTopicFileUrl = ctx.pageParams.uploadTopicFileUrl,
-            getTopicImgUrl = ctx.pageParams.getTopicImgUrl,
-            unregisterPasteListener = ctx.unregisterPasteListener,
-            registerPasteListener = ctx.registerPasteListener
+            getTopicImgUrl = ctx.pageParams.getTopicImgUrl
           ).render),
           mayHaveChildren = true,
           children = node.children.map(_.map(mapMainTopicTree)),
